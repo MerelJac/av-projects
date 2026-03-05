@@ -1,0 +1,283 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  TEAM
+  CLIENT
+  ADMIN
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      Role
+  createdAt DateTime @default(now())
+
+  profile             Profile?
+  invites             Invite[]
+  passwordResetTokens PasswordResetToken[]
+  timeEntries         TimeEntry[]
+}
+
+model Profile {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  firstName String
+  phone     String?
+  lastName  String
+}
+
+model Invite {
+  id        String @id @default(uuid())
+  token     String @unique
+  email     String
+  trainerId String
+  trainer   User   @relation(fields: [trainerId], references: [id])
+
+  accepted  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Customer {
+  id          String  @id @default(uuid())
+  name        String
+  email       String?
+  phone       String?
+  billingTerm String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  quotes        Quote[]
+  projects      Project[]
+  itemPrices    CustomerItemPrice[]
+  subscriptions Subscription[]
+}
+
+model Item {
+  id           String  @id @default(uuid())
+  itemNumber   String  @unique
+  manufacturer String?
+
+  cost  Float?
+  price Float?
+
+  lastSoldPrice Float?
+
+  active   Boolean @default(true)
+  approved Boolean @default(false)
+
+  eolDate DateTime?
+
+  category String?
+  type     ItemType
+
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  customerPrices CustomerItemPrice[]
+
+  priceHistory  ItemPriceHistory[]
+  shipments     Shipment[]
+  quoteLines    QuoteLine[]
+  subscriptions Subscription[]
+}
+
+model Shipment {
+  id String @id @default(uuid())
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
+
+  itemId String?
+  item   Item?   @relation(fields: [itemId], references: [id])
+
+  quantity Int
+
+  carrier  String?
+  tracking String?
+
+  shippedBy String?
+  createdAt DateTime @default(now())
+}
+
+enum ItemType {
+  HARDWARE
+  SOFTWARE
+  SUBSCRIPTION
+  SERVICE
+}
+
+model Quote {
+  id String @id @default(uuid())
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  status QuoteStatus @default(DRAFT)
+
+  total Float?
+
+  createdAt DateTime @default(now())
+
+  lines    QuoteLine[]
+  projects Project[]
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+}
+
+model QuoteLine {
+  id String @id @default(uuid())
+
+  quoteId String
+  quote   Quote  @relation(fields: [quoteId], references: [id])
+
+  itemId String?
+  item   Item?   @relation(fields: [itemId], references: [id])
+
+  description String
+  quantity    Int
+  price       Float
+
+  cost Float?
+}
+
+model CustomerItemPrice {
+  id String @id @default(uuid())
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  itemId String
+  item   Item   @relation(fields: [itemId], references: [id])
+
+  price     Float
+  createdAt DateTime @default(now())
+
+  @@unique([customerId, itemId])
+}
+
+model Project {
+  id String @id @default(uuid())
+
+  name String
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  quoteId String?
+  quote   Quote?  @relation(fields: [quoteId], references: [id])
+
+  totalBudget Float?
+  invoiced    Float?
+
+  createdAt DateTime @default(now())
+
+  milestones   ProjectMilestone[]
+  shipments    Shipment[]
+  timeEntries  TimeEntry[]
+  changeOrders ChangeOrder[]
+}
+
+model Subscription {
+  id String @id @default(uuid())
+
+  itemId String
+  item   Item   @relation(fields: [itemId], references: [id])
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  startDate DateTime
+  endDate   DateTime
+
+  status SubscriptionStatus
+
+  notes String?
+
+  createdAt DateTime @default(now())
+}
+
+model TimeEntry {
+  id String @id @default(uuid())
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  hours Float
+  notes String?
+
+  createdAt DateTime @default(now())
+}
+
+model ItemPriceHistory {
+  id String @id @default(uuid())
+
+  itemId String
+  item   Item   @relation(fields: [itemId], references: [id])
+
+  cost  Float?
+  price Float?
+
+  changedBy String?
+  createdAt DateTime @default(now())
+}
+
+model ChangeOrder {
+  id String @id @default(uuid())
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
+
+  description String
+
+  amount Float
+
+  createdAt DateTime @default(now())
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PENDING_RENEWAL
+  EXPIRED
+}
+
+model ProjectMilestone {
+  id String @id @default(uuid())
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
+
+  name      String
+  dueDate   DateTime?
+  completed Boolean   @default(false)
+}
