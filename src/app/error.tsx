@@ -37,13 +37,13 @@ export default function Error({
         <div className="flex items-center justify-center gap-3">
           <button
             onClick={() => reset()}
-            className="px-5 py-2.5 bg-lime-green text-black font-syne font-bold text-sm rounded-xl hover:opacity-90 active:scale-[0.97] transition"
+            className="px-5 py-2.5 bg-secondary-color text-black font-syne font-bold text-sm rounded-xl hover:opacity-90 active:scale-[0.97] transition"
           >
             Try again
           </button>
           <Link
             href="/"
-            className="px-5 py-2.5 bg-white border border-surface2 hover:border-lime-green/20 text-muted hover:text-foreground text-sm font-medium rounded-xl transition"
+            className="px-5 py-2.5 bg-white border border-surface2 hover:border-secondary-color/20 text-muted hover:text-foreground text-sm font-medium rounded-xl transition"
           >
             Go home
           </Link>

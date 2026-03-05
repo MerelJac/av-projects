@@ -92,10 +92,10 @@ export default function ProgramsPageClient({
               key={program.id}
               className="px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 
         hover:bg-white/50 hover:pl-6 transition-all duration-150 group
-        border-l-2 border-l-transparent hover:border-l-lime-green/50"
+        border-l-2 border-l-transparent hover:border-l-secondary-color/50"
             >
               <Link href={`/programs/${program.id}`} className="flex-1 min-w-0">
-                <div className="font-syne font-bold text-sm text-foreground truncate group-hover:text-lime-green transition-colors">
+                <div className="font-syne font-bold text-sm text-foreground truncate group-hover:text-secondary-color transition-colors">
                   {program.name}
                 </div>
                 {/* Optional: show more info if you have it */}

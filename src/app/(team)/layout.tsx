@@ -1,8 +1,8 @@
 // src/app/trainer/layout.tsx
 import { getServerSession } from "next-auth";
-import SidebarLayout from "../components/team/Sidebar";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import SidebarLayout from "../components/team/Sidebar";
 
 export default async function TeamLayout({
   children,

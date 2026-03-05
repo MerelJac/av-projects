@@ -36,7 +36,7 @@ export function SyncProgramButton({
       <button
         onClick={handleClick}
         disabled={loading}
-        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-surface2 hover:border-lime-green/30 hover:text-lime-green text-muted text-sm font-medium transition-all active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
+        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-surface2 hover:border-secondary-color/30 hover:text-secondary-color text-muted text-sm font-medium transition-all active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
                                       title="Update with new workouts in the program."
       >
         <RefreshCcw size={14} className={loading ? "animate-spin" : ""} />

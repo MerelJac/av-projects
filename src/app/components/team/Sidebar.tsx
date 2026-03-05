@@ -3,13 +3,20 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { LogoutButton } from "../Logout";
-import { LucideIcon } from "lucide-react";
+import {
+  BarChart,
+  Boxes,
+  Clock,
+  CreditCard,
+  FileText,
+  FolderKanban,
+  LucideIcon,
+  Truck,
+} from "lucide-react";
 
 import {
   LayoutDashboard,
   Users,
-  Dumbbell,
-  ClipboardList,
   User2,
   Menu,
   X,
@@ -18,13 +25,20 @@ import {
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/clients", label: "Clients", icon: Users },
-  { href: "/exercises", label: "Exercise Library", icon: Dumbbell },
-  { href: "/programs", label: "Programs", icon: ClipboardList },
+  { href: "/projects", label: "Projects", icon: FolderKanban },
+  { href: "/items", label: "Items", icon: Boxes },
+  { href: "/customers", label: "Customers", icon: Users },
+
+  { href: "/quotes", label: "Quotes", icon: FileText },
+
+  { href: "/shipments", label: "Shipments", icon: Truck },
+  { href: "/time", label: "Time Tracking", icon: Clock },
+  { href: "/invoices", label: "Invoices", icon: CreditCard },
+  { href: "/reports", label: "Reports", icon: BarChart },
 ];
 
 const adminNavLinks = [
-  { href: "/admin/exercises", label: "Review Exercises", icon: GitCompare },
+  { href: "/", label: "Admin Stuff Later", icon: GitCompare },
 ];
 
 export default function SidebarLayout({
@@ -55,8 +69,8 @@ export default function SidebarLayout({
         onClick={onClick}
         className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
           active
-            ? "bg-lime-green/10 text-lime-green border border-lime-green/20"
-            : "text-muted hover:text-foreground hover:bg-white border border-transparent"
+            ? "bg-secondary-color/10 text-secondary-color border border-secondary-color/20"
+            : "text-muted hover:text-foreground hover:bg-surface2 border border-transparent"
         }`}
       >
         <Icon className="w-4 h-4 shrink-0" />
@@ -66,16 +80,16 @@ export default function SidebarLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-white">
+    <div className="flex min-h-screen bg-background">
       {/* Mobile top bar */}
-      <header className="md:hidden fixed top-0 inset-x-0 h-14 bg-white/95 backdrop-blur-md border-b border-surface2 z-40 flex items-center px-4">
+      <header className="md:hidden fixed top-0 inset-x-0 h-14 bg-background/95 backdrop-blur-md border-b border-surface2 z-40 flex items-center px-4">
         <button
           onClick={() => setOpen(true)}
-          className="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-muted hover:text-foreground transition-colors"
+          className="w-9 h-9 rounded-xl bg-surface2 flex items-center justify-center text-muted hover:text-foreground transition-colors"
         >
           <Menu className="w-4 h-4" />
         </button>
-        <span className="ml-3 font-syne font-bold text-base text-lime-green">
+        <span className="ml-3 font-syne font-bold text-base text-secondary-color">
           AV Projects
         </span>
       </header>
@@ -83,7 +97,7 @@ export default function SidebarLayout({
       {/* Mobile overlay */}
       {open && (
         <div
-          className="fixed inset-0 bg-white/60 backdrop-blur-sm z-40 md:hidden"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
           onClick={() => setOpen(false)}
         />
       )}
@@ -92,7 +106,7 @@ export default function SidebarLayout({
       <aside
         className={`
         fixed inset-y-0 left-0 z-50
-        w-64 bg-white border-r border-surface2 flex flex-col
+        w-64 bg-surface border-r border-surface2 flex flex-col
         transform transition-transform duration-200
         ${open ? "translate-x-0" : "-translate-x-full"}
         md:sticky md:top-0 md:translate-x-0 md:h-screen
@@ -101,7 +115,7 @@ export default function SidebarLayout({
         {/* Brand */}
         <div className="px-5 py-5 border-b border-surface2 flex items-center justify-between">
           <div>
-            <h1 className="font-syne font-extrabold text-base text-lime-green tracking-tight">
+            <h1 className="font-syne font-extrabold text-base text-secondary-color tracking-tight">
               AV Projects
             </h1>
             <p className="text-[10px] font-semibold tracking-widest uppercase text-muted mt-0.5">
@@ -110,14 +124,14 @@ export default function SidebarLayout({
           </div>
           <button
             onClick={() => setOpen(false)}
-            className="md:hidden w-8 h-8 rounded-xl bg-white flex items-center justify-center text-muted hover:text-foreground transition-colors"
+            className="md:hidden w-8 h-8 rounded-xl bg-surface2 flex items-center justify-center text-muted hover:text-foreground transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-scroll">
           {navItems.map((item) => (
             <NavLink key={item.href} {...item} onClick={() => setOpen(false)} />
           ))}
@@ -142,7 +156,7 @@ export default function SidebarLayout({
         {/* Footer */}
         <div className="px-4 py-4 space-y-1 border-t border-surface2">
           <NavLink
-            href="/trainer/profile"
+            href="/profile"
             label="Profile"
             icon={User2}
             onClick={() => setOpen(false)}

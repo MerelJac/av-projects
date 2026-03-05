@@ -8,7 +8,7 @@ import { useState } from "react";
 import { ExerciseSearch } from "../workout/ExerciseSearch";
 import { ArrowLeftRight, Plus, X } from "lucide-react";
 
-const inputCls = "w-full px-4 py-2.5 bg-white border border-surface2 rounded-xl text-foreground text-sm placeholder:text-muted focus:border-lime-green/50 focus:ring-1 focus:ring-lime-green/30 outline-none transition";
+const inputCls = "w-full px-4 py-2.5 bg-white border border-surface2 rounded-xl text-foreground text-sm placeholder:text-muted focus:border-secondary-color/50 focus:ring-1 focus:ring-secondary-color/30 outline-none transition";
 const labelCls = "block text-[10px] font-semibold tracking-widest uppercase text-muted mb-1.5";
 
 export default function SubstitutionsEditor({
@@ -33,8 +33,8 @@ export default function SubstitutionsEditor({
 
       {/* Header */}
       <div className="flex items-center gap-2.5 px-5 py-4 border-b border-surface2">
-        <div className="w-8 h-8 rounded-xl bg-lime-green/10 flex items-center justify-center">
-          <ArrowLeftRight size={14} className="text-lime-green" />
+        <div className="w-8 h-8 rounded-xl bg-secondary-color/10 flex items-center justify-center">
+          <ArrowLeftRight size={14} className="text-secondary-color" />
         </div>
         <h2 className="font-syne font-bold text-base text-foreground">Substitutions</h2>
       </div>
@@ -52,7 +52,7 @@ export default function SubstitutionsEditor({
                 className="flex items-start justify-between gap-4 bg-white border border-surface2 rounded-xl px-4 py-3"
               >
                 <div className="flex items-start gap-3 min-w-0">
-                  <div className="w-1.5 h-1.5 rounded-full bg-lime-green mt-2 flex-shrink-0" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-secondary-color mt-2 flex-shrink-0" />
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">
                       {sub.substituteExercise.name}
@@ -97,13 +97,13 @@ export default function SubstitutionsEditor({
                 <button
                   type="button"
                   onClick={() => setShowSearch(true)}
-                  className="w-full flex justify-between items-center px-4 py-2.5 bg-white border border-surface2 rounded-xl hover:border-lime-green/30 transition text-left"
+                  className="w-full flex justify-between items-center px-4 py-2.5 bg-white border border-surface2 rounded-xl hover:border-secondary-color/30 transition text-left"
                 >
                   <span className="text-sm text-muted">Search for an exercise…</span>
-                  <span className="text-xs font-semibold text-lime-green">Browse →</span>
+                  <span className="text-xs font-semibold text-secondary-color">Browse →</span>
                 </button>
               ) : (
-                <div className="flex justify-between items-center px-4 py-3 bg-lime-green/5 border border-lime-green/20 rounded-xl">
+                <div className="flex justify-between items-center px-4 py-3 bg-secondary-color/5 border border-secondary-color/20 rounded-xl">
                   <div>
                     <p className="text-sm font-medium text-foreground">{selectedExercise.name}</p>
                     <p className="text-xs text-muted mt-0.5">
@@ -149,7 +149,7 @@ export default function SubstitutionsEditor({
 
             <button
               type="submit"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-lime-green text-black font-syne font-bold text-sm rounded-xl hover:opacity-90 active:scale-[0.98] transition"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-secondary-color text-black font-syne font-bold text-sm rounded-xl hover:opacity-90 active:scale-[0.98] transition"
             >
               <Plus size={14} />
               Add Substitution

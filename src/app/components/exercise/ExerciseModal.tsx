@@ -58,8 +58,8 @@ export default function ExerciseModal({
               {/* Header */}
               <div className="flex items-start justify-between px-5 pt-5 pb-4 border-b border-surface2 sticky top-0 bg-white z-10">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-xl bg-lime-green/10 flex items-center justify-center flex-shrink-0">
-                    <Dumbbell size={15} className="text-lime-green" />
+                  <div className="w-9 h-9 rounded-xl bg-secondary-color/10 flex items-center justify-center flex-shrink-0">
+                    <Dumbbell size={15} className="text-secondary-color" />
                   </div>
                   <div className="min-w-0">
                     <h2 className="font-syne font-bold text-base text-foreground ">
@@ -116,7 +116,7 @@ export default function ExerciseModal({
                 {clientId && oneRMHistory.length > 0 && (
                   <div className="bg-white rounded-xl px-4 py-3.5">
                     <div className="flex items-center gap-2 mb-3">
-                      <TrendingUp size={13} className="text-lime-green" />
+                      <TrendingUp size={13} className="text-secondary-color" />
                       <p className="text-[10px] font-semibold tracking-widest uppercase text-muted">
                         1RM Progress
                       </p>
@@ -137,7 +137,7 @@ export default function ExerciseModal({
                       {exercise.substitutions.map((sub) => (
                         <li key={sub.id}
                           className="flex items-start gap-3 bg-white border border-surface2 rounded-xl px-4 py-3">
-                          <div className="w-1.5 h-1.5 rounded-full bg-lime-green mt-2 flex-shrink-0" />
+                          <div className="w-1.5 h-1.5 rounded-full bg-secondary-color mt-2 flex-shrink-0" />
                           <div>
                             <p className="text-sm font-medium text-foreground">{sub.name}</p>
                             {sub.note && (

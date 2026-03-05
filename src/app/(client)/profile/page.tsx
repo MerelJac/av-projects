@@ -293,7 +293,7 @@ export default async function ClientProfilePage() {
                   {/* Icon */}
                   <div
                     className={`w-10 h-10 rounded-xl flex items-center justify-center text-base flex-shrink-0 ${
-                      isAdditional ? "bg-lime-green/10" : "bg-mint/10"
+                      isAdditional ? "bg-secondary-color/10" : "bg-mint/10"
                     }`}
                   >
                     {isAdditional ? "😎" : "💪"}
@@ -311,7 +311,7 @@ export default async function ClientProfilePage() {
                   <span
                     className={`text-[11px] font-semibold px-2.5 py-1 rounded-full flex-shrink-0 ${
                       isAdditional
-                        ? "text-lime-green bg-lime-green/10"
+                        ? "text-secondary-color bg-secondary-color/10"
                         : "text-mint bg-mint/10"
                     }`}
                   >

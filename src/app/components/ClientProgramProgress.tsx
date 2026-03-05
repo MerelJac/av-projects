@@ -68,7 +68,7 @@ export function ClientProgramProgress({
       {/* Client header */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-lime-green to-[#3dffa0] flex items-center justify-center font-syne font-bold text-black text-xs flex-shrink-0">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-secondary-color to-[#3dffa0] flex items-center justify-center font-syne font-bold text-black text-xs flex-shrink-0">
             {initials}
           </div>
           <div>
@@ -81,7 +81,7 @@ export function ClientProgramProgress({
         {showClientLink && (
           <Link
             href={`/clients/${client.id}`}
-            className="text-xs font-semibold text-muted hover:text-lime-green transition-colors px-3 py-1.5 rounded-xl bg-white border border-transparent hover:border-lime-green/20"
+            className="text-xs font-semibold text-muted hover:text-secondary-color transition-colors px-3 py-1.5 rounded-xl bg-white border border-transparent hover:border-secondary-color/20"
           >
             View →
           </Link>
@@ -113,7 +113,7 @@ export function ClientProgramProgress({
                       isComplete
                         ? "text-[#3dffa0] bg-[#3dffa0]/10"
                         : isStarted
-                          ? "text-lime-green bg-lime-green/10"
+                          ? "text-secondary-color bg-secondary-color/10"
                           : "text-muted bg-white"
                     }`}
                   >

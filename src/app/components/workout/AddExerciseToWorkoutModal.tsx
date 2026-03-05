@@ -51,7 +51,7 @@ export function AddExerciseToWorkoutModal({
             </div>
             <button
               onClick={() => setShowCreateExerciseModal(true)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-surface2 text-muted hover:text-lime-green hover:border-lime-green/30 transition-colors text-xs font-medium flex-shrink-0"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-surface2 text-muted hover:text-secondary-color hover:border-secondary-color/30 transition-colors text-xs font-medium flex-shrink-0"
             >
               <Plus size={13} />
               New
@@ -61,8 +61,8 @@ export function AddExerciseToWorkoutModal({
           {/* Selected exercise */}
           {exercise && (
             <div className="space-y-3">
-              <div className="flex items-center gap-2 bg-lime-green/5 border border-lime-green/15 rounded-xl px-3 py-2">
-                <span className="text-[10px] font-semibold tracking-widest uppercase text-lime-green/70">
+              <div className="flex items-center gap-2 bg-secondary-color/5 border border-secondary-color/15 rounded-xl px-3 py-2">
+                <span className="text-[10px] font-semibold tracking-widest uppercase text-secondary-color/70">
                   Selected
                 </span>
                 <span className="text-sm text-foreground font-medium">
@@ -88,8 +88,8 @@ export function AddExerciseToWorkoutModal({
             disabled={!exercise || !prescribed}
             className={
               !exercise || !prescribed
-                ? "w-full py-2.5 rounded-xl font-syne font-bold text-sm bg-lime-green text-black opacity-30 cursor-not-allowed"
-                : "w-full py-2.5 rounded-xl font-syne font-bold text-sm bg-lime-green text-black hover:opacity-90 active:scale-[0.98] transition"
+                ? "w-full py-2.5 rounded-xl font-syne font-bold text-sm bg-secondary-color text-black opacity-30 cursor-not-allowed"
+                : "w-full py-2.5 rounded-xl font-syne font-bold text-sm bg-secondary-color text-black hover:opacity-90 active:scale-[0.98] transition"
             }
           >
             Add to Workout

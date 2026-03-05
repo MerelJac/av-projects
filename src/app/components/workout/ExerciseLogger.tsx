@@ -205,7 +205,7 @@ export function ExerciseLogger({
                         <input
                           type="number"
                           value={set.reps}
-                          className="w-full bg-white border border-surface2 rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-lime-green/50 outline-none"
+                          className="w-full bg-white border border-surface2 rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-secondary-color/50 outline-none"
                           onChange={(e) => {
                             setHasSaved(false);
                             setPerformedState((prev) => {
@@ -237,7 +237,7 @@ export function ExerciseLogger({
                           placeholder={
                             recommendedWeight ? `${recommendedWeight}` : "—"
                           }
-                          className="w-full bg-white border border-surface2 rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-lime-green/50 outline-none"
+                          className="w-full bg-white border border-surface2 rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-secondary-color/50 outline-none"
                           onFocus={() => {
                             if (!set.weight && recommendedWeight) {
                               setHasSaved(false);
@@ -303,7 +303,7 @@ export function ExerciseLogger({
                         <input
                           type="number"
                           value={set.reps}
-                          className="w-full bg-white border border-surface2 rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-lime-green/50 outline-none"
+                          className="w-full bg-white border border-surface2 rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-secondary-color/50 outline-none"
                           onChange={(e) => {
                             setHasSaved(false);
                             setPerformedState((prev) => {
@@ -330,7 +330,7 @@ export function ExerciseLogger({
                           placeholder={
                             recommendedWeight ? `${recommendedWeight}` : "—"
                           }
-                          className="w-full bg-white border border-surface2 rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-lime-green/50 outline-none"
+                          className="w-full bg-white border border-surface2 rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-secondary-color/50 outline-none"
                           onFocus={() => {
                             if (!set.weight && recommendedWeight) {
                               setHasSaved(false);
@@ -371,7 +371,7 @@ export function ExerciseLogger({
                           type="number"
                           value={set.duration ?? ""}
                           placeholder="—"
-                          className="w-full bg-white border border-surface2 rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-lime-green/50 outline-none"
+                          className="w-full bg-white border border-surface2 rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-secondary-color/50 outline-none"
                           onChange={(e) => {
                             setHasSaved(false);
                             setPerformedState((prev) => {
@@ -428,7 +428,7 @@ export function ExerciseLogger({
                             type="number"
                             value={set.reps ?? ""}
                             placeholder="—"
-                            className="w-full bg-white border border-surface2 rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-lime-green/50 outline-none"
+                            className="w-full bg-white border border-surface2 rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-secondary-color/50 outline-none"
                             onChange={(e) => {
                               setHasSaved(false);
                               setPerformedState((prev) => {
@@ -459,7 +459,7 @@ export function ExerciseLogger({
                             type="number"
                             value={set.weight ?? ""}
                             placeholder="bw"
-                            className="w-full bg-white border border-surface2 rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-lime-green/50 outline-none"
+                            className="w-full bg-white border border-surface2 rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-secondary-color/50 outline-none"
                             onChange={(e) => {
                               setHasSaved(false);
                               setPerformedState((prev) => {
@@ -490,7 +490,7 @@ export function ExerciseLogger({
                             type="number"
                             value={set.duration ?? ""}
                             placeholder="—"
-                            className="w-full bg-white border border-surface2 rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-lime-green/50 outline-none"
+                            className="w-full bg-white border border-surface2 rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-secondary-color/50 outline-none"
                             onChange={(e) => {
                               setHasSaved(false);
                               setPerformedState((prev) => {
@@ -539,7 +539,7 @@ export function ExerciseLogger({
                       <input
                         type="number"
                         value={set.reps}
-                        className="w-full bg-white border border-surface2 rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-lime-green/50 outline-none"
+                        className="w-full bg-white border border-surface2 rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted focus:border-secondary-color/50 outline-none"
                         onChange={(e) => {
                           setHasSaved(false);
                           setPerformedState((prev) => {

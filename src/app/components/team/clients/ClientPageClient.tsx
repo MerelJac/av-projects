@@ -52,10 +52,10 @@ export default function ClientPageClient({
       key={c.id}
       className="px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 
         hover:bg-white/50 hover:pl-6 transition-all duration-150 group
-        border-l-2 border-l-transparent hover:border-l-lime-green/50"
+        border-l-2 border-l-transparent hover:border-l-secondary-color/50"
     >
       <div className="min-w-0">
-        <div className="font-syne font-bold text-sm text-foreground truncate group-hover:text-lime-green transition-colors">
+        <div className="font-syne font-bold text-sm text-foreground truncate group-hover:text-secondary-color transition-colors">
           {c.profile?.firstName} {c.profile?.lastName || ""}
           {!c.profile?.firstName && !c.profile?.lastName && (
             <span className="text-muted">(no name)</span>
@@ -74,7 +74,7 @@ export default function ClientPageClient({
         )}
         <Link
           href={`/clients/${c.id}`}
-          className="px-4 py-2 rounded-xl bg-white border border-white/10 text-foreground text-xs font-semibold hover:border-lime-green/30 hover:text-lime-green transition-all active:scale-[0.97]"
+          className="px-4 py-2 rounded-xl bg-white border border-white/10 text-foreground text-xs font-semibold hover:border-secondary-color/30 hover:text-secondary-color transition-all active:scale-[0.97]"
         >
           View Profile
         </Link>

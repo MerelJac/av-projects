@@ -11,7 +11,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-dm-sans); /* DM Sans = default body font */
   --font-syne: var(--font-syne); /* Syne = headings */
-  --color-lime-green: var(--accent);
+  --color-secondary-color: var(--accent);
   --color-muted: var(--muted); /* ← add this */
   --color-danger: var(--orange);
   --color-soft: var(--red);
@@ -541,7 +541,7 @@ body {
   --surface: #161618;
   --surface2: #1e1e21;
   --border: rgba(255, 255, 255, 0.07);
-  --accent: #c8f135;
+  --accent: #90D5FF;
   --accent2: #3dffa0;
   --red: #ff5c5c;
   --text: #161618;

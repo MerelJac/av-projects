@@ -35,6 +35,43 @@ model Profile {
   lastName  String
 }
 
+model Invoice {
+  id String @id @default(uuid())
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
+
+  amount Float
+  status InvoiceStatus @default(DRAFT)
+
+  issuedAt DateTime?
+  paidAt   DateTime?
+
+  createdAt DateTime @default(now())
+}
+
+model QuoteBundle {
+  id String @id @default(uuid())
+
+  quoteId String
+  quote   Quote  @relation(fields: [quoteId], references: [id])
+
+  name String
+
+  showToCustomer Boolean @default(true)
+
+  createdAt DateTime @default(now())
+
+  lines QuoteLine[]
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  VOID
+}
+
 model Invite {
   id        String @id @default(uuid())
   token     String @unique
@@ -76,6 +113,12 @@ model Customer {
   subscriptions Subscription[]
 }
 
+enum BillingTerms {
+  NET30
+  PROGRESS
+  PREPAID
+}
+
 model Item {
   id           String  @id @default(uuid())
   itemNumber   String  @unique
@@ -98,10 +141,11 @@ model Item {
   updatedAt      DateTime            @updatedAt
   customerPrices CustomerItemPrice[]
 
-  priceHistory  ItemPriceHistory[]
-  shipments     Shipment[]
-  quoteLines    QuoteLine[]
-  subscriptions Subscription[]
+  priceHistory       ItemPriceHistory[]
+  shipments          Shipment[]
+  quoteLines         QuoteLine[]
+  subscriptions      Subscription[]
+  purchaseOrderLines PurchaseOrderLine[]
 }
 
 model Shipment {
@@ -141,8 +185,9 @@ model Quote {
 
   createdAt DateTime @default(now())
 
-  lines    QuoteLine[]
-  projects Project[]
+  lines        QuoteLine[]
+  projects     Project[]
+  quoteBundles QuoteBundle[]
 }
 
 enum QuoteStatus {
@@ -157,6 +202,9 @@ model QuoteLine {
 
   quoteId String
   quote   Quote  @relation(fields: [quoteId], references: [id])
+
+  bundleId String?
+  bundle   QuoteBundle? @relation(fields: [bundleId], references: [id])
 
   itemId String?
   item   Item?   @relation(fields: [itemId], references: [id])
@@ -194,15 +242,19 @@ model Project {
   quoteId String?
   quote   Quote?  @relation(fields: [quoteId], references: [id])
 
+  billingTerms BillingTerms? // ← ADD THIS
+
   totalBudget Float?
   invoiced    Float?
 
   createdAt DateTime @default(now())
 
-  milestones   ProjectMilestone[]
-  shipments    Shipment[]
-  timeEntries  TimeEntry[]
-  changeOrders ChangeOrder[]
+  milestones     ProjectMilestone[]
+  shipments      Shipment[]
+  invoices       Invoice[]
+  timeEntries    TimeEntry[]
+  changeOrders   ChangeOrder[]
+  purchaseOrders PurchaseOrder[]
 }
 
 model Subscription {
@@ -280,4 +332,38 @@ model ProjectMilestone {
   name      String
   dueDate   DateTime?
   completed Boolean   @default(false)
+}
+
+model PurchaseOrder {
+  id String @id @default(uuid())
+
+  vendor String
+
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+
+  status POStatus @default(DRAFT)
+
+  createdAt DateTime @default(now())
+
+  lines PurchaseOrderLine[]
+}
+
+model PurchaseOrderLine {
+  id String @id @default(uuid())
+
+  poId          String
+  purchaseOrder PurchaseOrder @relation(fields: [poId], references: [id])
+
+  itemId String
+  item   Item   @relation(fields: [itemId], references: [id])
+
+  quantity Int
+  cost     Float
+}
+
+enum POStatus {
+  DRAFT
+  SENT
+  RECEIVED
 }

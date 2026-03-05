@@ -31,7 +31,7 @@ export function AdditionalWorkoutQuickAdd({ clientId }: { clientId: string }) {
               <X size={18} />
             </button>
 
-            <h3 className="mb-2 text-lg font-semibold text-lime-green">
+            <h3 className="mb-2 text-lg font-semibold text-secondary-color">
               Log additional workout
             </h3>
 

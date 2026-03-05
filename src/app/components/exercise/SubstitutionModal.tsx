@@ -61,8 +61,8 @@ export default function SubstitutionModal({
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-lime-green/10 flex items-center justify-center">
-                <ArrowLeftRight size={14} className="text-lime-green" />
+              <div className="w-8 h-8 rounded-xl bg-secondary-color/10 flex items-center justify-center">
+                <ArrowLeftRight size={14} className="text-secondary-color" />
               </div>
               <h2 className="font-syne font-bold text-base text-foreground">
                 Substitute Exercise
@@ -93,13 +93,13 @@ export default function SubstitutionModal({
                     disabled={loading}
                     className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl border transition-all active:scale-[0.98] disabled:opacity-50 ${
                       selecting === ex.id
-                        ? "bg-lime-green/10 border-lime-green/30 text-lime-green"
-                        : "bg-white border-surface2 text-foreground hover:border-lime-green/20"
+                        ? "bg-secondary-color/10 border-secondary-color/30 text-secondary-color"
+                        : "bg-white border-surface2 text-foreground hover:border-secondary-color/20"
                     }`}
                   >
                     <span className="text-sm font-medium">{ex.name}</span>
                     {selecting === ex.id
-                      ? <span className="text-xs text-lime-green">Selecting…</span>
+                      ? <span className="text-xs text-secondary-color">Selecting…</span>
                       : <span className="text-muted text-sm">→</span>
                     }
                   </button>

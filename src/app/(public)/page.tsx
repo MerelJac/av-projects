@@ -6,23 +6,23 @@ export default function PublicLandingPage() {
       {/* Hero */}
       <section className="bg-background">
         <div className="max-w-3xl mx-auto px-6 py-28 text-center space-y-8">
-          <div className="animate-fade-up inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-lime-green/10 border border-lime-green/20 text-lime-green text-xs font-semibold tracking-widest uppercase">
+          <div className="animate-fade-up inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary-color/10 border border-secondary-color/20 text-secondary-color text-xs font-semibold tracking-widest uppercase">
             For Trainers & Athletes
           </div>
           <p className="animate-fade-up-2 text-lg text-muted max-w-xl mx-auto leading-relaxed">
-            Dialed Fitness helps trainers and clients plan workouts, track progress,
+            AV Projects helps trainers and clients plan workouts, track progress,
             and stay accountable — all in one simple platform.
           </p>
           <div className="animate-fade-up-3 flex items-center justify-center gap-3 flex-wrap">
             <Link
               href="/signup"
-              className="px-6 py-3 rounded-xl bg-lime-green text-black font-syne font-bold text-sm hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
+              className="px-6 py-3 rounded-xl bg-secondary-color text-black font-syne font-bold text-sm hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
             >
               Get started →
             </Link>
             <Link
               href="/login"
-              className="px-6 py-3 rounded-xl border border-surface2 text-muted text-sm font-medium hover:text-foreground hover:border-lime-green/30 transition-all duration-150"
+              className="px-6 py-3 rounded-xl border border-surface2 text-muted text-sm font-medium hover:text-foreground hover:border-secondary-color/30 transition-all duration-150"
             >
               Log in
             </Link>
@@ -80,14 +80,14 @@ export default function PublicLandingPage() {
         <div className="max-w-2xl mx-auto px-6 py-24 text-center space-y-6 animate-fade-up">
           <h2 className="font-syne font-extrabold text-4xl text-foreground tracking-tight">
             Start training<br />
-            <span className="text-lime-green">smarter today.</span>
+            <span className="text-secondary-color">smarter today.</span>
           </h2>
           <p className="text-muted">
-            Join Dialed Fitness and take control of your training experience.
+            Join AV Projects and take control of your training experience.
           </p>
           <Link
             href="/signup"
-            className="inline-block px-8 py-3 rounded-xl bg-lime-green text-black font-syne font-bold text-sm hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
+            className="inline-block px-8 py-3 rounded-xl bg-secondary-color text-black font-syne font-bold text-sm hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
           >
             Create an account
           </Link>
@@ -105,18 +105,18 @@ function Feature({
   return (
     <div className={`relative rounded-2xl p-6 space-y-4 border transition-all duration-300 overflow-hidden h-full hover:-translate-y-1 hover:shadow-lg hover:shadow-black/20 ${
       highlight
-        ? "bg-lime-green/5 border-lime-green/25 hover:border-lime-green/50"
-        : "bg-background border-surface2 hover:border-lime-green/20"
+        ? "bg-secondary-color/5 border-secondary-color/25 hover:border-secondary-color/50"
+        : "bg-background border-surface2 hover:border-secondary-color/20"
     }`}>
       {highlight && (
-        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-lime-green to-[#3dffa0]" />
+        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-secondary-color to-[#3dffa0]" />
       )}
       <div className="flex items-start justify-between">
-        <div className="w-10 h-10 rounded-xl bg-lime-green/10 flex items-center justify-center text-lg flex-shrink-0 transition-transform duration-300 group-hover:scale-110">
+        <div className="w-10 h-10 rounded-xl bg-secondary-color/10 flex items-center justify-center text-lg flex-shrink-0 transition-transform duration-300 group-hover:scale-110">
           {icon}
         </div>
         {stat && (
-          <span className="text-[10px] font-semibold tracking-widest uppercase text-lime-green/70 bg-lime-green/10 px-2.5 py-1 rounded-full">
+          <span className="text-[10px] font-semibold tracking-widest uppercase text-secondary-color/70 bg-secondary-color/10 px-2.5 py-1 rounded-full">
             {stat}
           </span>
         )}

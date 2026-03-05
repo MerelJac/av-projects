@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 
-const inputCls = "w-full px-4 py-2.5 bg-white border border-white/10 rounded-xl text-foreground text-sm placeholder:text-muted focus:border-lime-green/50 focus:ring-1 focus:ring-lime-green/30 outline-none transition";
+const inputCls = "w-full px-4 py-2.5 bg-white border border-white/10 rounded-xl text-foreground text-sm placeholder:text-muted focus:border-secondary-color/50 focus:ring-1 focus:ring-secondary-color/30 outline-none transition";
 const labelCls = "block text-[10px] font-semibold tracking-widest uppercase text-muted mb-1.5";
 
 export default function ForgotPasswordPage() {
@@ -23,7 +23,7 @@ export default function ForgotPasswordPage() {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="w-full max-w-sm space-y-6 text-center">
-          <h1 className="font-syne font-extrabold text-3xl text-lime-green tracking-tight">
+          <h1 className="font-syne font-extrabold text-3xl text-secondary-color tracking-tight">
             AV Projects
           </h1>
           <div className="bg-white border border-surface2 rounded-2xl p-6 space-y-3">
@@ -36,7 +36,7 @@ export default function ForgotPasswordPage() {
             </p>
             <Link
               href="/login"
-              className="block text-center text-xs text-muted hover:text-lime-green transition-colors pt-1"
+              className="block text-center text-xs text-muted hover:text-secondary-color transition-colors pt-1"
             >
               Back to sign in
             </Link>
@@ -52,7 +52,7 @@ export default function ForgotPasswordPage() {
 
         {/* Brand */}
         <div className="text-center space-y-1">
-          <h1 className="font-syne font-extrabold text-3xl text-lime-green tracking-tight">
+          <h1 className="font-syne font-extrabold text-3xl text-secondary-color tracking-tight">
             AV Projects
           </h1>
           <p className="text-sm text-muted">Reset your password</p>
@@ -80,14 +80,14 @@ export default function ForgotPasswordPage() {
 
           <button
             type="submit"
-            className="w-full py-2.5 bg-lime-green text-black font-syne font-bold text-sm rounded-xl hover:opacity-90 active:scale-[0.98] transition"
+            className="w-full py-2.5 bg-secondary-color text-black font-syne font-bold text-sm rounded-xl hover:opacity-90 active:scale-[0.98] transition"
           >
             Send reset link
           </button>
 
           <Link
             href="/login"
-            className="block text-center text-xs text-muted hover:text-lime-green transition-colors"
+            className="block text-center text-xs text-muted hover:text-secondary-color transition-colors"
           >
             Back to sign in
           </Link>

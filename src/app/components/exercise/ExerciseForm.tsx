@@ -1,6 +1,6 @@
 import { Exercise } from "@prisma/client";
 
-const inputCls = "w-full px-4 py-2.5 bg-white border border-lime-green/30 rounded-xl text-foreground text-sm placeholder:text-muted focus:border-lime-green/60 focus:ring-1 focus:ring-lime-green/30 outline-none transition";
+const inputCls = "w-full px-4 py-2.5 bg-white border border-secondary-color/30 rounded-xl text-foreground text-sm placeholder:text-muted focus:border-secondary-color/60 focus:ring-1 focus:ring-secondary-color/30 outline-none transition";
 const labelCls = "block text-[10px] font-semibold tracking-widest uppercase text-muted mb-1.5";
 
 type Props = {
@@ -101,7 +101,7 @@ export default function ExerciseForm({
 
       <button
         type="submit"
-        className="w-full py-2.5 bg-lime-green text-black font-syne font-bold text-sm rounded-xl hover:opacity-90 active:scale-[0.98] transition"
+        className="w-full py-2.5 bg-secondary-color text-black font-syne font-bold text-sm rounded-xl hover:opacity-90 active:scale-[0.98] transition"
       >
         {submitLabel}
       </button>

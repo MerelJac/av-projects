@@ -31,7 +31,7 @@ export function CreateWorkoutForLater({ clientId }: { clientId: string }) {
               <X size={18} />
             </button>
             <div className="flex flex-col gap-2">
-            <h3 className="mb-2 text-lg font-semibold text-lime-green">
+            <h3 className="mb-2 text-lg font-semibold text-secondary-color">
                 Name your workout.
               </h3>
 

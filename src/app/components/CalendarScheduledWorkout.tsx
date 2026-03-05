@@ -53,8 +53,8 @@ const statusStyles: Record<
     label: "Done",
   },
   IN_PROGRESS: {
-    card: "bg-lime-green/5 border-lime-green/20",
-    badge: "text-lime-green bg-lime-green/10",
+    card: "bg-secondary-color/5 border-secondary-color/20",
+    badge: "text-secondary-color bg-secondary-color/10",
     label: "Active",
   },
   SKIPPED: {
@@ -161,7 +161,7 @@ export default function WorkoutCalendarWeek({
                 <div className={`text-center mb-2 ${isToday ? "" : ""}`}>
                   <p
                     className={`text-[10px] font-semibold uppercase tracking-widest ${
-                      isToday ? "text-lime-green" : "text-muted"
+                      isToday ? "text-secondary-color" : "text-muted"
                     }`}
                   >
                     {day.toLocaleDateString(undefined, { weekday: "short" })}
@@ -169,7 +169,7 @@ export default function WorkoutCalendarWeek({
                   <p
                     className={`font-syne font-bold text-sm mt-0.5 ${
                       isToday
-                        ? "text-lime-green bg-lime-green/10 w-6 h-6 rounded-full flex items-center justify-center mx-auto"
+                        ? "text-secondary-color bg-secondary-color/10 w-6 h-6 rounded-full flex items-center justify-center mx-auto"
                         : "text-foreground/60"
                     }`}
                   >
@@ -202,7 +202,7 @@ export default function WorkoutCalendarWeek({
                           </span>
                           <button
                             onClick={() => setRescheduleId(w.id)}
-                            className="text-[10px] text-muted hover:text-lime-green transition-colors text-left"
+                            className="text-[10px] text-muted hover:text-secondary-color transition-colors text-left"
                           >
                             Reschedule →
                           </button>

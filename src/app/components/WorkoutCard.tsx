@@ -54,7 +54,7 @@ export default function WorkoutCard({
   onDuplicate: () => void;
 }) {
   const inputCls =
-    "w-full px-3 py-2 bg-white border border-surface2 rounded-xl text-foreground text-sm placeholder:text-muted focus:border-lime-green/50 focus:ring-1 focus:ring-lime-green/30 outline-none transition";
+    "w-full px-3 py-2 bg-white border border-surface2 rounded-xl text-foreground text-sm placeholder:text-muted focus:border-secondary-color/50 focus:ring-1 focus:ring-secondary-color/30 outline-none transition";
   const labelCls =
     "block text-[10px] font-semibold tracking-widest uppercase text-muted mb-1.5";
 
@@ -627,7 +627,7 @@ export default function WorkoutCard({
               {name}
               <Pencil
                 size={13}
-                className="text-muted group-hover:text-lime-green transition-colors opacity-0 group-hover:opacity-100"
+                className="text-muted group-hover:text-secondary-color transition-colors opacity-0 group-hover:opacity-100"
               />
             </h2>
           )}
@@ -927,7 +927,7 @@ export default function WorkoutCard({
                 </p>
               </div>
               <button
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-lime-green transition-colors px-3 py-1.5 rounded-xl bg-white border border-transparent hover:border-lime-green/20"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-secondary-color transition-colors px-3 py-1.5 rounded-xl bg-white border border-transparent hover:border-secondary-color/20"
                 onClick={handleAddSection}
               >
                 <Plus size={13} /> New section
@@ -956,7 +956,7 @@ export default function WorkoutCard({
                 <button
                   type="button"
                   onClick={() => setShowSearch(true)}
-                  className="w-full text-left px-3 py-2 bg-white border border-surface2 rounded-xl text-sm hover:border-lime-green/30 transition-colors"
+                  className="w-full text-left px-3 py-2 bg-white border border-surface2 rounded-xl text-sm hover:border-secondary-color/30 transition-colors"
                 >
                   {exercises.find((e) => e.id === exerciseId)?.name ??
                     "Select exercise"}
@@ -1165,7 +1165,7 @@ export default function WorkoutCard({
               <button
                 onClick={handleAddExercise}
                 disabled={!exerciseId || !sectionId}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-lime-green text-black font-syne font-bold text-sm rounded-xl hover:opacity-90 active:scale-[0.97] transition disabled:opacity-30 disabled:cursor-not-allowed self-end"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-secondary-color text-black font-syne font-bold text-sm rounded-xl hover:opacity-90 active:scale-[0.97] transition disabled:opacity-30 disabled:cursor-not-allowed self-end"
               >
                 Add Exercise
               </button>

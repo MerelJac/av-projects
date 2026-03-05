@@ -11,20 +11,20 @@ export default function PublicLayout({
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-surface2">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="font-syne font-extrabold text-lg text-lime-green tracking-tight">
-            Dialed Fitness
+          <Link href="/" className="font-syne font-extrabold text-lg text-secondary-color tracking-tight">
+            AV Projects
           </Link>
 
           <nav className="flex items-center gap-3">
             <Link
               href="/login"
-              className="px-4 py-2 rounded-xl text-sm font-medium text-foreground hover:text-foreground border border-surface2 hover:border-lime-green/30 transition-colors"
+              className="px-4 py-2 rounded-xl text-sm font-medium text-foreground hover:text-foreground border border-surface2 hover:border-secondary-color/30 transition-colors"
             >
               Log in
             </Link>
             <Link
               href="/signup"
-              className="px-4 py-2 rounded-xl text-sm font-syne font-bold bg-lime-green text-black hover:opacity-90 active:scale-[0.98] transition"
+              className="px-4 py-2 rounded-xl text-sm font-syne font-bold bg-secondary-color text-black hover:opacity-90 active:scale-[0.98] transition"
             >
               Get started
             </Link>
@@ -39,11 +39,11 @@ export default function PublicLayout({
       <footer className="border-t border-surface2 bg-black">
         <div className="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
           <span className="text-xs text-muted">
-            © {new Date().getFullYear()} Dialed Fitness
+            © {new Date().getFullYear()} AV Projects
           </span>
           <Link
             href="/terms"
-            className="text-xs text-muted hover:text-lime-green transition-colors"
+            className="text-xs text-muted hover:text-secondary-color transition-colors"
           >
             Terms & Privacy Policy
           </Link>

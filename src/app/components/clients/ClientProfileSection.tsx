@@ -47,7 +47,7 @@ export default function ClientProfileSection({
           </div>
           <button
             onClick={() => setIsEditing(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white text-muted hover:text-lime-green hover:border-lime-green/30 transition-colors text-sm font-medium"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white text-muted hover:text-secondary-color hover:border-secondary-color/30 transition-colors text-sm font-medium"
           >
             <Pencil size={13} />
           </button>
@@ -57,8 +57,8 @@ export default function ClientProfileSection({
         <div className="divide-y divide-surface2">
           {/* Phone */}
           <div className="flex items-center gap-3 px-5 py-3.5">
-            <div className="w-8 h-8 rounded-xl bg-lime-green/10 flex items-center justify-center flex-shrink-0">
-              <Phone size={14} className="text-lime-green" />
+            <div className="w-8 h-8 rounded-xl bg-secondary-color/10 flex items-center justify-center flex-shrink-0">
+              <Phone size={14} className="text-secondary-color" />
             </div>
             <div className="min-w-0">
               <p className="text-[10px] font-semibold tracking-widest uppercase text-muted mb-0.5">
@@ -67,7 +67,7 @@ export default function ClientProfileSection({
               {profile?.phone ? (
                 <a
                   href={`tel:${profile.phone}`}
-                  className="text-sm font-medium text-muted hover:text-lime-green transition-colors"
+                  className="text-sm font-medium text-muted hover:text-secondary-color transition-colors"
                 >
                   {formatPhoneDisplay(profile.phone)}
                 </a>
@@ -79,8 +79,8 @@ export default function ClientProfileSection({
 
           {/* DOB */}
           <div className="flex items-center gap-3 px-5 py-3.5">
-            <div className="w-8 h-8 rounded-xl bg-lime-green/10 flex items-center justify-center flex-shrink-0">
-              <Calendar size={14} className="text-lime-green" />
+            <div className="w-8 h-8 rounded-xl bg-secondary-color/10 flex items-center justify-center flex-shrink-0">
+              <Calendar size={14} className="text-secondary-color" />
             </div>
             <div>
               <p className="text-[10px] font-semibold tracking-widest uppercase text-muted mb-0.5">
@@ -96,8 +96,8 @@ export default function ClientProfileSection({
 
           {/* Experience */}
           <div className="flex items-center gap-3 px-5 py-3.5">
-            <div className="w-8 h-8 rounded-xl bg-lime-green/10 flex items-center justify-center flex-shrink-0">
-              <Dumbbell size={14} className="text-lime-green" />
+            <div className="w-8 h-8 rounded-xl bg-secondary-color/10 flex items-center justify-center flex-shrink-0">
+              <Dumbbell size={14} className="text-secondary-color" />
             </div>
             <div>
               <p className="text-[10px] font-semibold tracking-widest uppercase text-muted mb-0.5">

@@ -22,7 +22,7 @@ export function ExerciseLogViewer({ logs }: { logs: ExerciseLog[] }) {
             </h4>
             <div className="flex items-center gap-2">
               {log.substitutedFrom && (
-                <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full text-lime-green bg-lime-green/10">
+                <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full text-secondary-color bg-secondary-color/10">
                   Substituted
                 </span>
               )}
@@ -33,8 +33,8 @@ export function ExerciseLogViewer({ logs }: { logs: ExerciseLog[] }) {
           </div>
 
           {/* Prescribed */}
-          <div className="flex items-center gap-2 bg-lime-green/5 border border-lime-green/15 rounded-xl px-3 py-2">
-            <span className="text-[10px] font-semibold tracking-widest uppercase text-lime-green/70">
+          <div className="flex items-center gap-2 bg-secondary-color/5 border border-secondary-color/15 rounded-xl px-3 py-2">
+            <span className="text-[10px] font-semibold tracking-widest uppercase text-secondary-color/70">
               Prescribed
             </span>
             <span className="text-sm text-foreground/80">
@@ -151,8 +151,8 @@ export function ExerciseLogViewer({ logs }: { logs: ExerciseLog[] }) {
 
           {/* Notes / substitution reason */}
           {log.substitutionReason && (
-            <div className="flex items-start gap-2 bg-lime-green/5 border border-lime-green/15 rounded-xl px-3 py-2.5">
-              <span className="text-[10px] font-semibold tracking-widest uppercase text-lime-green/70 mt-0.5 flex-shrink-0">
+            <div className="flex items-start gap-2 bg-secondary-color/5 border border-secondary-color/15 rounded-xl px-3 py-2.5">
+              <span className="text-[10px] font-semibold tracking-widest uppercase text-secondary-color/70 mt-0.5 flex-shrink-0">
                 Note
               </span>
               <p className="text-sm text-foreground/70 italic">{log.substitutionReason}</p>

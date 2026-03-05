@@ -222,7 +222,7 @@ export default function ClientProfile({
               placeholder="e.g. 172.5"
               value={weight}
               onChange={(e) => setWeight(e.target.value)}
-              className="w-full px-4 py-2.5 bg-white border border-surface2 rounded-xl text-foreground text-sm placeholder:text-muted focus:border-lime-green/50 focus:ring-1 focus:ring-lime-green/30 outline-none transition"
+              className="w-full px-4 py-2.5 bg-white border border-surface2 rounded-xl text-foreground text-sm placeholder:text-muted focus:border-secondary-color/50 focus:ring-1 focus:ring-secondary-color/30 outline-none transition"
             />
           </div>
           <div className="min-w-[140px]">
@@ -235,13 +235,13 @@ export default function ClientProfile({
               placeholder="e.g. 18.4"
               value={bodyFat}
               onChange={(e) => setBodyFat(e.target.value)}
-              className="w-full px-4 py-2.5 bg-white border border-surface2 rounded-xl text-foreground text-sm placeholder:text-muted focus:border-lime-green/50 focus:ring-1 focus:ring-lime-green/30 outline-none transition"
+              className="w-full px-4 py-2.5 bg-white border border-surface2 rounded-xl text-foreground text-sm placeholder:text-muted focus:border-secondary-color/50 focus:ring-1 focus:ring-secondary-color/30 outline-none transition"
             />
           </div>
           <button
             onClick={handleAddMetric}
             disabled={!weight.trim() && !bodyFat.trim()}
-            className="px-5 py-2.5 bg-lime-green text-black font-syne font-bold text-sm rounded-xl hover:opacity-90 active:scale-[0.98] transition disabled:opacity-30 disabled:cursor-not-allowed"
+            className="px-5 py-2.5 bg-secondary-color text-black font-syne font-bold text-sm rounded-xl hover:opacity-90 active:scale-[0.98] transition disabled:opacity-30 disabled:cursor-not-allowed"
           >
             Add Measurement
           </button>
@@ -354,14 +354,14 @@ export default function ClientProfile({
                         : isSkipped
                           ? "bg-danger/10"
                           : isInProgress
-                            ? "bg-lime-green/10"
+                            ? "bg-secondary-color/10"
                             : "bg-white";
                       const badgeClass = isDone
                         ? "text-[#3dffa0] bg-[#3dffa0]/10"
                         : isSkipped
                           ? "text-danger bg-danger/10"
                           : isInProgress
-                            ? "text-lime-green bg-lime-green/10"
+                            ? "text-secondary-color bg-secondary-color/10"
                             : "text-muted bg-white";
 
                       return (
@@ -379,7 +379,7 @@ export default function ClientProfile({
                           {/* Info — links to workout */}
                           <Link
                             href={`/view-workouts/${w.id}`}
-                            className="flex-1 min-w-0 hover:text-lime-green transition-colors"
+                            className="flex-1 min-w-0 hover:text-secondary-color transition-colors"
                           >
                             <p className="text-sm font-medium text-foreground truncate">
                               {w.workout.name}
@@ -407,7 +407,7 @@ export default function ClientProfile({
                                 }}
                                 onBlur={() => setActiveStatusId(null)}
                                 defaultValue={w.status}
-                                className="bg-white border border-lime-green/30 rounded-xl px-3 py-1.5 text-xs text-foreground focus:border-lime-green/50 outline-none transition"
+                                className="bg-white border border-secondary-color/30 rounded-xl px-3 py-1.5 text-xs text-foreground focus:border-secondary-color/50 outline-none transition"
                               >
                                 <option value="SCHEDULED">Scheduled</option>
                                 <option value="COMPLETED">Completed</option>
@@ -420,7 +420,7 @@ export default function ClientProfile({
                                     activeStatusId === w.id ? null : w.id,
                                   )
                                 }
-                                className="w-7 h-7 rounded-lg bg-white flex items-center justify-center text-muted hover:text-lime-green hover:bg-lime-green/10 hover:border-lime-green/20 border border-transparent transition-all"
+                                className="w-7 h-7 rounded-lg bg-white flex items-center justify-center text-muted hover:text-secondary-color hover:bg-secondary-color/10 hover:border-secondary-color/20 border border-transparent transition-all"
                                 title="Change status"
                               >
                                 <RotateCcw size={11} />
