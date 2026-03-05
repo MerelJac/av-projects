@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import Link from "next/link";
 
 export default async function CustomerPage({
   params,
@@ -24,7 +25,6 @@ export default async function CustomerPage({
       </p>
 
       <div className="grid grid-cols-2 gap-6">
-
         <div className="bg-white border rounded-xl p-6">
           <h3 className="font-semibold mb-4">Projects</h3>
 
@@ -45,6 +45,12 @@ export default async function CustomerPage({
           ))}
         </div>
 
+        <Link
+          href={`/customers/${customer.id}/pricing`}
+          className="hover:underline"
+        >
+          Customer Pricing
+        </Link>
       </div>
     </div>
   );
