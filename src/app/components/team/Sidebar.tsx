@@ -119,7 +119,7 @@ export default function SidebarLayout({
               AV Projects
             </h1>
             <p className="text-[10px] font-semibold tracking-widest uppercase text-muted mt-0.5">
-              Trainer Dashboard
+              Call One, Inc
             </p>
           </div>
           <button

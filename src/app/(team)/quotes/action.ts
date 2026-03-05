@@ -1,6 +1,7 @@
 "use server";
-
+// src/app/(team)/quotes/action.ts
 import { prisma } from "@/lib/prisma";
+import { redirect } from "next/navigation";
 
 export async function addItemToQuote(
   quoteId: string,
@@ -71,4 +72,21 @@ export async function convertQuoteToProject(
       quoteId,
     },
   });
+}
+
+export async function createQuote(formData: FormData) {
+  const customerId = formData.get("customerId") as string;
+
+  if (!customerId) {
+    throw new Error("Customer required");
+  }
+
+  const quote = await prisma.quote.create({
+    data: {
+      customerId,
+      status: "DRAFT",
+    },
+  });
+
+  redirect(`/quotes/${quote.id}/builder`);
 }
