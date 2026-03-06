@@ -16,7 +16,7 @@ export async function GET(req: Request) {
   }
 
   if (token.role === "ADMIN") {
-    return NextResponse.redirect(new URL("/", req.url));
+    return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
   return NextResponse.redirect(new URL("/client/dashboard", req.url));

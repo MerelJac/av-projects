@@ -23,6 +23,7 @@ export default async function ItemsPage() {
             <th className="p-3 text-left">Item #</th>
             <th className="p-3 text-left">Manufacturer</th>
             <th className="p-3 text-left">Price</th>
+            <th className="p-3 text-left">Actions</th>
           </tr>
         </thead>
 
@@ -32,6 +33,9 @@ export default async function ItemsPage() {
               <td className="p-3">{item.itemNumber}</td>
               <td className="p-3">{item.manufacturer}</td>
               <td className="p-3">${item.price}</td>
+              <td className="p-3">
+                <Link href={`/items/${item.id}`}>View</Link>
+              </td>
             </tr>
           ))}
         </tbody>

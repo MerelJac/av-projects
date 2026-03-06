@@ -4,12 +4,24 @@ import { useState } from "react";
 
 export default function AddItemModal({
   items,
-  onAdd,
+  quoteId,
 }: {
   items: any[];
-  onAdd: (itemId: string) => void;
+  quoteId: string;
 }) {
   const [open, setOpen] = useState(false);
+
+  async function addItem(itemId: string) {
+    await fetch("/api/quotes/add-item", {
+      method: "POST",
+      body: JSON.stringify({
+        quoteId,
+        itemId,
+      }),
+    });
+
+    window.location.reload();
+  }
 
   return (
     <>
@@ -21,27 +33,35 @@ export default function AddItemModal({
       </button>
 
       {open && (
-        <div className="fixed inset-0 bg-black/20 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
 
           <div className="bg-white p-6 rounded-xl w-[500px]">
 
             <h2 className="text-lg font-semibold mb-4">
-              Add Inventory Item
+              Add Item
             </h2>
 
-            <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto">
+            <div className="space-y-2 max-h-[300px] overflow-y-auto">
 
               {items.map((item) => (
-                <button
+                <div
                   key={item.id}
-                  className="border p-2 text-left hover:bg-gray-50"
-                  onClick={() => {
-                    onAdd(item.id);
-                    setOpen(false);
-                  }}
+                  className="flex justify-between border p-2 rounded"
                 >
-                  {item.itemNumber} — ${item.price}
-                </button>
+                  <div>
+                    <p className="font-medium">{item.itemNumber}</p>
+                    <p className="text-xs text-gray-500">
+                      {item.manufacturer}
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => addItem(item.id)}
+                    className="text-sm bg-black text-white px-3 rounded"
+                  >
+                    Add
+                  </button>
+                </div>
               ))}
 
             </div>

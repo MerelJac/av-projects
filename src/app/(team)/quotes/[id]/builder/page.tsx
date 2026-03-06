@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import AddBundle from "../components/AddBundle";
+import AddLine from "../components/AddLine";
 
 export default async function QuoteBuilder({
   params,
@@ -6,93 +8,82 @@ export default async function QuoteBuilder({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-
+  const items = await prisma.item.findMany();
   const quote = await prisma.quote.findUnique({
     where: { id },
     include: {
-      lines: true,
       customer: true,
+      lines: true,
+      quoteBundles: {
+        include: { lines: true },
+      },
     },
   });
 
   if (!quote) return <div>Quote not found</div>;
 
-  const total = quote.lines.reduce(
-    (sum, l) => sum + l.quantity * l.price,
-    0
-  );
+  const total = [
+    ...quote.lines,
+    ...quote.quoteBundles.flatMap((b) => b.lines),
+  ].reduce((sum, l) => sum + l.quantity * l.price, 0);
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl">
-
-      {/* HEADER */}
-
       <div className="flex justify-between items-center">
-
         <div>
-          <h1 className="text-2xl font-semibold">
-            Quote Builder
-          </h1>
+          <h1 className="text-2xl font-semibold">Quote Builder</h1>
 
-          <p className="text-gray-500">
-            {quote.customer.name}
-          </p>
+          <p className="text-gray-500">{quote.customer.name}</p>
         </div>
 
-        <div className="flex gap-3">
-          <button className="border px-4 py-2 rounded-lg">
-            + Add Bundle
-          </button>
-
-          <button className="border px-4 py-2 rounded-lg">
-            + Add Line
-          </button>
-        </div>
-
+        <AddBundle quoteId={quote.id} />
       </div>
 
-      {/* TABLE */}
+      {/* BUNDLES */}
 
-      <div className="border rounded-xl bg-white overflow-hidden">
+      {quote.quoteBundles.map((bundle) => (
+        <div key={bundle.id} className="border rounded-xl overflow-hidden">
+          <div className="bg-gray-100 p-3 font-medium flex justify-between">
+            {bundle.name}
 
-        <div className="grid grid-cols-4 p-4 border-b bg-gray-50 text-sm font-medium">
-          <div>Description</div>
-          <div>Qty</div>
-          <div>Price</div>
-          <div className="text-right">Total</div>
-        </div>
-
-        {quote.lines.length === 0 && (
-          <div className="p-6 text-gray-500 text-center">
-            No items yet. Click "Add Line" to start building the quote.
+            {!bundle.showToCustomer && (
+              <span className="text-xs text-orange-500">
+                hidden from customer
+              </span>
+            )}
           </div>
-        )}
-
-        {quote.lines.map((line) => (
-          <div
-            key={line.id}
-            className="grid grid-cols-4 p-4 border-b"
-          >
-            <div>{line.description}</div>
-
-            <div>{line.quantity}</div>
-
-            <div>${line.price}</div>
-
-            <div className="text-right">
-              ${(line.quantity * line.price).toFixed(2)}
+          {bundle.lines.map((line) => (
+            <div key={line.id} className="grid grid-cols-4 p-4 border-b">
+              <div>{line.description}</div>
+              <div>{line.quantity}</div>
+              <div>${line.price}</div>
+              <div className="text-right">
+                ${(line.quantity * line.price).toFixed(2)}
+              </div>
             </div>
+          ))}
+          <div className="p-3 border-t">
+            <AddLine quoteId={quote.id} bundleId={bundle.id} items={items} />
+          </div>{" "}
+        </div>
+      ))}
+
+      {/* UNBUNDLED LINES */}
+
+      {quote.lines.map((line) => (
+        <div key={line.id} className="grid grid-cols-4 p-4 border rounded">
+          <div>{line.description}</div>
+          <div>{line.quantity}</div>
+          <div>${line.price}</div>
+          <div className="text-right">
+            ${(line.quantity * line.price).toFixed(2)}
           </div>
-        ))}
-
-      </div>
-
-      {/* TOTAL */}
+        </div>
+      ))}
 
       <div className="flex justify-end text-lg font-semibold">
         Quote Total: ${total.toFixed(2)}
       </div>
-
     </div>
   );
 }

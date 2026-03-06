@@ -1,6 +1,4 @@
-// src/middleware.ts
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 export async function middleware(req: NextRequest) {
@@ -9,31 +7,20 @@ export async function middleware(req: NextRequest) {
     secret: process.env.NEXTAUTH_SECRET,
   });
 
-  // 🔒 Not logged in
-  if (!token) {
-    return NextResponse.redirect(new URL("/login", req.url));
-  }
+  const path = req.nextUrl.pathname;
 
-  const trainerOnlyPaths = ["/exercises", "/programs", "/trainer"];
+  // redirect logged-in users away from /
+  if (path === "/" && token) {
+    if (token.role === "CLIENT") {
+      return NextResponse.redirect(new URL("/client/dashboard", req.url));
+    }
 
-  const isTrainerRoute = trainerOnlyPaths.some((path) =>
-    req.nextUrl.pathname.startsWith(path),
-  );
-
-  // 🔒 Role guard
-  if (
-    isTrainerRoute &&
-    (!token || (token.role !== "TEAM" && token.role !== "ADMIN"))
-  ) {
-    console.log(
-      `Blocked ${req.nextUrl.pathname} — role was: ${token?.role ?? "MISSING"}`,
-    );
-    return NextResponse.redirect(new URL("/client", req.url));
+    return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/exercises/:path*", "/programs/:path*", "/trainer/:path*"],
+  matcher: ["/"],
 };

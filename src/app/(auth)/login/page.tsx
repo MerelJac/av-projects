@@ -27,7 +27,7 @@ export default function LoginPage() {
       setSignInText("Sign In");
       return;
     }
-    window.location.href = "/";
+    window.location.href = "/dashboard";
   }
 
   return (
