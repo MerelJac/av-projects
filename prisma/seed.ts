@@ -57,44 +57,49 @@ async function main() {
   /*
   ITEMS
   */
+const switchItem = await prisma.item.upsert({
+  where: { itemNumber: "CISCO-SW-9200" },
+  update: {},
+  create: {
+    itemNumber: "CISCO-SW-9200",
+    manufacturer: "Cisco",
+    cost: 2200,
+    price: 4200,
+    lastSoldPrice: 4000,
+    approved: true,
+    category: "Networking",
+    type: "HARDWARE",
+  },
+});
 
-  const switchItem = await prisma.item.create({
-    data: {
-      itemNumber: "CISCO-SW-9200",
-      manufacturer: "Cisco",
-      cost: 2200,
-      price: 4200,
-      lastSoldPrice: 4000,
-      approved: true,
-      category: "Networking",
-      type: "HARDWARE",
-    },
-  });
+const rackItem = await prisma.item.upsert({
+  where: { itemNumber: "RACK-42U" },
+  update: {},
+  create: {
+    itemNumber: "RACK-42U",
+    manufacturer: "Middle Atlantic",
+    cost: 900,
+    price: 1800,
+    lastSoldPrice: 1700,
+    approved: true,
+    category: "Infrastructure",
+    type: "HARDWARE",
+  },
+});
 
-  const rackItem = await prisma.item.create({
-    data: {
-      itemNumber: "RACK-42U",
-      manufacturer: "Middle Atlantic",
-      cost: 900,
-      price: 1800,
-      lastSoldPrice: 1700,
-      approved: true,
-      category: "Infrastructure",
-      type: "HARDWARE",
-    },
-  });
-
-  const laborItem = await prisma.item.create({
-    data: {
-      itemNumber: "LABOR-INSTALL",
-      manufacturer: "Internal",
-      cost: 60,
-      price: 150,
-      approved: true,
-      category: "Services",
-      type: "SERVICE",
-    },
-  });
+const laborItem = await prisma.item.upsert({
+  where: { itemNumber: "LABOR-INSTALL" },
+  update: {},
+  create: {
+    itemNumber: "LABOR-INSTALL",
+    manufacturer: "Internal",
+    cost: 60,
+    price: 150,
+    approved: true,
+    category: "Services",
+    type: "SERVICE",
+  },
+});
 
   /*
   CUSTOMER SPECIFIC PRICING
@@ -109,6 +114,19 @@ async function main() {
   });
 
   /*
+  PROJECT
+  */
+
+  const project = await prisma.project.create({
+    data: {
+      name: "Nike HQ Conference Room AV",
+      customerId: nike.id,
+      billingTerms: "PROGRESS",
+      totalBudget: 25000,
+    },
+  });
+
+  /*
   QUOTE
   */
 
@@ -116,7 +134,29 @@ async function main() {
     data: {
       customerId: nike.id,
       status: "DRAFT",
+      projectId: project.id,
     },
+  });
+
+  /*
+  PROJECT MILESTONES
+  */
+
+  await prisma.projectMilestone.createMany({
+    data: [
+      {
+        projectId: project.id,
+        name: "Equipment Ordered",
+      },
+      {
+        projectId: project.id,
+        name: "Installation",
+      },
+      {
+        projectId: project.id,
+        name: "System Commissioning",
+      },
+    ],
   });
 
   /*
@@ -174,41 +214,7 @@ async function main() {
   });
 
   /*
-  PROJECT
-  */
 
-  const project = await prisma.project.create({
-    data: {
-      name: "Nike HQ Conference Room AV",
-      customerId: nike.id,
-      quoteId: quote.id,
-      billingTerms: "PROGRESS",
-      totalBudget: 25000,
-    },
-  });
-
-  /*
-  PROJECT MILESTONES
-  */
-
-  await prisma.projectMilestone.createMany({
-    data: [
-      {
-        projectId: project.id,
-        name: "Equipment Ordered",
-      },
-      {
-        projectId: project.id,
-        name: "Installation",
-      },
-      {
-        projectId: project.id,
-        name: "System Commissioning",
-      },
-    ],
-  });
-
-  /*
   INVOICE
   */
 

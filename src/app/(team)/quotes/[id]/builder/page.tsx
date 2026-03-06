@@ -70,16 +70,22 @@ export default async function QuoteBuilder({
 
       {/* UNBUNDLED LINES */}
 
-      {quote.lines.map((line) => (
-        <div key={line.id} className="grid grid-cols-4 p-4 border rounded">
-          <div>{line.description}</div>
-          <div>{line.quantity}</div>
-          <div>${line.price}</div>
-          <div className="text-right">
-            ${(line.quantity * line.price).toFixed(2)}
+      <div className="border rounded-xl p-4">
+        <div className="font-medium mb-2">Individual Items</div>
+
+        {quote.lines.map((line) => (
+          <div key={line.id} className="grid grid-cols-4 p-4 border-b">
+            <div>{line.description}</div>
+            <div>{line.quantity}</div>
+            <div>${line.price}</div>
+            <div className="text-right">
+              ${(line.quantity * line.price).toFixed(2)}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+
+        <AddLine quoteId={quote.id} items={items} />
+      </div>
 
       <div className="flex justify-end text-lg font-semibold">
         Quote Total: ${total.toFixed(2)}

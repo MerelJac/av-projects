@@ -13,20 +13,162 @@ export default async function ProjectPage({
       timeEntries: true,
       purchaseOrders: true,
       milestones: true,
+      quotes: {
+        include: {
+          lines: {
+            include: {
+              item: true,
+              bundle: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      },
+      changeOrders: {
+        orderBy: { createdAt: "desc" },
+      },
     },
   });
 
   if (!project) return <div>Project not found</div>;
 
+  const quoteStatusStyles: Record<string, string> = {
+    ACCEPTED: "bg-green-100 text-green-700",
+    SENT: "bg-blue-100 text-blue-700",
+    REJECTED: "bg-red-100 text-red-700",
+    DRAFT: "bg-gray-100 text-gray-600",
+  };
+
+  const changeOrderTotal = project.changeOrders.reduce(
+    (sum, co) => sum + co.amount,
+    0
+  );
+
   return (
-    <div>
-      <h1 className="text-2xl font-semibold">{project.name}</h1>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold">{project.name}</h1>
+        <p className="text-gray-500">Customer: {project.customer.name}</p>
+      </div>
 
-      <p className="text-gray-500 mb-6">Customer: {project.customer.name}</p>
+      {/* Quotes */}
+      <div className="bg-white border rounded-xl p-6">
+        <h3 className="font-semibold mb-4">
+          Quotes ({project.quotes.length})
+        </h3>
 
+        {project.quotes.length === 0 ? (
+          <p className="text-sm text-gray-400">No quotes linked yet.</p>
+        ) : (
+          <div className="space-y-4">
+            {project.quotes.map((quote) => (
+              <div key={quote.id} className="border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-gray-700">
+                      #{quote.id.slice(0, 8).toUpperCase()}
+                    </span>
+                    <span
+                      className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                        quoteStatusStyles[quote.status]
+                      }`}
+                    >
+                      {quote.status}
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    {new Date(quote.createdAt).toLocaleDateString()}
+                    {quote.total != null && (
+                      <span className="ml-3 font-semibold text-gray-800">
+                        ${quote.total.toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {quote.lines.length > 0 && (
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-gray-400 border-b text-xs uppercase tracking-wide">
+                        <th className="pb-2">Description</th>
+                        <th className="pb-2">Item</th>
+                        <th className="pb-2 text-right">Qty</th>
+                        <th className="pb-2 text-right">Price</th>
+                        <th className="pb-2 text-right">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {quote.lines.map((line) => (
+                        <tr key={line.id} className="border-b last:border-0">
+                          <td className="py-1.5">{line.description}</td>
+                          <td className="py-1.5 text-gray-400">
+                            {line.item?.itemNumber ?? "—"}
+                          </td>
+                          <td className="py-1.5 text-right">{line.quantity}</td>
+                          <td className="py-1.5 text-right">
+                            ${line.price.toLocaleString()}
+                          </td>
+                          <td className="py-1.5 text-right">
+                            ${(line.quantity * line.price).toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Change Orders */}
+      <div className="bg-white border rounded-xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold">
+            Change Orders ({project.changeOrders.length})
+          </h3>
+          {project.changeOrders.length > 0 && (
+            <span className="text-sm font-medium text-gray-600">
+              Total:{" "}
+              <span className={changeOrderTotal >= 0 ? "text-green-600" : "text-red-600"}>
+                {changeOrderTotal >= 0 ? "+" : ""}$
+                {changeOrderTotal.toLocaleString()}
+              </span>
+            </span>
+          )}
+        </div>
+
+        {project.changeOrders.length === 0 ? (
+          <p className="text-sm text-gray-400">No change orders yet.</p>
+        ) : (
+          <div className="divide-y">
+            {project.changeOrders.map((co) => (
+              <div key={co.id} className="py-3 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-800">
+                    {co.description}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    {new Date(co.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+                <span
+                  className={`text-sm font-semibold ${
+                    co.amount >= 0 ? "text-green-600" : "text-red-600"
+                  }`}
+                >
+                  {co.amount >= 0 ? "+" : ""}${co.amount.toLocaleString()}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Milestones */}
       <div className="bg-white border rounded-xl p-6">
         <h3 className="font-semibold mb-4">Milestones</h3>
-
         {project.milestones.map((m) => (
           <div key={m.id} className="border-b py-2">
             {m.name}
@@ -34,15 +176,14 @@ export default async function ProjectPage({
         ))}
       </div>
 
+      {/* Stats */}
       <div className="grid grid-cols-3 gap-6">
         <div className="border p-6 rounded-xl">
           Shipments: {project.shipments.length}
         </div>
-
         <div className="border p-6 rounded-xl">
           Hours Logged: {project.timeEntries.length}
         </div>
-
         <div className="border p-6 rounded-xl">
           Purchase Orders: {project.purchaseOrders.length}
         </div>

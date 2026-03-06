@@ -174,19 +174,15 @@ enum ItemType {
 }
 
 model Quote {
-  id String @id @default(uuid())
-
-  customerId String
-  customer   Customer @relation(fields: [customerId], references: [id])
-
-  status QuoteStatus @default(DRAFT)
-
-  total Float?
-
-  createdAt DateTime @default(now())
-
+  id           String        @id @default(uuid())
+  customerId   String
+  customer     Customer      @relation(fields: [customerId], references: [id])
+  projectId    String?
+  project      Project?      @relation(fields: [projectId], references: [id])
+  status       QuoteStatus   @default(DRAFT)
+  total        Float?
+  createdAt    DateTime      @default(now())
   lines        QuoteLine[]
-  projects     Project[]
   quoteBundles QuoteBundle[]
 }
 
@@ -239,9 +235,6 @@ model Project {
   customerId String
   customer   Customer @relation(fields: [customerId], references: [id])
 
-  quoteId String?
-  quote   Quote?  @relation(fields: [quoteId], references: [id])
-
   billingTerms BillingTerms? // ← ADD THIS
 
   totalBudget Float?
@@ -255,6 +248,7 @@ model Project {
   timeEntries    TimeEntry[]
   changeOrders   ChangeOrder[]
   purchaseOrders PurchaseOrder[]
+  quotes         Quote[]
 }
 
 model Subscription {
