@@ -1,118 +1,64 @@
 // src/app/(team)/customers/[id]/pricing/page.tsx
-
 import { prisma } from "@/lib/prisma";
+import { notFound } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import PricingEditor from "./PricingEditor";
 
 export default async function CustomerPricing({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-
   const { id } = await params;
 
-  const customer = await prisma.customer.findUnique({
-    where: { id },
-  });
+  const customer = await prisma.customer.findUnique({ where: { id } });
+  if (!customer) return notFound();
 
   const items = await prisma.item.findMany({
     include: {
-      customerPrices: {
-        where: { customerId: id },
-      },
+      customerPrices: { where: { customerId: id } },
     },
     orderBy: { itemNumber: "asc" },
   });
 
-  if (!customer) return <div>Customer not found</div>;
-
   return (
-    <div className="flex flex-col gap-6 max-w-6xl">
+    <div className="min-h-screen bg-[#F7F6F3]">
+      <div className="max-w-5xl mx-auto px-6 py-10">
 
-      <div>
-        <h1 className="text-2xl font-semibold">
-          {customer.name} Pricing
-        </h1>
+        <Link
+          href={`/customers/${id}`}
+          className="flex items-center gap-2 text-sm text-[#666] hover:text-[#111] mb-6 transition-colors"
+        >
+          <ArrowLeft size={15} />
+          {customer.name}
+        </Link>
 
-        <p className="text-gray-500">
-          Customer specific pricing (MPV)
-        </p>
-      </div>
-
-      <div className="border rounded-xl bg-white overflow-hidden">
-
-        <div className="grid grid-cols-7 bg-gray-50 p-3 text-sm font-medium">
-          <div>Item No</div>
-          <div>Manufacturer</div>
-          <div>Cost</div>
-          <div>Base Price</div>
-          <div>Customer Price</div>
-          <div>Margin</div>
-          <div>Status</div>
+        <div className="flex items-start justify-between mb-8">
+          <div>
+            <p className="text-xs text-[#999] mb-1">{customer.name}</p>
+            <h1 className="text-2xl font-bold text-[#111] tracking-tight">
+              Customer Pricing
+            </h1>
+            <p className="text-sm text-[#999] mt-1">
+              Override list prices for this customer
+            </p>
+          </div>
         </div>
 
-        {items.map((item) => {
-
-          const customerPrice =
-            item.customerPrices[0]?.price ?? item.price ?? 0;
-
-          const margin =
-            item.cost && customerPrice
-              ? ((customerPrice - item.cost) / customerPrice) * 100
-              : 0;
-
-          return (
-            <div
-              key={item.id}
-              className="grid grid-cols-7 p-3 border-t text-sm items-center"
-            >
-
-              <div>{item.itemNumber}</div>
-
-              <div>{item.manufacturer}</div>
-
-              <div>${item.cost}</div>
-
-              <div>${item.price}</div>
-
-              <div>
-
-                <input
-                  defaultValue={customerPrice}
-                  className="border rounded px-2 py-1 w-24"
-                />
-
-              </div>
-
-              <div>
-                {margin.toFixed(1)}%
-              </div>
-
-              <div className="text-xs">
-
-                {!item.active && (
-                  <span className="text-red-500">Inactive</span>
-                )}
-
-                {item.eolDate && (
-                  <span className="ml-2 text-yellow-600">
-                    EOL
-                  </span>
-                )}
-
-                {item.approved && (
-                  <span className="ml-2 text-green-600">
-                    Approved
-                  </span>
-                )}
-
-              </div>
-
-            </div>
-          );
-        })}
+        <PricingEditor customerId={id} items={items.map((item) => ({
+          id: item.id,
+          itemNumber: item.itemNumber,
+          manufacturer: item.manufacturer,
+          cost: item.cost,
+          price: item.price,
+          active: item.active,
+          approved: item.approved,
+          eolDate: item.eolDate ? item.eolDate.toISOString() : null,
+          customerPrice: item.customerPrices[0]?.price ?? null,
+        }))} />
 
       </div>
-
     </div>
   );
 }
