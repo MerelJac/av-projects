@@ -16,7 +16,9 @@ export default async function ProjectsPage() {
     <div className="min-h-screen bg-[#F7F6F3]">
       <div className="max-w-5xl mx-auto px-6 py-10">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-bold text-[#111] tracking-tight">Projects</h1>
+          <h1 className="text-2xl font-bold text-[#111] tracking-tight">
+            Projects
+          </h1>
           <Link
             href="/projects/new"
             className="flex items-center gap-1.5 text-sm font-semibold bg-[#111] text-white px-4 py-2 rounded-xl hover:bg-[#333] transition-colors"
@@ -54,14 +56,17 @@ export default async function ProjectsPage() {
             <tbody>
               {projects.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-12 text-center text-sm text-[#bbb]">
+                  <td
+                    colSpan={7}
+                    className="px-5 py-12 text-center text-sm text-[#bbb]"
+                  >
                     No projects yet
                   </td>
                 </tr>
               ) : (
                 projects.map((project) => {
                   const acceptedQuotes = project.quotes.filter(
-                    (q) => q.status === "ACCEPTED"
+                    (q) => q.status === "ACCEPTED",
                   ).length;
 
                   return (
@@ -93,7 +98,9 @@ export default async function ProjectsPage() {
                         )}
                       </td>
                       <td className="px-3 py-3.5 text-right text-sm text-[#666]">
-                        {project.boms.length > 0 ? project.boms.length : (
+                        {project.boms.length > 0 ? (
+                          project.boms.length
+                        ) : (
                           <span className="text-[#ccc]">—</span>
                         )}
                       </td>
@@ -121,10 +128,15 @@ export default async function ProjectsPage() {
                         )}
                       </td>
                       <td className="pr-4">
-                        <ArrowRight
-                          size={14}
-                          className="text-[#ccc] group-hover:text-[#111] transition-colors"
-                        />
+                        <Link
+                          href={`/projects/${project.id}`}
+                          className="text-sm font-semibold text-[#111] hover:underline"
+                        >
+                          <ArrowRight
+                            size={14}
+                            className="text-[#ccc] group-hover:text-[#111] transition-colors"
+                          />
+                        </Link>
                       </td>
                     </tr>
                   );

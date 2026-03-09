@@ -212,7 +212,7 @@ export default async function ProjectPage({
                         Edit <ArrowRight size={11} />
                       </Link>
                       <Link
-                        href={`/quotes/${quote.id}`}
+                        href={`/projects/${project.id}/quotes/${quote.id}`}
                         className="flex items-center gap-1 text-xs font-semibold text-[#666] hover:underline"
                       >
                         View <ArrowRight size={11} />

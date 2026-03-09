@@ -105,13 +105,22 @@ export default function QuoteEditor({
       lines: [] as Bundle["lines"],
       quoteId: initialQuote.id,
       createdAt: new Date(),
-      bomId: null
+      bomId: null,
     } satisfies Bundle;
     setBundles((prev) => [...prev, tempBundle]);
     setNewBundleName("");
     setShowBundleInput(false);
     setSaved(false);
   }
+
+  console.log(
+    "lines with bundleIds:",
+    lines.map((l) => ({ id: l.id, bundleId: l.bundleId, desc: l.description })),
+  );
+  console.log(
+    "bundles:",
+    bundles.map((b) => ({ id: b.id, name: b.name })),
+  );
 
   function toggleBundleVisibility(bundleId: string) {
     setBundles((prev) =>
@@ -133,6 +142,10 @@ export default function QuoteEditor({
 
   async function handleSave() {
     setSaving(true);
+    console.log("Saving lines: ", lines);
+    console.log("Saving bundles: ", bundles);
+    console.log("Saving status: ", status);
+    console.log("Saving for quote it: ", initialQuote.id);
     try {
       const res = await fetch(
         `/api/projects/${projectId}/quotes/${initialQuote.id}`,
