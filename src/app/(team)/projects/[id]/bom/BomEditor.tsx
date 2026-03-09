@@ -5,8 +5,6 @@ import {
   ArrowLeft,
   Plus,
   Trash2,
-  FileText,
-  ChevronDown,
   Search,
   Zap,
   Package,
@@ -30,8 +28,7 @@ type BOMLine = {
   item: Item;
   quantity: number;
   notes: string | null;
-
-  sortOrder?: number; // ← make optional
+  sortOrder?: number;
 };
 
 type Quote = {
@@ -66,27 +63,24 @@ export default function BOMEditor({
   bom: BOM;
   items: Item[];
   projectId: string;
-  customerPrices: Record<string, number>; // itemId → custom price
+  customerPrices: Record<string, number>;
 }) {
-  console.log("Items: ", items);
   const router = useRouter();
   const [lines, setLines] = useState<BOMLine[]>(bom.lines);
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [saved, setSaved] = useState(true);
   const [itemSearch, setItemSearch] = useState("");
   const [showItemPicker, setShowItemPicker] = useState(false);
-  const [toast, setToast] = useState<{
-    type: "success" | "error";
-    msg: string;
-  } | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
-  function effectivePrice(
-    itemId: string,
-    standardPrice: number | null,
-  ): number | null {
+
+  function effectivePrice(itemId: string, standardPrice: number | null): number | null {
     return customerPrices[itemId] ?? standardPrice;
   }
+
   const showToast = (type: "success" | "error", msg: string) => {
     setToast({ type, msg });
     setTimeout(() => setToast(null), 3000);
@@ -96,9 +90,7 @@ export default function BOMEditor({
     (i) =>
       !lines.some((l) => l.itemId === i.id) &&
       (i.itemNumber.toLowerCase().includes(itemSearch.toLowerCase()) ||
-        (i.manufacturer ?? "")
-          .toLowerCase()
-          .includes(itemSearch.toLowerCase()) ||
+        (i.manufacturer ?? "").toLowerCase().includes(itemSearch.toLowerCase()) ||
         (i.category ?? "").toLowerCase().includes(itemSearch.toLowerCase())),
   );
 
@@ -118,17 +110,13 @@ export default function BOMEditor({
 
   function updateQuantity(lineId: string, qty: number) {
     setLines((prev) =>
-      prev.map((l) =>
-        l.id === lineId ? { ...l, quantity: Math.max(1, qty) } : l,
-      ),
+      prev.map((l) => (l.id === lineId ? { ...l, quantity: Math.max(1, qty) } : l)),
     );
     setSaved(false);
   }
 
   function updateNotes(lineId: string, notes: string) {
-    setLines((prev) =>
-      prev.map((l) => (l.id === lineId ? { ...l, notes } : l)),
-    );
+    setLines((prev) => prev.map((l) => (l.id === lineId ? { ...l, notes } : l)));
     setSaved(false);
   }
 
@@ -140,21 +128,18 @@ export default function BOMEditor({
   async function handleSave() {
     setSaving(true);
     try {
-      const res = await fetch(
-        `/api/projects/${projectId}/boms/${bom.id}/lines`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            lines: lines.map((l, i) => ({
-              itemId: l.itemId,
-              quantity: l.quantity,
-              notes: l.notes,
-              sortOrder: i,
-            })),
-          }),
-        },
-      );
+      const res = await fetch(`/api/projects/${projectId}/boms/${bom.id}/lines`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lines: lines.map((l, i) => ({
+            itemId: l.itemId,
+            quantity: l.quantity,
+            notes: l.notes,
+            sortOrder: i,
+          })),
+        }),
+      });
       if (!res.ok) throw new Error();
       setSaved(true);
       showToast("success", "BOM saved");
@@ -175,9 +160,7 @@ export default function BOMEditor({
     try {
       const res = await fetch(
         `/api/projects/${projectId}/boms/${bom.id}/generate-quote`,
-        {
-          method: "POST",
-        },
+        { method: "POST" },
       );
       if (!res.ok) throw new Error();
       const data = await res.json();
@@ -188,13 +171,24 @@ export default function BOMEditor({
     }
   }
 
-  const totalCost = lines.reduce(
-    (sum, l) => sum + (l.item.cost ?? 0) * l.quantity,
-    0,
-  );
+  async function handleDelete() {
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/boms/${bom.id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error();
+      router.push(`/projects/${projectId}`);
+    } catch {
+      showToast("error", "Failed to delete BOM");
+      setDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  }
+
+  const totalCost = lines.reduce((sum, l) => sum + (l.item.cost ?? 0) * l.quantity, 0);
   const totalPrice = lines.reduce(
-    (sum, l) =>
-      sum + (effectivePrice(l.itemId, l.item.price) ?? 0) * l.quantity,
+    (sum, l) => sum + (effectivePrice(l.itemId, l.item.price) ?? 0) * l.quantity,
     0,
   );
 
@@ -202,19 +196,52 @@ export default function BOMEditor({
     <div className="min-h-screen bg-[#F7F6F3]">
       {/* Toast */}
       {toast && (
-        <div
-          className={`fixed top-5 right-5 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-medium shadow-lg border transition-all ${
-            toast.type === "success"
-              ? "bg-white border-green-200 text-green-700"
-              : "bg-white border-red-200 text-red-600"
-          }`}
-        >
-          {toast.type === "success" ? (
-            <CheckCircle2 size={15} />
-          ) : (
-            <AlertCircle size={15} />
-          )}
+        <div className={`fixed top-5 right-5 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-medium shadow-lg border transition-all ${
+          toast.type === "success"
+            ? "bg-white border-green-200 text-green-700"
+            : "bg-white border-red-200 text-red-600"
+        }`}>
+          {toast.type === "success" ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
           {toast.msg}
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+            onClick={() => setShowDeleteConfirm(false)}
+          />
+          <div className="relative bg-white rounded-2xl shadow-2xl border border-[#E5E3DE] p-6 max-w-sm w-full mx-4">
+            <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center mb-4">
+              <Trash2 size={18} className="text-red-500" />
+            </div>
+            <h2 className="text-base font-bold text-[#111] mb-1">Delete BOM?</h2>
+            <p className="text-sm text-[#666] mb-1">
+              <span className="font-semibold text-[#111]">{bom.name}</span> will be permanently deleted.
+            </p>
+            {bom.quotes.length > 0 && (
+              <p className="text-sm text-amber-600 bg-amber-50 rounded-xl px-3 py-2 mt-3">
+                ⚠️ This BOM has {bom.quotes.length} generated quote{bom.quotes.length !== 1 ? "s" : ""}. The quotes will remain but will no longer be linked to this BOM.
+              </p>
+            )}
+            <div className="flex gap-3 mt-5">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 text-sm font-semibold px-4 py-2.5 rounded-xl border border-[#E5E3DE] hover:bg-[#F7F6F3] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 text-sm font-semibold px-4 py-2.5 rounded-xl bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
+              >
+                {deleting ? "Deleting…" : "Delete BOM"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -236,17 +263,20 @@ export default function BOMEditor({
               <span>·</span>
               <span>{bom.project.name}</span>
             </div>
-            <h1 className="text-2xl font-bold text-[#111] tracking-tight">
-              {bom.name}
-            </h1>
+            <h1 className="text-2xl font-bold text-[#111] tracking-tight">{bom.name}</h1>
             <p className="text-sm text-[#888] mt-1">
               {lines.length} item{lines.length !== 1 ? "s" : ""}
-              {!saved && (
-                <span className="text-amber-600 ml-2">· Unsaved changes</span>
-              )}
+              {!saved && <span className="text-amber-600 ml-2">· Unsaved changes</span>}
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="w-9 h-9 flex items-center justify-center rounded-xl border border-[#E5E3DE] bg-white hover:bg-red-50 hover:border-red-200 text-[#ccc] hover:text-red-500 transition-colors"
+              title="Delete BOM"
+            >
+              <Trash2 size={15} />
+            </button>
             <button
               onClick={handleSave}
               disabled={saving || saved}
@@ -270,8 +300,6 @@ export default function BOMEditor({
           <div className="col-span-2 space-y-4">
             {/* Add item */}
             <div className="bg-white border border-[#E5E3DE] rounded-2xl">
-              {" "}
-              {/* ← remove overflow-hidden */}
               <div className="px-5 py-4 border-b border-[#F0EEE9]">
                 <p className="text-xs font-semibold uppercase tracking-widest text-[#888]">
                   Add Items
@@ -279,18 +307,12 @@ export default function BOMEditor({
               </div>
               <div className="p-4 relative">
                 <div className="relative">
-                  <Search
-                    size={14}
-                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#bbb]"
-                  />
+                  <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#bbb]" />
                   <input
                     ref={searchRef}
                     type="text"
                     value={itemSearch}
-                    onChange={(e) => {
-                      setItemSearch(e.target.value);
-                      setShowItemPicker(true);
-                    }}
+                    onChange={(e) => { setItemSearch(e.target.value); setShowItemPicker(true); }}
                     onFocus={() => setShowItemPicker(true)}
                     placeholder="Search by item #, manufacturer, or category…"
                     className="w-full pl-9 pr-4 py-2.5 border border-[#E5E3DE] rounded-xl text-sm text-[#111] placeholder:text-[#bbb] focus:outline-none focus:border-[#111] transition-colors"
@@ -302,15 +324,12 @@ export default function BOMEditor({
                     onMouseDown={(e) => e.preventDefault()}
                   >
                     {filteredItems.length === 0 ? (
-                      <p className="text-sm text-[#999] px-4 py-3">
-                        No matching items
-                      </p>
+                      <p className="text-sm text-[#999] px-4 py-3">No matching items</p>
                     ) : (
                       filteredItems.slice(0, 20).map((item) => (
                         <button
                           key={item.id}
                           onMouseDown={(e) => {
-                            // ← use onMouseDown instead of onClick
                             e.preventDefault();
                             addLine(item);
                             setShowItemPicker(false);
@@ -319,46 +338,25 @@ export default function BOMEditor({
                           className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-[#F7F6F3] transition-colors text-left border-b border-[#F0EEE9] last:border-0"
                         >
                           <div>
-                            <span className="text-sm font-medium text-[#111]">
-                              {item.itemNumber}
-                            </span>
+                            <span className="text-sm font-medium text-[#111]">{item.itemNumber}</span>
                             {item.manufacturer && (
-                              <span className="text-xs text-[#999] ml-2">
-                                {item.manufacturer}
-                              </span>
+                              <span className="text-xs text-[#999] ml-2">{item.manufacturer}</span>
                             )}
                           </div>
                           <div className="flex items-center gap-3 text-xs text-[#999]">
                             {item.category && (
-                              <span className="bg-[#F0EEE9] px-2 py-0.5 rounded-md">
-                                {item.category}
-                              </span>
+                              <span className="bg-[#F0EEE9] px-2 py-0.5 rounded-md">{item.category}</span>
                             )}
-                            {item.price != null && (
-                              <span className="font-medium text-[#111]">
-                                ${item.price.toLocaleString()}
-                                {(() => {
-                                  const price = effectivePrice(
-                                    item.id,
-                                    item.price,
-                                  );
-                                  const hasCustom =
-                                    customerPrices[item.id] != null;
-                                  return price != null ? (
-                                    <span
-                                      className={`font-medium ${hasCustom ? "text-blue-600" : "text-[#111]"}`}
-                                    >
-                                      ${price.toLocaleString()}
-                                      {hasCustom && (
-                                        <span className="text-[10px] ml-1 text-[#bbb] normal-case">
-                                          custom
-                                        </span>
-                                      )}
-                                    </span>
-                                  ) : null;
-                                })()}
-                              </span>
-                            )}
+                            {(() => {
+                              const price = effectivePrice(item.id, item.price);
+                              const hasCustom = customerPrices[item.id] != null;
+                              return price != null ? (
+                                <span className={`font-medium ${hasCustom ? "text-blue-600" : "text-[#111]"}`}>
+                                  ${price.toLocaleString()}
+                                  {hasCustom && <span className="text-[10px] ml-1 text-[#bbb]">custom</span>}
+                                </span>
+                              ) : null;
+                            })()}
                             <Plus size={13} className="text-[#111]" />
                           </div>
                         </button>
@@ -374,53 +372,32 @@ export default function BOMEditor({
               {lines.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <Package size={32} className="text-[#ddd] mb-3" />
-                  <p className="text-sm font-medium text-[#999]">
-                    No items yet
-                  </p>
-                  <p className="text-xs text-[#bbb] mt-1">
-                    Search above to add items to this BOM
-                  </p>
+                  <p className="text-sm font-medium text-[#999]">No items yet</p>
+                  <p className="text-xs text-[#bbb] mt-1">Search above to add items to this BOM</p>
                 </div>
               ) : (
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-[#F0EEE9]">
-                      <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-5 py-3">
-                        Item
-                      </th>
-                      <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3 w-24">
-                        Qty
-                      </th>
-                      <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3 w-28">
-                        Unit Price
-                      </th>
-                      <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-5 py-3 w-28">
-                        Extended
-                      </th>
+                      <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-5 py-3">Item</th>
+                      <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3 w-24">Qty</th>
+                      <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3 w-28">Unit Price</th>
+                      <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-5 py-3 w-28">Extended</th>
                       <th className="w-10" />
                     </tr>
                   </thead>
                   <tbody>
                     {lines.map((line) => (
-                      <tr
-                        key={line.id}
-                        className="border-b border-[#F7F6F3] last:border-0 group"
-                      >
+                      <tr key={line.id} className="border-b border-[#F7F6F3] last:border-0 group">
                         <td className="px-5 py-3">
-                          <p className="text-sm font-medium text-[#111]">
-                            {line.item.itemNumber}
-                          </p>
+                          <p className="text-sm font-medium text-[#111]">{line.item.itemNumber}</p>
                           {line.item.manufacturer && (
-                            <p className="text-xs text-[#999] mt-0.5">
-                              {line.item.manufacturer}
-                            </p>
+                            <p className="text-xs text-[#999] mt-0.5">{line.item.manufacturer}</p>
                           )}
                           <input
                             type="text"
                             value={line.notes ?? ""}
-                            onChange={(e) =>
-                              updateNotes(line.id, e.target.value)
-                            }
+                            onChange={(e) => updateNotes(line.id, e.target.value)}
                             placeholder="Add note…"
                             className="mt-1.5 w-full text-xs text-[#666] placeholder:text-[#ccc] focus:outline-none border-0 bg-transparent"
                           />
@@ -430,32 +407,18 @@ export default function BOMEditor({
                             type="number"
                             min={1}
                             value={line.quantity}
-                            onChange={(e) =>
-                              updateQuantity(
-                                line.id,
-                                parseInt(e.target.value) || 1,
-                              )
-                            }
+                            onChange={(e) => updateQuantity(line.id, parseInt(e.target.value) || 1)}
                             className="w-16 text-right text-sm border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111] transition-colors"
                           />
                         </td>
-
                         <td className="px-3 py-3 text-right text-sm text-[#666]">
                           {(() => {
-                            const price = effectivePrice(
-                              line.itemId,
-                              line.item.price,
-                            );
-                            const hasCustom =
-                              customerPrices[line.itemId] != null;
+                            const price = effectivePrice(line.itemId, line.item.price);
+                            const hasCustom = customerPrices[line.itemId] != null;
                             if (price == null) return "—";
                             return (
                               <div className="flex flex-col items-end gap-0.5">
-                                <span
-                                  className={
-                                    hasCustom ? "text-blue-600 font-medium" : ""
-                                  }
-                                >
+                                <span className={hasCustom ? "text-blue-600 font-medium" : ""}>
                                   ${price.toLocaleString()}
                                 </span>
                                 {hasCustom && line.item.price != null && (
@@ -469,13 +432,8 @@ export default function BOMEditor({
                         </td>
                         <td className="px-5 py-3 text-right text-sm font-semibold text-[#111]">
                           {(() => {
-                            const price = effectivePrice(
-                              line.itemId,
-                              line.item.price,
-                            );
-                            return price != null
-                              ? `$${(price * line.quantity).toLocaleString()}`
-                              : "—";
+                            const price = effectivePrice(line.itemId, line.item.price);
+                            return price != null ? `$${(price * line.quantity).toLocaleString()}` : "—";
                           })()}
                         </td>
                         <td className="pr-3">
@@ -494,39 +452,26 @@ export default function BOMEditor({
             </div>
           </div>
 
-          {/* Sidebar — right 1/3 */}
+          {/* Sidebar */}
           <div className="space-y-4">
-            {/* Totals */}
             <div className="bg-white border border-[#E5E3DE] rounded-2xl p-5">
-              <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-4">
-                Summary
-              </p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-4">Summary</p>
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-[#666]">Total Cost</span>
                   <span className="font-semibold text-[#111]">
-                    $
-                    {totalCost.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                    })}
+                    ${totalCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-[#666]">Total Price</span>
                   <span className="font-semibold text-[#111]">
-                    $
-                    {totalPrice.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                    })}
+                    ${totalPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </span>
                 </div>
                 <div className="border-t border-[#F0EEE9] pt-3 flex justify-between text-sm">
                   <span className="text-[#666]">Margin</span>
-                  <span
-                    className={`font-bold ${
-                      totalPrice > totalCost ? "text-green-600" : "text-red-600"
-                    }`}
-                  >
+                  <span className={`font-bold ${totalPrice > totalCost ? "text-green-600" : "text-red-600"}`}>
                     {totalPrice > 0
                       ? `${(((totalPrice - totalCost) / totalPrice) * 100).toFixed(1)}%`
                       : "—"}
@@ -535,7 +480,6 @@ export default function BOMEditor({
               </div>
             </div>
 
-            {/* Generated Quotes */}
             <div className="bg-white border border-[#E5E3DE] rounded-2xl p-5">
               <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-4">
                 Quotes from this BOM
@@ -548,7 +492,7 @@ export default function BOMEditor({
                     <a
                       key={q.id}
                       href={`/projects/${projectId}/quotes/${q.id}`}
-                      className="flex items-center justify-between p-3 border border-[#F0EEE9] rounded-xl hover:border-[#E5E3DE] hover:bg-[#F7F6F3] transition-all group"
+                      className="flex items-center justify-between p-3 border border-[#F0EEE9] rounded-xl hover:border-[#E5E3DE] hover:bg-[#F7F6F3] transition-all"
                     >
                       <div>
                         <p className="text-xs font-mono font-semibold text-[#111]">
@@ -564,11 +508,7 @@ export default function BOMEditor({
                             ${q.total.toLocaleString()}
                           </span>
                         )}
-                        <span
-                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                            quoteStatusColors[q.status]
-                          }`}
-                        >
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${quoteStatusColors[q.status]}`}>
                           {q.status}
                         </span>
                       </div>
@@ -581,12 +521,8 @@ export default function BOMEditor({
         </div>
       </div>
 
-      {/* Click outside to close picker */}
       {showItemPicker && (
-        <div
-          className="fixed inset-0 z-10"
-          onClick={() => setShowItemPicker(false)}
-        />
+        <div className="fixed inset-0 z-10" onClick={() => setShowItemPicker(false)} />
       )}
     </div>
   );

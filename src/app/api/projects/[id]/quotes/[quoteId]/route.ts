@@ -149,6 +149,13 @@ export async function PUT(
       where: { quoteId, id: { notIn: incomingBundleIds } },
     });
     console.log("deleted", deleted.count, "bundles");
+
+    // 5. Update quote status + total  ← THIS WAS MISSING
+    console.log("--- Step 5: updating quote status:", status, "total:", total);
+    await tx.quote.update({
+      where: { id: quoteId },
+      data: { status, total },
+    });
   });
 
   console.log("=== QUOTE SAVE COMPLETE ===");
