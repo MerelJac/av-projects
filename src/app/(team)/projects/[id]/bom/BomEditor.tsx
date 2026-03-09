@@ -61,11 +61,14 @@ export default function BOMEditor({
   bom,
   items,
   projectId,
+  customerPrices,
 }: {
   bom: BOM;
   items: Item[];
   projectId: string;
+  customerPrices: Record<string, number>; // itemId → custom price
 }) {
+  console.log("Items: ", items);
   const router = useRouter();
   const [lines, setLines] = useState<BOMLine[]>(bom.lines);
   const [saving, setSaving] = useState(false);
@@ -78,7 +81,12 @@ export default function BOMEditor({
     msg: string;
   } | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
-
+  function effectivePrice(
+    itemId: string,
+    standardPrice: number | null,
+  ): number | null {
+    return customerPrices[itemId] ?? standardPrice;
+  }
   const showToast = (type: "success" | "error", msg: string) => {
     setToast({ type, msg });
     setTimeout(() => setToast(null), 3000);
@@ -185,7 +193,8 @@ export default function BOMEditor({
     0,
   );
   const totalPrice = lines.reduce(
-    (sum, l) => sum + (l.item.price ?? 0) * l.quantity,
+    (sum, l) =>
+      sum + (effectivePrice(l.itemId, l.item.price) ?? 0) * l.quantity,
     0,
   );
 
@@ -260,7 +269,9 @@ export default function BOMEditor({
           {/* Line Items — left 2/3 */}
           <div className="col-span-2 space-y-4">
             {/* Add item */}
-            <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
+            <div className="bg-white border border-[#E5E3DE] rounded-2xl">
+              {" "}
+              {/* ← remove overflow-hidden */}
               <div className="px-5 py-4 border-b border-[#F0EEE9]">
                 <p className="text-xs font-semibold uppercase tracking-widest text-[#888]">
                   Add Items
@@ -285,9 +296,11 @@ export default function BOMEditor({
                     className="w-full pl-9 pr-4 py-2.5 border border-[#E5E3DE] rounded-xl text-sm text-[#111] placeholder:text-[#bbb] focus:outline-none focus:border-[#111] transition-colors"
                   />
                 </div>
-
                 {showItemPicker && itemSearch && (
-                  <div className="absolute left-4 right-4 top-full mt-1 bg-white border border-[#E5E3DE] rounded-xl shadow-lg z-20 max-h-64 overflow-y-auto">
+                  <div
+                    className="absolute left-4 right-4 top-full mt-1 bg-white border border-[#E5E3DE] rounded-xl shadow-lg z-20 max-h-64 overflow-y-auto"
+                    onMouseDown={(e) => e.preventDefault()}
+                  >
                     {filteredItems.length === 0 ? (
                       <p className="text-sm text-[#999] px-4 py-3">
                         No matching items
@@ -296,7 +309,9 @@ export default function BOMEditor({
                       filteredItems.slice(0, 20).map((item) => (
                         <button
                           key={item.id}
-                          onClick={() => {
+                          onMouseDown={(e) => {
+                            // ← use onMouseDown instead of onClick
+                            e.preventDefault();
                             addLine(item);
                             setShowItemPicker(false);
                             setItemSearch("");
@@ -322,6 +337,26 @@ export default function BOMEditor({
                             {item.price != null && (
                               <span className="font-medium text-[#111]">
                                 ${item.price.toLocaleString()}
+                                {(() => {
+                                  const price = effectivePrice(
+                                    item.id,
+                                    item.price,
+                                  );
+                                  const hasCustom =
+                                    customerPrices[item.id] != null;
+                                  return price != null ? (
+                                    <span
+                                      className={`font-medium ${hasCustom ? "text-blue-600" : "text-[#111]"}`}
+                                    >
+                                      ${price.toLocaleString()}
+                                      {hasCustom && (
+                                        <span className="text-[10px] ml-1 text-[#bbb] normal-case">
+                                          custom
+                                        </span>
+                                      )}
+                                    </span>
+                                  ) : null;
+                                })()}
                               </span>
                             )}
                             <Plus size={13} className="text-[#111]" />
@@ -404,15 +439,44 @@ export default function BOMEditor({
                             className="w-16 text-right text-sm border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111] transition-colors"
                           />
                         </td>
+
                         <td className="px-3 py-3 text-right text-sm text-[#666]">
-                          {line.item.price != null
-                            ? `$${line.item.price.toLocaleString()}`
-                            : "—"}
+                          {(() => {
+                            const price = effectivePrice(
+                              line.itemId,
+                              line.item.price,
+                            );
+                            const hasCustom =
+                              customerPrices[line.itemId] != null;
+                            if (price == null) return "—";
+                            return (
+                              <div className="flex flex-col items-end gap-0.5">
+                                <span
+                                  className={
+                                    hasCustom ? "text-blue-600 font-medium" : ""
+                                  }
+                                >
+                                  ${price.toLocaleString()}
+                                </span>
+                                {hasCustom && line.item.price != null && (
+                                  <span className="text-[10px] text-[#bbb] line-through">
+                                    ${line.item.price.toLocaleString()}
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </td>
                         <td className="px-5 py-3 text-right text-sm font-semibold text-[#111]">
-                          {line.item.price != null
-                            ? `$${(line.item.price * line.quantity).toLocaleString()}`
-                            : "—"}
+                          {(() => {
+                            const price = effectivePrice(
+                              line.itemId,
+                              line.item.price,
+                            );
+                            return price != null
+                              ? `$${(price * line.quantity).toLocaleString()}`
+                              : "—";
+                          })()}
                         </td>
                         <td className="pr-3">
                           <button

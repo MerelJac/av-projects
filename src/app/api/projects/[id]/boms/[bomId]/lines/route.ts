@@ -3,8 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string; bomId: string } }
+  { params }: { params: Promise<{ id: string; bomId: string }> }
 ) {
+  const { id, bomId } = await params;
   const { lines } = await req.json();
 
   if (!Array.isArray(lines)) {
@@ -12,26 +13,22 @@ export async function PUT(
   }
 
   const bom = await prisma.billOfMaterials.findUnique({
-    where: { id: params.bomId },
+    where: { id: bomId },
   });
 
-  if (!bom || bom.projectId !== params.id) {
+  if (!bom || bom.projectId !== id) {
     return NextResponse.json({ error: "BOM not found" }, { status: 404 });
   }
 
-  // Replace all lines atomically
   await prisma.$transaction([
-    prisma.bOMLine.deleteMany({ where: { bomId: params.bomId } }),
+    prisma.bOMLine.deleteMany({ where: { bomId } }),
     prisma.bOMLine.createMany({
-      data: lines.map(
-        (l: { itemId: string; quantity: number; notes?: string; sortOrder?: number }, i: number) => ({
-          bomId: params.bomId,
-          itemId: l.itemId,
-          quantity: l.quantity ?? 1,
-          notes: l.notes ?? null,
-          sortOrder: l.sortOrder ?? i,
-        })
-      ),
+      data: lines.map((l: { itemId: string; quantity: number; notes?: string }) => ({
+        bomId,
+        itemId: l.itemId,
+        quantity: l.quantity ?? 1,
+        notes: l.notes ?? null,
+      })),
     }),
   ]);
 

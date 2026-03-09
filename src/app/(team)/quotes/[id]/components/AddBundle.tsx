@@ -1,6 +1,6 @@
 "use client";
 
-import { createBundle } from "../builder/actions";
+import { createBundle } from "../dep-builder/actions";
 
 export default function AddBundle({ quoteId }: { quoteId: string }) {
   return (

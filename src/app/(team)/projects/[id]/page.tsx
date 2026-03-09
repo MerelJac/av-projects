@@ -94,6 +94,13 @@ export default async function ProjectPage({
                       </span>
                     )}
                   </div>
+                      <a
+                  href={`/quotes/${quote.id}`}
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  View →
+                </a>
+
                 </div>
 
                 {quote.lines.length > 0 && (

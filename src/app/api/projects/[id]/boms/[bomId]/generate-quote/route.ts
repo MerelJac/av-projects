@@ -3,20 +3,21 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string; bomId: string } }
+  { params }: { params: Promise<{ id: string; bomId: string }> },
 ) {
+  const { id, bomId } = await params;
+
   const bom = await prisma.billOfMaterials.findUnique({
-    where: { id: params.bomId },
+    where: { id: bomId },
     include: {
       lines: {
         include: { item: true },
-        orderBy: { sortOrder: "asc" },
       },
       project: true,
     },
   });
 
-  if (!bom || bom.projectId !== params.id) {
+  if (!bom || bom.projectId !== id) {
     return NextResponse.json({ error: "BOM not found" }, { status: 404 });
   }
 
@@ -24,15 +25,25 @@ export async function POST(
     return NextResponse.json({ error: "BOM has no lines" }, { status: 400 });
   }
 
-  // Snapshot: prices are captured at quote generation time
+  const customerPrices = await prisma.customerItemPrice.findMany({
+    where: {
+      customerId: bom.project.customerId,
+      itemId: { in: bom.lines.map((l) => l.itemId) },
+    },
+  });
+
+  const priceMap = Object.fromEntries(
+    customerPrices.map((cp) => [cp.itemId, cp.price]),
+  );
+
   const lineData = bom.lines.map((line) => ({
     itemId: line.itemId,
     description: [line.item.manufacturer, line.item.itemNumber]
       .filter(Boolean)
       .join(" — "),
     quantity: line.quantity,
-    price: line.item.price ?? 0,   // snapshot current price
-    cost: line.item.cost ?? null,  // snapshot current cost
+    price: priceMap[line.itemId] ?? line.item.price ?? 0,
+    cost: line.item.cost ?? null,
   }));
 
   const total = lineData.reduce((sum, l) => sum + l.price * l.quantity, 0);
@@ -41,7 +52,7 @@ export async function POST(
     data: {
       customerId: bom.project.customerId,
       projectId: bom.projectId,
-      bomId: bom.id,
+      billOfMaterialsId: bom.id,
       status: "DRAFT",
       total,
       lines: { create: lineData },

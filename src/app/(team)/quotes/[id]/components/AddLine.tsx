@@ -1,6 +1,6 @@
 "use client";
 
-import { createLine } from "../builder/actions";
+import { createLine } from "../dep-builder/actions";
 
 export default function AddLine({
   quoteId,

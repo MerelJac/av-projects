@@ -2,50 +2,28 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ArrowLeft, Send, CheckCircle2, XCircle, Layers,
-  Eye, EyeOff, Trash2, AlertCircle, FileText, Edit2, Check
+  ArrowLeft,
+  Send,
+  CheckCircle2,
+  XCircle,
+  Layers,
+  Eye,
+  EyeOff,
+  Trash2,
+  AlertCircle,
+  FileText,
+  Edit2,
+  Check,
 } from "lucide-react";
+import { QuoteWithDetails } from "../quotes/[quoteId]/page";
+import { QuoteStatus } from "@prisma/client";
 
-type Item = {
-  id: string;
-  itemNumber: string;
-  manufacturer: string | null;
-};
-
-type Bundle = {
-  id: string;
-  name: string;
-  showToCustomer: boolean;
-  lines: QuoteLine[];
-};
-
-type QuoteLine = {
-  id: string;
-  description: string;
-  quantity: number;
-  price: number;
-  cost: number | null;
-  itemId: string | null;
-  bundleId: string | null;
-  item: Item | null;
-  bundle: Bundle | null;
-};
-
-type Quote = {
-  id: string;
-  status: string;
-  total: number | null;
-  customerId: string;
-  projectId: string | null;
-  customer: { name: string };
-  project: { name: string } | null;
-  bom: { id: string; name: string } | null;
-  lines: QuoteLine[];
-  quoteBundles: Bundle[];
-};
+// Derive types directly from the Prisma payload
+type QuoteLine = QuoteWithDetails["lines"][number];
+type Bundle = QuoteWithDetails["quoteBundles"][number];
 
 const STATUS_CONFIG: Record<
-  string,
+  QuoteStatus,
   { label: string; color: string; icon: React.ReactNode }
 > = {
   DRAFT: {
@@ -74,16 +52,19 @@ export default function QuoteEditor({
   quote: initialQuote,
   projectId,
 }: {
-  quote: Quote;
+  quote: QuoteWithDetails;
   projectId: string;
 }) {
   const router = useRouter();
   const [lines, setLines] = useState<QuoteLine[]>(initialQuote.lines);
   const [bundles, setBundles] = useState<Bundle[]>(initialQuote.quoteBundles);
-  const [status, setStatus] = useState(initialQuote.status);
+  const [status, setStatus] = useState<QuoteStatus>(initialQuote.status);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(true);
-  const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const [toast, setToast] = useState<{
+    type: "success" | "error";
+    msg: string;
+  } | null>(null);
   const [newBundleName, setNewBundleName] = useState("");
   const [showBundleInput, setShowBundleInput] = useState(false);
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
@@ -98,7 +79,7 @@ export default function QuoteEditor({
 
   function updateLine(lineId: string, updates: Partial<QuoteLine>) {
     setLines((prev) =>
-      prev.map((l) => (l.id === lineId ? { ...l, ...updates } : l))
+      prev.map((l) => (l.id === lineId ? { ...l, ...updates } : l)),
     );
     setSaved(false);
   }
@@ -110,19 +91,22 @@ export default function QuoteEditor({
 
   function assignToBundle(lineId: string, bundleId: string | null) {
     setLines((prev) =>
-      prev.map((l) => (l.id === lineId ? { ...l, bundleId } : l))
+      prev.map((l) => (l.id === lineId ? { ...l, bundleId } : l)),
     );
     setSaved(false);
   }
 
   function addBundle() {
     if (!newBundleName.trim()) return;
-    const tempBundle: Bundle = {
+    const tempBundle = {
       id: `temp-${Date.now()}`,
       name: newBundleName.trim(),
-      showToCustomer: true,
-      lines: [],
-    };
+      showToCustomer: true as const,
+      lines: [] as Bundle["lines"],
+      quoteId: initialQuote.id,
+      createdAt: new Date(),
+      bomId: null
+    } satisfies Bundle;
     setBundles((prev) => [...prev, tempBundle]);
     setNewBundleName("");
     setShowBundleInput(false);
@@ -132,8 +116,8 @@ export default function QuoteEditor({
   function toggleBundleVisibility(bundleId: string) {
     setBundles((prev) =>
       prev.map((b) =>
-        b.id === bundleId ? { ...b, showToCustomer: !b.showToCustomer } : b
-      )
+        b.id === bundleId ? { ...b, showToCustomer: !b.showToCustomer } : b,
+      ),
     );
     setSaved(false);
   }
@@ -141,7 +125,7 @@ export default function QuoteEditor({
   function removeBundle(bundleId: string) {
     // Unassign lines from this bundle
     setLines((prev) =>
-      prev.map((l) => (l.bundleId === bundleId ? { ...l, bundleId: null } : l))
+      prev.map((l) => (l.bundleId === bundleId ? { ...l, bundleId: null } : l)),
     );
     setBundles((prev) => prev.filter((b) => b.id !== bundleId));
     setSaved(false);
@@ -150,11 +134,14 @@ export default function QuoteEditor({
   async function handleSave() {
     setSaving(true);
     try {
-      const res = await fetch(`/api/projects/${projectId}/quotes/${initialQuote.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lines, bundles, status }),
-      });
+      const res = await fetch(
+        `/api/projects/${projectId}/quotes/${initialQuote.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lines, bundles, status }),
+        },
+      );
       if (!res.ok) throw new Error();
       setSaved(true);
       showToast("success", "Quote saved");
@@ -166,7 +153,7 @@ export default function QuoteEditor({
     }
   }
 
-  async function handleStatusChange(newStatus: string) {
+  async function handleStatusChange(newStatus: QuoteStatus) {
     setStatus(newStatus);
     setSaved(false);
   }
@@ -189,7 +176,11 @@ export default function QuoteEditor({
               : "bg-white border-red-200 text-red-600"
           }`}
         >
-          {toast.type === "success" ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
+          {toast.type === "success" ? (
+            <CheckCircle2 size={15} />
+          ) : (
+            <AlertCircle size={15} />
+          )}
           {toast.msg}
         </div>
       )}
@@ -209,10 +200,10 @@ export default function QuoteEditor({
           <div>
             <div className="flex items-center gap-2 text-xs text-[#999] mb-1">
               <span>{initialQuote.customer.name}</span>
-              {initialQuote.bom && (
+              {initialQuote.billOfMaterials && (
                 <>
                   <span>·</span>
-                  <span>from BOM: {initialQuote.bom.name}</span>
+                  <span>from BOM: {initialQuote.billOfMaterials.name}</span>
                 </>
               )}
             </div>
@@ -220,7 +211,9 @@ export default function QuoteEditor({
               <h1 className="text-2xl font-bold text-[#111] tracking-tight font-mono">
                 #{initialQuote.id.slice(0, 8).toUpperCase()}
               </h1>
-              <span className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${statusCfg.color}`}>
+              <span
+                className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${statusCfg.color}`}
+              >
                 {statusCfg.icon}
                 {statusCfg.label}
               </span>
@@ -244,14 +237,15 @@ export default function QuoteEditor({
         <div className="grid grid-cols-3 gap-6">
           {/* Lines — left 2/3 */}
           <div className="col-span-2 space-y-4">
-
             {/* Unbundled lines */}
             <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
               <div className="px-5 py-3.5 border-b border-[#F0EEE9] flex items-center justify-between">
                 <p className="text-xs font-semibold uppercase tracking-widest text-[#888]">
                   Line Items
                 </p>
-                <p className="text-xs text-[#bbb]">{unbundledLines.length} unbundled</p>
+                <p className="text-xs text-[#bbb]">
+                  {unbundledLines.length} unbundled
+                </p>
               </div>
 
               {unbundledLines.length === 0 ? (
@@ -262,10 +256,18 @@ export default function QuoteEditor({
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-[#F0EEE9]">
-                      <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-5 py-3">Description</th>
-                      <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3 w-20">Qty</th>
-                      <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3 w-28">Price</th>
-                      <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-5 py-3 w-28">Total</th>
+                      <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-5 py-3">
+                        Description
+                      </th>
+                      <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3 w-20">
+                        Qty
+                      </th>
+                      <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3 w-28">
+                        Price
+                      </th>
+                      <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-5 py-3 w-28">
+                        Total
+                      </th>
                       <th className="w-10" />
                     </tr>
                   </thead>
@@ -276,7 +278,11 @@ export default function QuoteEditor({
                         line={line}
                         bundles={bundles}
                         editing={editingLineId === line.id}
-                        onEdit={() => setEditingLineId(editingLineId === line.id ? null : line.id)}
+                        onEdit={() =>
+                          setEditingLineId(
+                            editingLineId === line.id ? null : line.id,
+                          )
+                        }
                         onUpdate={(u) => updateLine(line.id, u)}
                         onRemove={() => removeLine(line.id)}
                         onAssignBundle={(bId) => assignToBundle(line.id, bId)}
@@ -292,7 +298,7 @@ export default function QuoteEditor({
               const bundleLines = lines.filter((l) => l.bundleId === bundle.id);
               const bundleTotal = bundleLines.reduce(
                 (s, l) => s + l.price * l.quantity,
-                0
+                0,
               );
               return (
                 <div
@@ -302,25 +308,39 @@ export default function QuoteEditor({
                   <div className="px-5 py-3.5 border-b border-[#F0EEE9] flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       <Layers size={14} className="text-[#999]" />
-                      <p className="text-sm font-semibold text-[#111]">{bundle.name}</p>
+                      <p className="text-sm font-semibold text-[#111]">
+                        {bundle.name}
+                      </p>
                       <span className="text-xs text-[#bbb]">
-                        {bundleLines.length} item{bundleLines.length !== 1 ? "s" : ""}
+                        {bundleLines.length} item
+                        {bundleLines.length !== 1 ? "s" : ""}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold text-[#111]">
-                        ${bundleTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        $
+                        {bundleTotal.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                        })}
                       </span>
                       <button
                         onClick={() => toggleBundleVisibility(bundle.id)}
-                        title={bundle.showToCustomer ? "Visible to customer" : "Hidden from customer"}
+                        title={
+                          bundle.showToCustomer
+                            ? "Visible to customer"
+                            : "Hidden from customer"
+                        }
                         className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border transition-colors ${
                           bundle.showToCustomer
                             ? "border-green-200 text-green-600 bg-green-50"
                             : "border-[#E5E3DE] text-[#999] bg-[#F7F6F3]"
                         }`}
                       >
-                        {bundle.showToCustomer ? <Eye size={11} /> : <EyeOff size={11} />}
+                        {bundle.showToCustomer ? (
+                          <Eye size={11} />
+                        ) : (
+                          <EyeOff size={11} />
+                        )}
                         {bundle.showToCustomer ? "Visible" : "Hidden"}
                       </button>
                       <button
@@ -345,10 +365,16 @@ export default function QuoteEditor({
                             line={line}
                             bundles={bundles}
                             editing={editingLineId === line.id}
-                            onEdit={() => setEditingLineId(editingLineId === line.id ? null : line.id)}
+                            onEdit={() =>
+                              setEditingLineId(
+                                editingLineId === line.id ? null : line.id,
+                              )
+                            }
                             onUpdate={(u) => updateLine(line.id, u)}
                             onRemove={() => removeLine(line.id)}
-                            onAssignBundle={(bId) => assignToBundle(line.id, bId)}
+                            onAssignBundle={(bId) =>
+                              assignToBundle(line.id, bId)
+                            }
                             inBundle
                           />
                         ))}
@@ -408,18 +434,26 @@ export default function QuoteEditor({
                 <div className="flex justify-between text-sm">
                   <span className="text-[#666]">Subtotal</span>
                   <span className="font-semibold text-[#111]">
-                    ${subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    $
+                    {subtotal.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                    })}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-[#666]">Total Cost</span>
                   <span className="text-[#666]">
-                    ${totalCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    $
+                    {totalCost.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                    })}
                   </span>
                 </div>
                 <div className="border-t border-[#F0EEE9] pt-3 flex justify-between text-sm">
                   <span className="text-[#666]">Margin</span>
-                  <span className={`font-bold text-base ${margin >= 20 ? "text-green-600" : margin >= 10 ? "text-amber-600" : "text-red-600"}`}>
+                  <span
+                    className={`font-bold text-base ${margin >= 20 ? "text-green-600" : margin >= 10 ? "text-amber-600" : "text-red-600"}`}
+                  >
                     {margin.toFixed(1)}%
                   </span>
                 </div>
@@ -432,7 +466,12 @@ export default function QuoteEditor({
                 Status
               </p>
               <div className="space-y-2">
-                {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
+                {(
+                  Object.entries(STATUS_CONFIG) as [
+                    QuoteStatus,
+                    (typeof STATUS_CONFIG)[QuoteStatus],
+                  ][]
+                ).map(([key, cfg]) => (
                   <button
                     key={key}
                     onClick={() => handleStatusChange(key)}
@@ -483,7 +522,7 @@ function LineRow({
   inBundle = false,
 }: {
   line: QuoteLine;
-  bundles: { id: string; name: string }[];
+  bundles: Bundle[];
   editing: boolean;
   onEdit: () => void;
   onUpdate: (u: Partial<QuoteLine>) => void;
@@ -493,7 +532,9 @@ function LineRow({
 }) {
   return (
     <>
-      <tr className={`border-b border-[#F7F6F3] last:border-0 group ${inBundle ? "bg-[#FAFAF9]" : ""}`}>
+      <tr
+        className={`border-b border-[#F7F6F3] last:border-0 group ${inBundle ? "bg-[#FAFAF9]" : ""}`}
+      >
         <td className="px-5 py-3">
           {editing ? (
             <input
@@ -515,7 +556,9 @@ function LineRow({
             </div>
           )}
           {line.item && (
-            <p className="text-[10px] text-[#bbb] mt-0.5 font-mono">{line.item.itemNumber}</p>
+            <p className="text-[10px] text-[#bbb] mt-0.5 font-mono">
+              {line.item.itemNumber}
+            </p>
           )}
         </td>
         <td className="px-3 py-3 text-right">
@@ -523,7 +566,9 @@ function LineRow({
             type="number"
             min={1}
             value={line.quantity}
-            onChange={(e) => onUpdate({ quantity: parseInt(e.target.value) || 1 })}
+            onChange={(e) =>
+              onUpdate({ quantity: parseInt(e.target.value) || 1 })
+            }
             className="w-14 text-right text-sm border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111]"
           />
         </td>
@@ -535,13 +580,18 @@ function LineRow({
               min={0}
               step={0.01}
               value={line.price}
-              onChange={(e) => onUpdate({ price: parseFloat(e.target.value) || 0 })}
+              onChange={(e) =>
+                onUpdate({ price: parseFloat(e.target.value) || 0 })
+              }
               className="w-20 text-right text-sm border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111]"
             />
           </div>
         </td>
         <td className="px-5 py-3 text-right text-sm font-semibold text-[#111]">
-          ${(line.price * line.quantity).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          $
+          {(line.price * line.quantity).toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+          })}
         </td>
         <td className="pr-3">
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">

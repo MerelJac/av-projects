@@ -10,20 +10,21 @@ export default async function BOMPage({
 }) {
   const { id, bomId } = await params;
 
-  const [bom, items] = await Promise.all([
-    prisma.billOfMaterials.findUnique({
-      where: { id: bomId },
-      include: {
-        project: { include: { customer: true } },
-        lines: {
-          include: { item: true },
-        },
-        quotes: {
-          orderBy: { createdAt: "desc" },
-          select: { id: true, status: true, total: true, createdAt: true },
-        },
+  const bom = await prisma.billOfMaterials.findUnique({
+    where: { id: bomId },
+    include: {
+      project: { include: { customer: true } },
+      lines: { include: { item: true } },
+      quotes: {
+        orderBy: { createdAt: "desc" },
+        select: { id: true, status: true, total: true, createdAt: true },
       },
-    }),
+    },
+  });
+
+  if (!bom || bom.project.id !== id) return notFound();
+
+  const [items, customerPrices] = await Promise.all([
     prisma.item.findMany({
       where: { active: true },
       orderBy: { itemNumber: "asc" },
@@ -37,14 +38,19 @@ export default async function BOMPage({
         type: true,
       },
     }),
+    prisma.customerItemPrice.findMany({
+      where: { customerId: bom.project.customerId },
+      select: { itemId: true, price: true },
+    }),
   ]);
-
-  if (!bom || bom.project.id !== id) return notFound();
 
   return (
     <BOMEditor
       bom={bom as BOMType}
       items={items as BOMItem[]}
+      customerPrices={Object.fromEntries(
+        customerPrices.map((cp) => [cp.itemId, cp.price]),
+      )}
       projectId={id}
     />
   );
