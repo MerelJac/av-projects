@@ -1,5 +1,24 @@
-// src/app/(team)/projects/[id]/page.tsx
 import { prisma } from "@/lib/prisma";
+import { notFound } from "next/navigation";
+import Link from "next/link";
+import {
+  FileText,
+  Package,
+  GitBranch,
+  Milestone,
+  Truck,
+  Clock,
+  ShoppingCart,
+  Plus,
+  ArrowRight,
+} from "lucide-react";
+
+const quoteStatusStyles: Record<string, string> = {
+  ACCEPTED: "bg-green-100 text-green-700",
+  SENT: "bg-blue-100 text-blue-700",
+  REJECTED: "bg-red-100 text-red-600",
+  DRAFT: "bg-gray-100 text-gray-600",
+};
 
 export default async function ProjectPage({
   params,
@@ -15,26 +34,17 @@ export default async function ProjectPage({
       shipments: true,
       timeEntries: true,
       purchaseOrders: true,
-      milestones: true,
+      milestones: { orderBy: { dueDate: "asc" } },
       quotes: {
         include: {
-          lines: {
-            include: {
-              item: true,
-              bundle: true,
-            },
-          },
+          lines: { include: { item: true, bundle: true } },
         },
         orderBy: { createdAt: "desc" },
       },
-      changeOrders: {
-        orderBy: { createdAt: "desc" },
-      },
+      changeOrders: { orderBy: { createdAt: "desc" } },
       boms: {
         include: {
-          lines: {
-            include: { item: true },
-          },
+          lines: { include: { item: true } },
           quotes: true,
         },
         orderBy: { createdAt: "desc" },
@@ -42,217 +52,259 @@ export default async function ProjectPage({
     },
   });
 
-  if (!project) return <div>Project not found</div>;
-
-  const quoteStatusStyles: Record<string, string> = {
-    ACCEPTED: "bg-green-100 text-green-700",
-    SENT: "bg-blue-100 text-blue-700",
-    REJECTED: "bg-red-100 text-red-700",
-    DRAFT: "bg-gray-100 text-gray-600",
-  };
+  if (!project) return notFound();
 
   const changeOrderTotal = project.changeOrders.reduce(
     (sum, co) => sum + co.amount,
     0,
   );
 
+  const completedMilestones = project.milestones.filter((m) => m.completed).length;
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">{project.name}</h1>
-        <p className="text-gray-500">Customer: {project.customer.name}</p>
-      </div>
+    <div className="min-h-screen bg-[#F7F6F3]">
+      <div className="max-w-5xl mx-auto px-6 py-10 space-y-6">
 
-      {/* Quotes */}
-      <div className="bg-white border rounded-xl p-6">
-        <h3 className="font-semibold mb-4">Quotes ({project.quotes.length})</h3>
-
-        {project.quotes.length === 0 ? (
-          <p className="text-sm text-gray-400">No quotes linked yet.</p>
-        ) : (
-          <div className="space-y-4">
-            {project.quotes.map((quote) => (
-              <div key={quote.id} className="border rounded-lg p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-gray-700">
-                      #{quote.id.slice(0, 8).toUpperCase()}
-                    </span>
-                    <span
-                      className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                        quoteStatusStyles[quote.status]
-                      }`}
-                    >
-                      {quote.status}
-                    </span>
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {new Date(quote.createdAt).toLocaleDateString()}
-                    {quote.total != null && (
-                      <span className="ml-3 font-semibold text-gray-800">
-                        ${quote.total.toLocaleString()}
-                      </span>
-                    )}
-                  </div>
-                      <a
-                  href={`/quotes/${quote.id}`}
-                  className="text-sm text-blue-600 hover:underline"
-                >
-                  View →
-                </a>
-
-                </div>
-
-                {quote.lines.length > 0 && (
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-left text-gray-400 border-b text-xs uppercase tracking-wide">
-                        <th className="pb-2">Description</th>
-                        <th className="pb-2">Item</th>
-                        <th className="pb-2 text-right">Qty</th>
-                        <th className="pb-2 text-right">Price</th>
-                        <th className="pb-2 text-right">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {quote.lines.map((line) => (
-                        <tr key={line.id} className="border-b last:border-0">
-                          <td className="py-1.5">{line.description}</td>
-                          <td className="py-1.5 text-gray-400">
-                            {line.item?.itemNumber ?? "—"}
-                          </td>
-                          <td className="py-1.5 text-right">{line.quantity}</td>
-                          <td className="py-1.5 text-right">
-                            ${line.price.toLocaleString()}
-                          </td>
-                          <td className="py-1.5 text-right">
-                            ${(line.quantity * line.price).toLocaleString()}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* BOMs */}
-      <div className="bg-white border rounded-xl p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold">
-            Bill of Materials ({project.boms.length})
-          </h3>
-          <a
-            href={`/projects/${project.id}/bom/new`}
-            className="text-sm bg-black text-white px-3 py-1.5 rounded-lg"
-          >
-            + New BOM
-          </a>
-        </div>
-        {project.boms.length === 0 ? (
-          <p className="text-sm text-gray-400">No BOMs yet.</p>
-        ) : (
-          <div className="space-y-3">
-            {project.boms.map((bom) => (
-              <div
-                key={bom.id}
-                className="border rounded-lg p-4 flex items-center justify-between"
-              >
-                <div>
-                  <p className="font-medium text-sm">{bom.name}</p>
-                  <p className="text-xs text-gray-400">
-                    {bom.lines.length} items ·{" "}
-                    {bom.quotes.length > 0
-                      ? `${bom.quotes.length} quote(s) generated`
-                      : "No quotes yet"}
-                  </p>
-                </div>
-                <a
-                  href={`/projects/${project.id}/bom/${bom.id}`}
-                  className="text-sm text-blue-600 hover:underline"
-                >
-                  View →
-                </a>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-      {/* Change Orders */}
-      <div className="bg-white border rounded-xl p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold">
-            Change Orders ({project.changeOrders.length})
-          </h3>
-          {project.changeOrders.length > 0 && (
-            <span className="text-sm font-medium text-gray-600">
-              Total:{" "}
-              <span
-                className={
-                  changeOrderTotal >= 0 ? "text-green-600" : "text-red-600"
-                }
-              >
-                {changeOrderTotal >= 0 ? "+" : ""}$
-                {changeOrderTotal.toLocaleString()}
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-xs text-[#999] mb-1">{project.customer.name}</p>
+            <h1 className="text-2xl font-bold text-[#111] tracking-tight">
+              {project.name}
+            </h1>
+            {project.billingTerms && (
+              <span className="inline-block mt-2 text-[10px] font-semibold uppercase tracking-widest px-2.5 py-1 bg-[#111] text-white rounded-lg">
+                {project.billingTerms}
               </span>
-            </span>
+            )}
+          </div>
+          {project.totalBudget != null && (
+            <div className="text-right">
+              <p className="text-xs text-[#999] mb-0.5">Budget</p>
+              <p className="text-xl font-bold text-[#111]">
+                ${project.totalBudget.toLocaleString()}
+              </p>
+              {project.invoiced != null && (
+                <p className="text-xs text-[#999] mt-0.5">
+                  ${project.invoiced.toLocaleString()} invoiced
+                </p>
+              )}
+            </div>
           )}
         </div>
 
-        {project.changeOrders.length === 0 ? (
-          <p className="text-sm text-gray-400">No change orders yet.</p>
-        ) : (
-          <div className="divide-y">
-            {project.changeOrders.map((co) => (
-              <div
-                key={co.id}
-                className="py-3 flex items-center justify-between"
-              >
-                <div>
-                  <p className="text-sm font-medium text-gray-800">
-                    {co.description}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {new Date(co.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-                <span
-                  className={`text-sm font-semibold ${
-                    co.amount >= 0 ? "text-green-600" : "text-red-600"
-                  }`}
+        {/* Stats Row */}
+        <div className="grid grid-cols-3 gap-4">
+          <div className="bg-white border border-[#E5E3DE] rounded-2xl p-5 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-[#F0EEE9] flex items-center justify-center flex-shrink-0">
+              <Truck size={16} className="text-[#666]" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-[#111]">{project.shipments.length}</p>
+              <p className="text-xs text-[#999]">Shipments</p>
+            </div>
+          </div>
+          <div className="bg-white border border-[#E5E3DE] rounded-2xl p-5 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-[#F0EEE9] flex items-center justify-center flex-shrink-0">
+              <Clock size={16} className="text-[#666]" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-[#111]">
+                {project.timeEntries.reduce((sum, t) => sum + t.hours, 0).toFixed(1)}
+              </p>
+              <p className="text-xs text-[#999]">Hours Logged</p>
+            </div>
+          </div>
+          <div className="bg-white border border-[#E5E3DE] rounded-2xl p-5 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-[#F0EEE9] flex items-center justify-center flex-shrink-0">
+              <ShoppingCart size={16} className="text-[#666]" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-[#111]">{project.purchaseOrders.length}</p>
+              <p className="text-xs text-[#999]">Purchase Orders</p>
+            </div>
+          </div>
+        </div>
+
+        {/* BOMs */}
+        <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-[#F0EEE9] flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <Package size={15} className="text-[#999]" />
+              <h3 className="font-semibold text-sm text-[#111]">
+                Bill of Materials
+              </h3>
+              <span className="text-xs text-[#bbb]">{project.boms.length}</span>
+            </div>
+            <Link
+              href={`/projects/${project.id}/bom/new`}
+              className="flex items-center gap-1.5 text-xs font-semibold bg-[#111] text-white px-3 py-1.5 rounded-lg hover:bg-[#333] transition-colors"
+            >
+              <Plus size={12} />
+              New BOM
+            </Link>
+          </div>
+          {project.boms.length === 0 ? (
+            <div className="px-6 py-10 text-center">
+              <p className="text-sm text-[#bbb]">No BOMs yet — create one to start building quotes</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-[#F7F6F3]">
+              {project.boms.map((bom) => (
+                <Link
+                  key={bom.id}
+                  href={`/projects/${project.id}/bom/${bom.id}`}
+                  className="flex items-center justify-between px-6 py-4 hover:bg-[#FAFAF9] transition-colors group"
                 >
-                  {co.amount >= 0 ? "+" : ""}${co.amount.toLocaleString()}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+                  <div>
+                    <p className="text-sm font-medium text-[#111]">{bom.name}</p>
+                    <p className="text-xs text-[#999] mt-0.5">
+                      {bom.lines.length} item{bom.lines.length !== 1 ? "s" : ""} ·{" "}
+                      {bom.quotes.length > 0
+                        ? `${bom.quotes.length} quote${bom.quotes.length !== 1 ? "s" : ""} generated`
+                        : "No quotes yet"}
+                    </p>
+                  </div>
+                  <ArrowRight size={14} className="text-[#ccc] group-hover:text-[#111] transition-colors" />
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
 
-      {/* Milestones */}
-      <div className="bg-white border rounded-xl p-6">
-        <h3 className="font-semibold mb-4">Milestones</h3>
-        {project.milestones.map((m) => (
-          <div key={m.id} className="border-b py-2">
-            {m.name}
+        {/* Quotes */}
+        <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-[#F0EEE9] flex items-center gap-2.5">
+            <FileText size={15} className="text-[#999]" />
+            <h3 className="font-semibold text-sm text-[#111]">Quotes</h3>
+            <span className="text-xs text-[#bbb]">{project.quotes.length}</span>
           </div>
-        ))}
-      </div>
+          {project.quotes.length === 0 ? (
+            <div className="px-6 py-10 text-center">
+              <p className="text-sm text-[#bbb]">No quotes yet — generate one from a BOM</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-[#F7F6F3]">
+              {project.quotes.map((quote) => (
+                <div key={quote.id} className="px-6 py-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-mono font-semibold text-[#111]">
+                        #{quote.id.slice(0, 8).toUpperCase()}
+                      </span>
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${quoteStatusStyles[quote.status]}`}>
+                        {quote.status}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      {quote.total != null && (
+                        <span className="text-sm font-semibold text-[#111]">
+                          ${quote.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </span>
+                      )}
+                      <span className="text-xs text-[#999]">
+                        {new Date(quote.createdAt).toLocaleDateString()}
+                      </span>
+                      <Link
+                        href={`/projects/${project.id}/quotes/${quote.id}`}
+                        className="flex items-center gap-1 text-xs font-semibold text-[#111] hover:underline"
+                      >
+                        Edit <ArrowRight size={11} />
+                      </Link>
+                      <Link
+                        href={`/quotes/${quote.id}`}
+                        className="flex items-center gap-1 text-xs font-semibold text-[#666] hover:underline"
+                      >
+                        View <ArrowRight size={11} />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-6">
-        <div className="border p-6 rounded-xl">
-          Shipments: {project.shipments.length}
+        {/* Milestones */}
+        <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-[#F0EEE9] flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <Milestone size={15} className="text-[#999]" />
+              <h3 className="font-semibold text-sm text-[#111]">Milestones</h3>
+              <span className="text-xs text-[#bbb]">{project.milestones.length}</span>
+            </div>
+            {project.milestones.length > 0 && (
+              <span className="text-xs text-[#999]">
+                {completedMilestones}/{project.milestones.length} complete
+              </span>
+            )}
+          </div>
+          {project.milestones.length === 0 ? (
+            <div className="px-6 py-10 text-center">
+              <p className="text-sm text-[#bbb]">No milestones yet</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-[#F7F6F3]">
+              {project.milestones.map((m) => (
+                <div key={m.id} className="px-6 py-3.5 flex items-center gap-3">
+                  <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
+                    m.completed
+                      ? "bg-green-500 border-green-500"
+                      : "border-[#ccc]"
+                  }`} />
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm ${m.completed ? "line-through text-[#999]" : "text-[#111]"}`}>
+                      {m.name}
+                    </p>
+                  </div>
+                  {m.dueDate && (
+                    <span className="text-xs text-[#999] flex-shrink-0">
+                      {new Date(m.dueDate).toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-        <div className="border p-6 rounded-xl">
-          Hours Logged: {project.timeEntries.length}
+
+        {/* Change Orders */}
+        <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-[#F0EEE9] flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <GitBranch size={15} className="text-[#999]" />
+              <h3 className="font-semibold text-sm text-[#111]">Change Orders</h3>
+              <span className="text-xs text-[#bbb]">{project.changeOrders.length}</span>
+            </div>
+            {project.changeOrders.length > 0 && (
+              <span className={`text-sm font-semibold ${changeOrderTotal >= 0 ? "text-green-600" : "text-red-600"}`}>
+                {changeOrderTotal >= 0 ? "+" : ""}${changeOrderTotal.toLocaleString()}
+              </span>
+            )}
+          </div>
+          {project.changeOrders.length === 0 ? (
+            <div className="px-6 py-10 text-center">
+              <p className="text-sm text-[#bbb]">No change orders yet</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-[#F7F6F3]">
+              {project.changeOrders.map((co) => (
+                <div key={co.id} className="px-6 py-3.5 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-[#111]">{co.description}</p>
+                    <p className="text-xs text-[#999] mt-0.5">
+                      {new Date(co.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <span className={`text-sm font-semibold ${co.amount >= 0 ? "text-green-600" : "text-red-600"}`}>
+                    {co.amount >= 0 ? "+" : ""}${co.amount.toLocaleString()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-        <div className="border p-6 rounded-xl">
-          Purchase Orders: {project.purchaseOrders.length}
-        </div>
+
       </div>
     </div>
   );

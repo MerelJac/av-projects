@@ -1,34 +1,42 @@
 import { prisma } from "@/lib/prisma";
+import { QuoteBundle, QuoteLine } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string; quoteId: string } }
+  { params }: { params: Promise<{ id: string; quoteId: string }> }
 ) {
+  const { id, quoteId } = await params;
   const { lines, bundles, status } = await req.json();
 
   const quote = await prisma.quote.findUnique({
-    where: { id: params.quoteId },
+    where: { id: quoteId },
   });
 
-  if (!quote || quote.projectId !== params.id) {
+  if (!quote || quote.projectId !== id) {
     return NextResponse.json({ error: "Quote not found" }, { status: 404 });
   }
 
-  const total = (lines as any[]).reduce(
-    (sum: number, l: any) => sum + (l.price ?? 0) * (l.quantity ?? 1),
+  const total = (lines as QuoteLine[]).reduce(
+    (sum: number, l: QuoteLine) => sum + (l.price ?? 0) * (l.quantity ?? 1),
     0
   );
 
   await prisma.$transaction(async (tx) => {
-    // 1. Upsert bundles
+    // 1. Null out all line bundleIds first to avoid FK violations
+    await tx.quoteLine.updateMany({
+      where: { quoteId },
+      data: { bundleId: null },
+    });
+
+    // 2. Upsert bundles
     const bundleIdMap: Record<string, string> = {};
-    for (const bundle of bundles as any[]) {
+    for (const bundle of bundles as QuoteBundle[]) {
       const isTemp = bundle.id.startsWith("temp-");
       if (isTemp) {
         const created = await tx.quoteBundle.create({
           data: {
-            quoteId: params.quoteId,
+            quoteId,
             name: bundle.name,
             showToCustomer: bundle.showToCustomer ?? true,
           },
@@ -46,20 +54,20 @@ export async function PUT(
       }
     }
 
-    // 2. Delete removed bundles
-    const incomingBundleIds = (bundles as any[])
-      .filter((b: any) => !b.id.startsWith("temp-"))
-      .map((b: any) => b.id);
+    // 3. Delete removed bundles
+    const incomingBundleIds = (bundles as QuoteBundle[])
+      .filter((b: QuoteBundle) => !b.id.startsWith("temp-"))
+      .map((b: QuoteBundle) => b.id);
 
     await tx.quoteBundle.deleteMany({
       where: {
-        quoteId: params.quoteId,
+        quoteId,
         id: { notIn: incomingBundleIds },
       },
     });
 
-    // 3. Update each line
-    for (const line of lines as any[]) {
+    // 4. Update each line with resolved bundleId
+    for (const line of lines as QuoteLine[]) {
       const resolvedBundleId = line.bundleId
         ? (bundleIdMap[line.bundleId] ?? line.bundleId)
         : null;
@@ -76,9 +84,9 @@ export async function PUT(
       });
     }
 
-    // 4. Update quote status + total
+    // 5. Update quote status + total
     await tx.quote.update({
-      where: { id: params.quoteId },
+      where: { id: quoteId },
       data: { status, total },
     });
   });
