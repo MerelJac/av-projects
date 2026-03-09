@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, Mail, Phone, Tag } from "lucide-react";
+import DeleteCustomerButton from "./DeleteCustomerButton";
 
 const quoteStatusStyles: Record<string, string> = {
   ACCEPTED: "bg-green-100 text-green-700",
@@ -22,6 +23,7 @@ export default async function CustomerPage({
     include: {
       projects: { orderBy: { createdAt: "desc" } },
       quotes: { orderBy: { createdAt: "desc" } },
+      _count: { select: { itemPrices: true, subscriptions: true } },
     },
   });
 
@@ -60,13 +62,21 @@ export default async function CustomerPage({
               )}
             </div>
           </div>
-          <Link
-            href={`/customers/${customer.id}/pricing`}
-            className="flex items-center gap-1.5 text-sm font-semibold border border-[#E5E3DE] bg-white px-4 py-2 rounded-xl hover:bg-[#F7F6F3] transition-colors"
-          >
-            <Tag size={13} />
-            Customer Pricing
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/customers/${customer.id}/pricing`}
+              className="flex items-center gap-1.5 text-sm font-semibold border border-[#E5E3DE] bg-white px-4 py-2 rounded-xl hover:bg-[#F7F6F3] transition-colors"
+            >
+              <Tag size={13} />
+              Customer Pricing
+            </Link>
+            <DeleteCustomerButton
+              customerId={customer.id}
+              customerName={customer.name}
+              projectCount={customer.projects.length}
+              quoteCount={customer.quotes.length}
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-6">
