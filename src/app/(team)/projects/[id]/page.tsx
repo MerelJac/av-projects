@@ -1,12 +1,15 @@
+// src/app/(team)/projects/[id]/page.tsx
 import { prisma } from "@/lib/prisma";
 
 export default async function ProjectPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
+
   const project = await prisma.project.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       customer: true,
       shipments: true,
@@ -27,6 +30,15 @@ export default async function ProjectPage({
       changeOrders: {
         orderBy: { createdAt: "desc" },
       },
+      boms: {
+        include: {
+          lines: {
+            include: { item: true },
+          },
+          quotes: true,
+        },
+        orderBy: { createdAt: "desc" },
+      },
     },
   });
 
@@ -41,7 +53,7 @@ export default async function ProjectPage({
 
   const changeOrderTotal = project.changeOrders.reduce(
     (sum, co) => sum + co.amount,
-    0
+    0,
   );
 
   return (
@@ -53,9 +65,7 @@ export default async function ProjectPage({
 
       {/* Quotes */}
       <div className="bg-white border rounded-xl p-6">
-        <h3 className="font-semibold mb-4">
-          Quotes ({project.quotes.length})
-        </h3>
+        <h3 className="font-semibold mb-4">Quotes ({project.quotes.length})</h3>
 
         {project.quotes.length === 0 ? (
           <p className="text-sm text-gray-400">No quotes linked yet.</p>
@@ -122,6 +132,48 @@ export default async function ProjectPage({
         )}
       </div>
 
+      {/* BOMs */}
+      <div className="bg-white border rounded-xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold">
+            Bill of Materials ({project.boms.length})
+          </h3>
+          <a
+            href={`/projects/${project.id}/bom/new`}
+            className="text-sm bg-black text-white px-3 py-1.5 rounded-lg"
+          >
+            + New BOM
+          </a>
+        </div>
+        {project.boms.length === 0 ? (
+          <p className="text-sm text-gray-400">No BOMs yet.</p>
+        ) : (
+          <div className="space-y-3">
+            {project.boms.map((bom) => (
+              <div
+                key={bom.id}
+                className="border rounded-lg p-4 flex items-center justify-between"
+              >
+                <div>
+                  <p className="font-medium text-sm">{bom.name}</p>
+                  <p className="text-xs text-gray-400">
+                    {bom.lines.length} items ·{" "}
+                    {bom.quotes.length > 0
+                      ? `${bom.quotes.length} quote(s) generated`
+                      : "No quotes yet"}
+                  </p>
+                </div>
+                <a
+                  href={`/projects/${project.id}/bom/${bom.id}`}
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  View →
+                </a>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
       {/* Change Orders */}
       <div className="bg-white border rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
@@ -131,7 +183,11 @@ export default async function ProjectPage({
           {project.changeOrders.length > 0 && (
             <span className="text-sm font-medium text-gray-600">
               Total:{" "}
-              <span className={changeOrderTotal >= 0 ? "text-green-600" : "text-red-600"}>
+              <span
+                className={
+                  changeOrderTotal >= 0 ? "text-green-600" : "text-red-600"
+                }
+              >
                 {changeOrderTotal >= 0 ? "+" : ""}$
                 {changeOrderTotal.toLocaleString()}
               </span>
@@ -144,7 +200,10 @@ export default async function ProjectPage({
         ) : (
           <div className="divide-y">
             {project.changeOrders.map((co) => (
-              <div key={co.id} className="py-3 flex items-center justify-between">
+              <div
+                key={co.id}
+                className="py-3 flex items-center justify-between"
+              >
                 <div>
                   <p className="text-sm font-medium text-gray-800">
                     {co.description}
