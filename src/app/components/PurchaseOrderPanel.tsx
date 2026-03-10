@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { POWithDetails } from "@/types/purchaseOrder";
+import Link from "next/link";
 
 type Item = { id: string; itemNumber: string; manufacturer: string | null };
 
@@ -62,10 +63,26 @@ const PO_STATUS: Record<
   PO["status"],
   { label: string; color: string; icon: React.ReactNode }
 > = {
-  DRAFT: { label: "Draft", color: "text-gray-500 bg-gray-100", icon: <Clock size={11} /> },
-  SENT: { label: "Sent to Vendor", color: "text-blue-600 bg-blue-50", icon: <Send size={11} /> },
-  PARTIALLY_RECEIVED: { label: "Partial", color: "text-amber-600 bg-amber-50", icon: <AlertCircle size={11} /> },
-  RECEIVED: { label: "Received", color: "text-green-600 bg-green-50", icon: <CheckCircle2 size={11} /> },
+  DRAFT: {
+    label: "Draft",
+    color: "text-gray-500 bg-gray-100",
+    icon: <Clock size={11} />,
+  },
+  SENT: {
+    label: "Sent to Vendor",
+    color: "text-blue-600 bg-blue-50",
+    icon: <Send size={11} />,
+  },
+  PARTIALLY_RECEIVED: {
+    label: "Partial",
+    color: "text-amber-600 bg-amber-50",
+    icon: <AlertCircle size={11} />,
+  },
+  RECEIVED: {
+    label: "Received",
+    color: "text-green-600 bg-green-50",
+    icon: <CheckCircle2 size={11} />,
+  },
 };
 
 export default function PurchaseOrdersPanel({
@@ -119,7 +136,9 @@ export default function PurchaseOrdersPanel({
           <Package size={14} className="text-[#999]" />
           <h3 className="text-sm font-semibold text-[#111]">Purchase Orders</h3>
           {pos.length > 0 && (
-            <span className="text-xs text-[#bbb]">{pos.length} PO{pos.length !== 1 ? "s" : ""}</span>
+            <span className="text-xs text-[#bbb]">
+              {pos.length} PO{pos.length !== 1 ? "s" : ""}
+            </span>
           )}
         </div>
         <div className="flex items-center gap-3">
@@ -141,7 +160,8 @@ export default function PurchaseOrdersPanel({
       {/* PO list */}
       {pos.length === 0 && !showNewPO && (
         <p className="px-5 py-8 text-sm text-[#bbb] text-center">
-          No purchase orders yet — create one to start fulfilling this sales order
+          No purchase orders yet — create one to start fulfilling this sales
+          order
         </p>
       )}
 
@@ -210,8 +230,12 @@ function PORow({
         </span>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-[#111]">{po.vendor}</span>
-            <span className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${cfg.color}`}>
+            <span className="text-sm font-semibold text-[#111]">
+              {po.vendor}
+            </span>
+            <span
+              className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${cfg.color}`}
+            >
               {cfg.icon}
               {cfg.label}
             </span>
@@ -223,7 +247,17 @@ function PORow({
             {new Date(po.createdAt).toLocaleDateString()}
           </p>
         </div>
-        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+        <Link
+          href={`/projects/${projectId}/sales-orders/${salesOrderId}/purchase-orders/${po.id}`}
+          className="text-sm font-semibold text-[#111] hover:underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {po.vendor}
+        </Link>
+        <div
+          className="flex items-center gap-2"
+          onClick={(e) => e.stopPropagation()}
+        >
           {po.status === "DRAFT" && (
             <button
               onClick={onMarkSent}
@@ -232,6 +266,7 @@ function PORow({
               Mark Sent
             </button>
           )}
+
           {(po.status === "SENT" || po.status === "PARTIALLY_RECEIVED") && (
             <button
               onClick={() => setShowLogShipment(true)}
@@ -254,9 +289,10 @@ function PORow({
             </p>
             <div className="space-y-1.5">
               {po.lines.map((line) => {
-                const pct = line.quantity > 0
-                  ? (line.receivedQuantity / line.quantity) * 100
-                  : 0;
+                const pct =
+                  line.quantity > 0
+                    ? (line.receivedQuantity / line.quantity) * 100
+                    : 0;
                 return (
                   <div key={line.id} className="flex items-center gap-3">
                     <div className="flex-1 min-w-0">
@@ -270,7 +306,9 @@ function PORow({
                       )}
                     </div>
                     <div className="flex items-center gap-2 text-xs text-[#666]">
-                      <span>{line.receivedQuantity}/{line.quantity}</span>
+                      <span>
+                        {line.receivedQuantity}/{line.quantity}
+                      </span>
                       <div className="w-16 h-1.5 bg-[#E5E3DE] rounded-full overflow-hidden">
                         <div
                           className={`h-full rounded-full transition-all ${pct >= 100 ? "bg-green-500" : pct > 0 ? "bg-amber-400" : "bg-[#E5E3DE]"}`}
@@ -292,22 +330,35 @@ function PORow({
               </p>
               <div className="space-y-2">
                 {po.shipments.map((s) => (
-                  <div key={s.id} className="text-xs text-[#444] flex items-start gap-3">
-                    <Truck size={11} className="mt-0.5 text-[#999] flex-shrink-0" />
+                  <div
+                    key={s.id}
+                    className="text-xs text-[#444] flex items-start gap-3"
+                  >
+                    <Truck
+                      size={11}
+                      className="mt-0.5 text-[#999] flex-shrink-0"
+                    />
                     <div>
                       <span className="font-semibold">
                         {s.item?.itemNumber ?? "Item"} × {s.quantity}
                       </span>
-                      {s.carrier && <span className="text-[#999] ml-2">{s.carrier}</span>}
+                      {s.carrier && (
+                        <span className="text-[#999] ml-2">{s.carrier}</span>
+                      )}
                       {s.tracking && (
-                        <span className="ml-2 font-mono text-[#666]">{s.tracking}</span>
+                        <span className="ml-2 font-mono text-[#666]">
+                          {s.tracking}
+                        </span>
                       )}
                       {s.receivedAt && (
                         <span className="ml-2 text-green-600">
-                          ✓ Received {new Date(s.receivedAt).toLocaleDateString()}
+                          ✓ Received{" "}
+                          {new Date(s.receivedAt).toLocaleDateString()}
                         </span>
                       )}
-                      {s.notes && <p className="text-[#999] mt-0.5">{s.notes}</p>}
+                      {s.notes && (
+                        <p className="text-[#999] mt-0.5">{s.notes}</p>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -407,7 +458,9 @@ function LogShipmentForm({
         </div>
         <div className="px-6 py-4 space-y-3">
           <div>
-            <label className="text-xs font-semibold text-[#666] block mb-1">Item</label>
+            <label className="text-xs font-semibold text-[#666] block mb-1">
+              Item
+            </label>
             <select
               value={itemId}
               onChange={(e) => setItemId(e.target.value)}
@@ -416,13 +469,16 @@ function LogShipmentForm({
               <option value="">— All items / unspecified —</option>
               {po.lines.map((l) => (
                 <option key={l.itemId} value={l.itemId}>
-                  {l.item.itemNumber} (ordered: {l.quantity}, received: {l.receivedQuantity})
+                  {l.item.itemNumber} (ordered: {l.quantity}, received:{" "}
+                  {l.receivedQuantity})
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <label className="text-xs font-semibold text-[#666] block mb-1">Quantity Received</label>
+            <label className="text-xs font-semibold text-[#666] block mb-1">
+              Quantity Received
+            </label>
             <input
               type="number"
               min={1}
@@ -433,7 +489,9 @@ function LogShipmentForm({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-semibold text-[#666] block mb-1">Carrier</label>
+              <label className="text-xs font-semibold text-[#666] block mb-1">
+                Carrier
+              </label>
               <input
                 type="text"
                 value={carrier}
@@ -443,7 +501,9 @@ function LogShipmentForm({
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-[#666] block mb-1">Tracking #</label>
+              <label className="text-xs font-semibold text-[#666] block mb-1">
+                Tracking #
+              </label>
               <input
                 type="text"
                 value={tracking}
@@ -454,7 +514,9 @@ function LogShipmentForm({
             </div>
           </div>
           <div>
-            <label className="text-xs font-semibold text-[#666] block mb-1">Shipped By</label>
+            <label className="text-xs font-semibold text-[#666] block mb-1">
+              Shipped By
+            </label>
             <input
               type="text"
               value={shippedBy}
@@ -464,7 +526,9 @@ function LogShipmentForm({
             />
           </div>
           <div>
-            <label className="text-xs font-semibold text-[#666] block mb-1">Notes</label>
+            <label className="text-xs font-semibold text-[#666] block mb-1">
+              Notes
+            </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -539,8 +603,16 @@ function NewPOForm({
         cost: parseFloat(selectedLines[l.id].cost) || 0,
       }));
 
-    if (!vendor.trim()) { setError("Vendor is required"); setSaving(false); return; }
-    if (!lines.length) { setError("Select at least one item"); setSaving(false); return; }
+    if (!vendor.trim()) {
+      setError("Vendor is required");
+      setSaving(false);
+      return;
+    }
+    if (!lines.length) {
+      setError("Select at least one item");
+      setSaving(false);
+      return;
+    }
 
     try {
       const res = await fetch(
@@ -576,7 +648,9 @@ function NewPOForm({
       </div>
       <div className="space-y-3">
         <div>
-          <label className="text-xs font-semibold text-[#666] block mb-1">Vendor *</label>
+          <label className="text-xs font-semibold text-[#666] block mb-1">
+            Vendor *
+          </label>
           <input
             type="text"
             value={vendor}
@@ -596,7 +670,10 @@ function NewPOForm({
               {itemLines.map((l) => {
                 const state = selectedLines[l.id];
                 return (
-                  <div key={l.id} className="flex items-center gap-3 bg-white rounded-xl border border-[#E5E3DE] px-3 py-2">
+                  <div
+                    key={l.id}
+                    className="flex items-center gap-3 bg-white rounded-xl border border-[#E5E3DE] px-3 py-2"
+                  >
                     <input
                       type="checkbox"
                       checked={state?.selected ?? false}
@@ -618,7 +695,10 @@ function NewPOForm({
                       onChange={(e) =>
                         setSelectedLines((prev) => ({
                           ...prev,
-                          [l.id]: { ...prev[l.id], quantity: parseInt(e.target.value) || 1 },
+                          [l.id]: {
+                            ...prev[l.id],
+                            quantity: parseInt(e.target.value) || 1,
+                          },
                         }))
                       }
                       className="w-14 text-right text-xs border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none"
@@ -649,7 +729,9 @@ function NewPOForm({
         )}
 
         <div>
-          <label className="text-xs font-semibold text-[#666] block mb-1">Notes</label>
+          <label className="text-xs font-semibold text-[#666] block mb-1">
+            Notes
+          </label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -666,7 +748,10 @@ function NewPOForm({
         )}
 
         <div className="flex justify-end gap-3 pt-1">
-          <button onClick={onCancel} className="text-sm text-[#666] hover:text-[#111]">
+          <button
+            onClick={onCancel}
+            className="text-sm text-[#666] hover:text-[#111]"
+          >
             Cancel
           </button>
           <button

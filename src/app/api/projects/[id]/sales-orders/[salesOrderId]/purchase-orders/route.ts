@@ -7,22 +7,19 @@ import { PurchaseOrderLine } from "@prisma/client";
 // GET /api/projects/:id/sales-orders/:salesOrderId/purchase-orders
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string; salesOrderId: string }> },
+  { params }: { params: Promise<{ id: string; salesOrderId: string; poId: string }> },
 ) {
-  const { id: projectId, salesOrderId } = await params;
-
-  const pos = await prisma.purchaseOrder.findMany({
-    where: { salesOrderId, projectId },
+  const { poId } = await params;
+  const po = await prisma.purchaseOrder.findUnique({
+    where: { id: poId },
     include: {
       lines: { include: { item: true, salesOrderLine: true } },
-      shipments: true,
+      shipments: { include: { item: true } },
     },
-    orderBy: { createdAt: "desc" },
   });
-
-  return NextResponse.json(pos);
+  if (!po) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  return NextResponse.json(po);
 }
-
 // POST /api/projects/:id/sales-orders/:salesOrderId/purchase-orders
 // Body: { vendor, notes, lines: [{ itemId, salesOrderLineId?, quantity, cost }] }
 export async function POST(
