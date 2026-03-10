@@ -15,6 +15,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import ChangeOrderNotes from "@/app/components/ChangeOrderNotes";
+import AllShipments from "@/app/components/shipments/AllShipments";
 
 const quoteStatusStyles: Record<string, string> = {
   ACCEPTED: "bg-green-100 text-green-700",
@@ -64,12 +65,23 @@ export default async function ProjectPage({
     0,
   );
 
-  const completedMilestones = project.milestones.filter((m) => m.completed).length;
+  const completedMilestones = project.milestones.filter(
+    (m) => m.completed,
+  ).length;
+
+  const shipments = await prisma.shipment.findMany({
+    include: {
+      project: true,
+      item: true,
+      purchaseOrder: { select: { id: true, vendor: true } },
+      salesOrder: { include: { customer: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
 
   return (
     <div className="min-h-screen bg-[#F7F6F3]">
       <div className="max-w-5xl mx-auto px-6 py-10 space-y-6">
-
         {/* Header */}
         <div className="flex items-start justify-between">
           <div>
@@ -105,7 +117,9 @@ export default async function ProjectPage({
               <Truck size={16} className="text-[#666]" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-[#111]">{project.shipments.length}</p>
+              <p className="text-2xl font-bold text-[#111]">
+                {project.shipments.length}
+              </p>
               <p className="text-xs text-[#999]">Shipments</p>
             </div>
           </div>
@@ -115,7 +129,9 @@ export default async function ProjectPage({
             </div>
             <div>
               <p className="text-2xl font-bold text-[#111]">
-                {project.timeEntries.reduce((sum, t) => sum + t.hours, 0).toFixed(1)}
+                {project.timeEntries
+                  .reduce((sum, t) => sum + t.hours, 0)
+                  .toFixed(1)}
               </p>
               <p className="text-xs text-[#999]">Hours Logged</p>
             </div>
@@ -125,7 +141,9 @@ export default async function ProjectPage({
               <ShoppingCart size={16} className="text-[#666]" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-[#111]">{project.purchaseOrders.length}</p>
+              <p className="text-2xl font-bold text-[#111]">
+                {project.purchaseOrders.length}
+              </p>
               <p className="text-xs text-[#999]">Purchase Orders</p>
             </div>
           </div>
@@ -151,7 +169,9 @@ export default async function ProjectPage({
           </div>
           {project.boms.length === 0 ? (
             <div className="px-6 py-10 text-center">
-              <p className="text-sm text-[#bbb]">No BOMs yet — create one to start building quotes</p>
+              <p className="text-sm text-[#bbb]">
+                No BOMs yet — create one to start building quotes
+              </p>
             </div>
           ) : (
             <div className="divide-y divide-[#F7F6F3]">
@@ -162,15 +182,21 @@ export default async function ProjectPage({
                   className="flex items-center justify-between px-6 py-4 hover:bg-[#FAFAF9] transition-colors group"
                 >
                   <div>
-                    <p className="text-sm font-medium text-[#111]">{bom.name}</p>
+                    <p className="text-sm font-medium text-[#111]">
+                      {bom.name}
+                    </p>
                     <p className="text-xs text-[#999] mt-0.5">
-                      {bom.lines.length} item{bom.lines.length !== 1 ? "s" : ""} ·{" "}
+                      {bom.lines.length} item{bom.lines.length !== 1 ? "s" : ""}{" "}
+                      ·{" "}
                       {bom.quotes.length > 0
                         ? `${bom.quotes.length} quote${bom.quotes.length !== 1 ? "s" : ""} generated`
                         : "No quotes yet"}
                     </p>
                   </div>
-                  <ArrowRight size={14} className="text-[#ccc] group-hover:text-[#111] transition-colors" />
+                  <ArrowRight
+                    size={14}
+                    className="text-[#ccc] group-hover:text-[#111] transition-colors"
+                  />
                 </Link>
               ))}
             </div>
@@ -186,7 +212,9 @@ export default async function ProjectPage({
           </div>
           {project.quotes.length === 0 ? (
             <div className="px-6 py-10 text-center">
-              <p className="text-sm text-[#bbb]">No quotes yet — generate one from a BOM</p>
+              <p className="text-sm text-[#bbb]">
+                No quotes yet — generate one from a BOM
+              </p>
             </div>
           ) : (
             <div className="divide-y divide-[#F7F6F3]">
@@ -197,14 +225,19 @@ export default async function ProjectPage({
                       <span className="text-xs font-mono font-semibold text-[#111]">
                         #{quote.id.slice(0, 8).toUpperCase()}
                       </span>
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${quoteStatusStyles[quote.status]}`}>
+                      <span
+                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${quoteStatusStyles[quote.status]}`}
+                      >
                         {quote.status}
                       </span>
                     </div>
                     <div className="flex items-center gap-4">
                       {quote.total != null && (
                         <span className="text-sm font-semibold text-[#111]">
-                          ${quote.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          $
+                          {quote.total.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                          })}
                         </span>
                       )}
                       <span className="text-xs text-[#999]">
@@ -236,7 +269,9 @@ export default async function ProjectPage({
             <div className="flex items-center gap-2.5">
               <Milestone size={15} className="text-[#999]" />
               <h3 className="font-semibold text-sm text-[#111]">Milestones</h3>
-              <span className="text-xs text-[#bbb]">{project.milestones.length}</span>
+              <span className="text-xs text-[#bbb]">
+                {project.milestones.length}
+              </span>
             </div>
             {project.milestones.length > 0 && (
               <span className="text-xs text-[#999]">
@@ -252,13 +287,17 @@ export default async function ProjectPage({
             <div className="divide-y divide-[#F7F6F3]">
               {project.milestones.map((m) => (
                 <div key={m.id} className="px-6 py-3.5 flex items-center gap-3">
-                  <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
-                    m.completed
-                      ? "bg-green-500 border-green-500"
-                      : "border-[#ccc]"
-                  }`} />
+                  <div
+                    className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
+                      m.completed
+                        ? "bg-green-500 border-green-500"
+                        : "border-[#ccc]"
+                    }`}
+                  />
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm ${m.completed ? "line-through text-[#999]" : "text-[#111]"}`}>
+                    <p
+                      className={`text-sm ${m.completed ? "line-through text-[#999]" : "text-[#111]"}`}
+                    >
                       {m.name}
                     </p>
                   </div>
@@ -273,17 +312,25 @@ export default async function ProjectPage({
           )}
         </div>
 
+        <AllShipments shipments={shipments} />
         {/* Change Orders */}
         <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
           <div className="px-6 py-4 border-b border-[#F0EEE9] flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <GitBranch size={15} className="text-[#999]" />
-              <h3 className="font-semibold text-sm text-[#111]">Change Orders</h3>
-              <span className="text-xs text-[#bbb]">{project.changeOrders.length}</span>
+              <h3 className="font-semibold text-sm text-[#111]">
+                Change Orders
+              </h3>
+              <span className="text-xs text-[#bbb]">
+                {project.changeOrders.length}
+              </span>
             </div>
             {project.changeOrders.length > 0 && (
-              <span className={`text-sm font-semibold ${changeOrderTotal >= 0 ? "text-green-600" : "text-red-600"}`}>
-                {changeOrderTotal >= 0 ? "+" : ""}${changeOrderTotal.toLocaleString()}
+              <span
+                className={`text-sm font-semibold ${changeOrderTotal >= 0 ? "text-green-600" : "text-red-600"}`}
+              >
+                {changeOrderTotal >= 0 ? "+" : ""}$
+                {changeOrderTotal.toLocaleString()}
               </span>
             )}
           </div>
@@ -302,17 +349,21 @@ export default async function ProjectPage({
                         {new Date(co.createdAt).toLocaleDateString()}
                       </p>
                     </div>
-                    <span className={`text-sm font-semibold ${co.amount >= 0 ? "text-green-600" : "text-red-600"}`}>
+                    <span
+                      className={`text-sm font-semibold ${co.amount >= 0 ? "text-green-600" : "text-red-600"}`}
+                    >
                       {co.amount >= 0 ? "+" : ""}${co.amount.toLocaleString()}
                     </span>
                   </div>
-                  <ChangeOrderNotes changeOrderId={co.id} currentUserId={currentUserId} />
+                  <ChangeOrderNotes
+                    changeOrderId={co.id}
+                    currentUserId={currentUserId}
+                  />
                 </div>
               ))}
             </div>
           )}
         </div>
-
       </div>
     </div>
   );
