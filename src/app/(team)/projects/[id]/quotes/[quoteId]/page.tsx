@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
-import QuoteEditor from "../../bom/QuoteEditor";
+import QuoteEditor from "./QuoteEditor";
 import { Prisma } from "@prisma/client";
 import NotesPanel from "@/app/components/NotesPanel";
 import { authOptions } from "@/lib/auth";
@@ -13,6 +13,7 @@ export type QuoteWithDetails = Prisma.QuoteGetPayload<{
     billOfMaterials: { select: { id: true; name: true } };
     lines: { include: { item: true; bundle: true } };
     quoteBundles: { include: { lines: { include: { item: true } } } };
+    salesOrder: { select: { id: true } };  // ← add this
   };
 }>;
 
@@ -39,14 +40,15 @@ export default async function QuotePage({
         include: { lines: { include: { item: true } } },
         orderBy: { createdAt: "asc" },
       },
+      salesOrder: { select: { id: true } },  // ← add this
     },
   });
 
   if (!quote || quote.projectId !== id) return notFound();
 
   return (
-    <div className=" bg-[#F7F6F3]">
-      <QuoteEditor quote={quote} projectId={id} />;
+    <div className="bg-[#F7F6F3]">
+      <QuoteEditor quote={quote} projectId={id} />
       <div className="max-w-5xl mx-auto px-6 pb-10">
         <NotesPanel
           documentType="QUOTE"

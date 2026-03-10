@@ -63,9 +63,11 @@ model QuoteBundle {
 
   createdAt DateTime @default(now())
 
-  lines QuoteLine[]
-  bomId String?
-  bom   BillOfMaterials? @relation(fields: [bomId], references: [id])
+  lines        QuoteLine[]
+  bomId        String?
+  bom          BillOfMaterials? @relation(fields: [bomId], references: [id])
+  salesOrder   SalesOrder?      @relation(fields: [salesOrderId], references: [id])
+  salesOrderId String?
 }
 
 enum InvoiceStatus {
@@ -114,6 +116,7 @@ model Customer {
   projects      Project[]
   itemPrices    CustomerItemPrice[]
   subscriptions Subscription[]
+  salesOrders   SalesOrder[]
 }
 
 enum BillingTerms {
@@ -150,6 +153,7 @@ model Item {
   subscriptions      Subscription[]
   purchaseOrderLines PurchaseOrderLine[]
   bomlines           BOMLine[]
+  salesOrderLines    SalesOrderLine[]
 }
 
 model Shipment {
@@ -190,6 +194,7 @@ model Quote {
   quoteBundles      QuoteBundle[]
   billOfMaterials   BillOfMaterials? @relation(fields: [billOfMaterialsId], references: [id])
   billOfMaterialsId String?
+  salesOrder        SalesOrder?
 }
 
 enum QuoteStatus {
@@ -256,6 +261,7 @@ model Project {
   purchaseOrders PurchaseOrder[]
   quotes         Quote[]
   boms           BillOfMaterials[]
+  salesOrders    SalesOrder[]
 }
 
 model Subscription {
@@ -411,4 +417,48 @@ model Note {
   createdAt    DateTime         @default(now())
 
   @@index([documentType, documentId])
+}
+
+enum SalesOrderStatus {
+  OPEN
+  FULFILLED
+  CLOSED
+}
+
+// 2. Add this model
+model SalesOrder {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  status SalesOrderStatus @default(OPEN)
+
+  // Snapshot of the quote at conversion time
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  // Link back to the originating quote (nullable in case quote is deleted)
+  quoteId String? @unique
+  quote   Quote?  @relation(fields: [quoteId], references: [id])
+
+  lines        SalesOrderLine[]
+  quoteBundles QuoteBundle[]
+}
+
+model SalesOrderLine {
+  id           String     @id @default(cuid())
+  salesOrderId String
+  salesOrder   SalesOrder @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
+
+  description String
+  quantity    Int
+  price       Decimal  @db.Decimal(10, 2)
+  cost        Decimal? @db.Decimal(10, 2)
+
+  // Optional: preserve item reference from quote line
+  itemId String?
+  item   Item?   @relation(fields: [itemId], references: [id])
 }

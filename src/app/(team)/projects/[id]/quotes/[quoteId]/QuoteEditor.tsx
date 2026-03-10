@@ -15,8 +15,9 @@ import {
   Edit2,
   Check,
 } from "lucide-react";
-import { QuoteWithDetails } from "../quotes/[quoteId]/page";
+import { QuoteWithDetails } from "./page";
 import { QuoteStatus } from "@prisma/client";
+import ConvertToSalesOrderButton from "@/app/components/team/sales-orders/ConvertToSalesOrderButton";
 
 // Derive types directly from the Prisma payload
 type QuoteLine = QuoteWithDetails["lines"][number];
@@ -106,6 +107,7 @@ export default function QuoteEditor({
       quoteId: initialQuote.id,
       createdAt: new Date(),
       bomId: null,
+      salesOrderId: null, 
     } satisfies Bundle;
     setBundles((prev) => [...prev, tempBundle]);
     setNewBundleName("");
@@ -502,6 +504,13 @@ export default function QuoteEditor({
               </div>
             </div>
 
+            {initialQuote.status === "ACCEPTED" && (
+              <ConvertToSalesOrderButton
+                projectId={projectId}
+                quoteId={initialQuote.id}
+                existingSalesOrderId={initialQuote.salesOrder?.id}
+              />
+            )}
             {/* Actions */}
             <div className="bg-white border border-[#E5E3DE] rounded-2xl p-5 space-y-2">
               <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-4">
