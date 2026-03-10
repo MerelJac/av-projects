@@ -9,8 +9,9 @@ export async function GET(
   const scopes = await prisma.projectScope.findMany({
     where: { projectId: id },
     include: {
+      item: true,
       timeEntries: {
-        include: { user: { select: { id: true, name: true, email: true } } },
+        include: { user: { select: { id: true, email: true, profile: true } } },
         orderBy: { date: "desc" },
       },
     },
@@ -24,13 +25,23 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const { name, estimatedHours } = await req.json();
+  const { name, estimatedHours, itemId } = await req.json();
   if (!name?.trim()) {
     return NextResponse.json({ error: "Name required" }, { status: 400 });
   }
   const scope = await prisma.projectScope.create({
-    data: { projectId: id, name: name.trim(), estimatedHours: estimatedHours ?? 0 },
-    include: { timeEntries: true },
+    data: {
+      projectId: id,
+      itemId: itemId ?? null,
+      name: name.trim(),
+      estimatedHours: estimatedHours ?? 0,
+    },
+    include: {
+      item: true,
+      timeEntries: {
+        include: { user: { select: { id: true, email: true, profile: true } } },
+      },
+    },
   });
   return NextResponse.json(scope, { status: 201 });
 }

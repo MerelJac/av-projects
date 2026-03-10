@@ -54,9 +54,16 @@ export default async function ProjectPage({
           orderBy: { createdAt: "desc" },
         },
         scopes: {
-          include: {
+          select: {
+            id: true,
+            name: true,
+            estimatedHours: true,
+            itemId: true,
+            item: true,
             timeEntries: {
-              include: { user: { include: { profile: true } } },
+              include: {
+                user: { select: { id: true, email: true, profile: true } },
+              },
               orderBy: { date: "desc" },
             },
           },
@@ -162,6 +169,9 @@ export default async function ProjectPage({
           initialScopes={project.scopes}
           teamUsers={teamUsers}
           currentUserId={currentUserId}
+          acceptedQuotes={project.quotes
+            .filter((q) => q.status === "ACCEPTED")
+            .map((q) => ({ id: q.id, createdAt: q.createdAt.toISOString() }))}
         />
 
         {/* BOMs */}

@@ -154,6 +154,7 @@ model Item {
   purchaseOrderLines PurchaseOrderLine[]
   bomlines           BOMLine[]
   salesOrderLines    SalesOrderLine[]
+  scopes             ProjectScope[]
 }
 
 enum ItemType {
@@ -270,6 +271,8 @@ model ProjectScope {
   id             String      @id @default(uuid())
   projectId      String
   project        Project     @relation(fields: [projectId], references: [id])
+  itemId         String?
+  item           Item?       @relation(fields: [itemId], references: [id])
   name           String
   estimatedHours Float       @default(0)
   timeEntries    TimeEntry[]

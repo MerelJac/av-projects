@@ -6,16 +6,18 @@ export async function PUT(
   { params }: { params: Promise<{ id: string; scopeId: string }> },
 ) {
   const { scopeId } = await params;
-  const { name, estimatedHours } = await req.json();
+  const { name, estimatedHours, itemId } = await req.json();
   const scope = await prisma.projectScope.update({
     where: { id: scopeId },
     data: {
       ...(name !== undefined && { name: name.trim() }),
       ...(estimatedHours !== undefined && { estimatedHours }),
+      ...(itemId !== undefined && { itemId: itemId ?? null }),
     },
     include: {
+      item: true,
       timeEntries: {
-        include: { user: { select: { id: true, name: true, email: true } } },
+        include: { user: { select: { id: true, email: true, profile: true } } },
       },
     },
   });
