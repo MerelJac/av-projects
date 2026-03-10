@@ -14,12 +14,6 @@ export default function PublicLandingPage() {
           </p>
           <div className="animate-fade-up-3 flex items-center justify-center gap-3 flex-wrap">
             <Link
-              href="/signup"
-              className="px-6 py-3 rounded-xl bg-secondary-color text-black font-syne font-bold text-sm hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
-            >
-              Get started →
-            </Link>
-            <Link
               href="/login"
               className="px-6 py-3 rounded-xl border border-surface2 text-muted text-sm font-medium hover:text-foreground hover:border-secondary-color/30 transition-all duration-150"
             >

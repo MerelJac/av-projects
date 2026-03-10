@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import {
   FileText,
   Package,
@@ -12,6 +14,7 @@ import {
   Plus,
   ArrowRight,
 } from "lucide-react";
+import ChangeOrderNotes from "@/app/components/ChangeOrderNotes";
 
 const quoteStatusStyles: Record<string, string> = {
   ACCEPTED: "bg-green-100 text-green-700",
@@ -26,6 +29,8 @@ export default async function ProjectPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const session = await getServerSession(authOptions);
+  const currentUserId = session?.user?.id;
 
   const project = await prisma.project.findUnique({
     where: { id },
@@ -289,16 +294,19 @@ export default async function ProjectPage({
           ) : (
             <div className="divide-y divide-[#F7F6F3]">
               {project.changeOrders.map((co) => (
-                <div key={co.id} className="px-6 py-3.5 flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-[#111]">{co.description}</p>
-                    <p className="text-xs text-[#999] mt-0.5">
-                      {new Date(co.createdAt).toLocaleDateString()}
-                    </p>
+                <div key={co.id} className="px-6 py-3.5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-[#111]">{co.description}</p>
+                      <p className="text-xs text-[#999] mt-0.5">
+                        {new Date(co.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <span className={`text-sm font-semibold ${co.amount >= 0 ? "text-green-600" : "text-red-600"}`}>
+                      {co.amount >= 0 ? "+" : ""}${co.amount.toLocaleString()}
+                    </span>
                   </div>
-                  <span className={`text-sm font-semibold ${co.amount >= 0 ? "text-green-600" : "text-red-600"}`}>
-                    {co.amount >= 0 ? "+" : ""}${co.amount.toLocaleString()}
-                  </span>
+                  <ChangeOrderNotes changeOrderId={co.id} currentUserId={currentUserId} />
                 </div>
               ))}
             </div>

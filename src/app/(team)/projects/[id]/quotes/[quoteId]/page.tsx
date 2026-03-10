@@ -2,6 +2,9 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import QuoteEditor from "../../bom/QuoteEditor";
 import { Prisma } from "@prisma/client";
+import NotesPanel from "@/app/components/NotesPanel";
+import { authOptions } from "@/lib/auth";
+import { getServerSession } from "next-auth";
 
 export type QuoteWithDetails = Prisma.QuoteGetPayload<{
   include: {
@@ -18,6 +21,8 @@ export default async function QuotePage({
 }: {
   params: Promise<{ id: string; quoteId: string }>;
 }) {
+  const session = await getServerSession(authOptions);
+  const currentUserId = session?.user?.id;
   const { id, quoteId } = await params;
 
   const quote = await prisma.quote.findUnique({
@@ -39,5 +44,16 @@ export default async function QuotePage({
 
   if (!quote || quote.projectId !== id) return notFound();
 
-  return <QuoteEditor quote={quote} projectId={id} />;
+  return (
+    <div className=" bg-[#F7F6F3]">
+      <QuoteEditor quote={quote} projectId={id} />;
+      <div className="max-w-5xl mx-auto px-6 pb-10">
+        <NotesPanel
+          documentType="QUOTE"
+          documentId={quote.id}
+          currentUserId={currentUserId}
+        />
+      </div>
+    </div>
+  );
 }

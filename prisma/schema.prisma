@@ -23,6 +23,7 @@ model User {
   invites             Invite[]
   passwordResetTokens PasswordResetToken[]
   timeEntries         TimeEntry[]
+  notes               Note[]
 }
 
 model Profile {
@@ -392,4 +393,22 @@ model BOMLine {
 
   quantity Int
   notes    String?
+}
+
+enum NoteDocumentType {
+  QUOTE
+  BILL_OF_MATERIALS
+  CHANGE_ORDER
+}
+
+model Note {
+  id           String           @id @default(uuid())
+  documentType NoteDocumentType
+  documentId   String
+  content      String
+  userId       String
+  user         User             @relation(fields: [userId], references: [id])
+  createdAt    DateTime         @default(now())
+
+  @@index([documentType, documentId])
 }

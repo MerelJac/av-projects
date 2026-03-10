@@ -2,6 +2,9 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import BOMEditor from "../BomEditor";
 import { BOMItem, BOMType } from "@/types/bom";
+import NotesPanel from "@/app/components/NotesPanel";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export default async function BOMPage({
   params,
@@ -9,6 +12,8 @@ export default async function BOMPage({
   params: Promise<{ id: string; bomId: string }>;
 }) {
   const { id, bomId } = await params;
+  const session = await getServerSession(authOptions);
+  const currentUserId = session?.user?.id;
 
   const bom = await prisma.billOfMaterials.findUnique({
     where: { id: bomId },
@@ -45,13 +50,18 @@ export default async function BOMPage({
   ]);
 
   return (
-    <BOMEditor
-      bom={bom as BOMType}
-      items={items as BOMItem[]}
-      customerPrices={Object.fromEntries(
-        customerPrices.map((cp) => [cp.itemId, cp.price]),
-      )}
-      projectId={id}
-    />
+    <div className=" bg-[#F7F6F3]">
+      <BOMEditor
+        bom={bom as BOMType}
+        items={items as BOMItem[]}
+        customerPrices={Object.fromEntries(
+          customerPrices.map((cp) => [cp.itemId, cp.price]),
+        )}
+        projectId={id}
+      />
+      <div className="max-w-5xl mx-auto px-6 pb-10">
+        <NotesPanel documentType="BILL_OF_MATERIALS" documentId={bomId} currentUserId={currentUserId} />
+      </div>
+    </div>
   );
 }

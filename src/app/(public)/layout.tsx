@@ -22,12 +22,7 @@ export default function PublicLayout({
             >
               Log in
             </Link>
-            <Link
-              href="/signup"
-              className="px-4 py-2 rounded-xl text-sm font-syne font-bold bg-secondary-color text-black hover:opacity-90 active:scale-[0.98] transition"
-            >
-              Get started
-            </Link>
+
           </nav>
         </div>
       </header>

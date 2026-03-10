@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { AlertCircle } from "lucide-react";
 import { ClientListItem } from "@/types/client";
@@ -74,7 +74,7 @@ export default function ClientPageClient({
         )}
         <Link
           href={`/clients/${c.id}`}
-          className="px-4 py-2 rounded-xl bg-white border border-white/10 text-foreground text-xs font-semibold hover:border-secondary-color/30 hover:text-secondary-color transition-all active:scale-[0.97]"
+          className="px-4 py-2 rounded-xl bg-white border text-foreground text-xs font-semibold hover:border-secondary-color/30 hover:text-secondary-color transition-all active:scale-[0.97]"
         >
           View Profile
         </Link>

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 
-const inputCls = "w-full px-4 py-2.5 bg-white border border-white/10 rounded-xl text-foreground text-sm placeholder:text-muted focus:border-secondary-color/50 focus:ring-1 focus:ring-secondary-color/30 outline-none transition";
+const inputCls = "w-full px-4 py-2.5 bg-white border  rounded-xl text-foreground text-sm placeholder:text-muted focus:border-secondary-color/50 focus:ring-1 focus:ring-secondary-color/30 transition";
 const labelCls = "block text-[10px] font-semibold tracking-widest uppercase text-muted mb-1.5";
 
 export default function ForgotPasswordPage() {

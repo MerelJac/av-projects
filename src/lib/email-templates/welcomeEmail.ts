@@ -9,10 +9,10 @@ export async function sendWelcomeEmail(to: string) {
 
   return sendEmail({
     to,
-    subject: "Welcome to AV Projects Club!",
+    subject: "Welcome to AV Projects!",
     html: `
       <div style="font-family: sans-serif; line-height: 1.6; color: #333;">
-        <h2>Welcome to AV Projects Club 🔥</h2>
+        <h2>Welcome to AV Projects 🔥</h2>
         <p>You have been invited to register!</p>
         <p>We’re excited to have you on board. Reminder: Register with the same email address from this email!</p>
         <p>
@@ -22,10 +22,10 @@ export async function sendWelcomeEmail(to: string) {
           </a>
         </p>
         <br/>
-        <p style="font-size: 0.9rem; color: #888;">— AV Projects Club</p>
+        <p style="font-size: 0.9rem; color: #888;">— AV Projects</p>
       </div>
     `,
-    text: `Welcome to AV Projects Club! You're officially part of the movement 🔥
+    text: `Welcome to AV Projects! You're officially part of the movement 🔥
 Get started here: ${appUrl}/signup`,
   });
 }

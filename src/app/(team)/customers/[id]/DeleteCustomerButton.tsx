@@ -33,8 +33,8 @@ export default function DeleteCustomerButton({
         throw new Error(data.error ?? "Failed to delete");
       }
       router.push("/customers");
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to delete");
       setDeleting(false);
     }
   }

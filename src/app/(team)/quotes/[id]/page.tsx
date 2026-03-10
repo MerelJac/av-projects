@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import NotesPanel from "@/app/components/NotesPanel";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export default async function QuoteViewPage({
   params,
@@ -8,6 +11,8 @@ export default async function QuoteViewPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const session = await getServerSession(authOptions);
+  const currentUserId = session?.user?.id;
 
   const quote = await prisma.quote.findUnique({
     where: { id },
@@ -143,6 +148,11 @@ export default async function QuoteViewPage({
             </span>
           </div>
         </div>
+      </div>
+
+      {/* Internal Notes */}
+      <div className="mt-6">
+        <NotesPanel documentType="QUOTE" documentId={quote.id} currentUserId={currentUserId} />
       </div>
     </div>
   );
