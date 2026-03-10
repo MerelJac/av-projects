@@ -9,7 +9,10 @@ export async function POST(
   const { userId, hours, notes, date } = await req.json();
 
   if (!userId || !hours || hours <= 0) {
-    return NextResponse.json({ error: "userId and hours required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "userId and hours required" },
+      { status: 400 },
+    );
   }
 
   const entry = await prisma.timeEntry.create({
@@ -21,7 +24,7 @@ export async function POST(
       notes: notes ?? null,
       date: date ? new Date(date) : new Date(),
     },
-    include: { user: { select: { id: true, name: true, email: true } } },
+    include: { user: { include: { profile: true } } },
   });
   return NextResponse.json(entry, { status: 201 });
 }

@@ -1,8 +1,17 @@
 "use client";
 import { useState } from "react";
 import {
-  Target, Plus, Pencil, Trash2, X, AlertCircle,
-  ChevronDown, ChevronRight, Clock, User, Download,
+  Target,
+  Plus,
+  Pencil,
+  Trash2,
+  X,
+  AlertCircle,
+  ChevronDown,
+  ChevronRight,
+  Clock,
+  User,
+  Download,
 } from "lucide-react";
 
 type Item = { id: string; itemNumber: string; manufacturer: string | null };
@@ -15,7 +24,13 @@ type TimeEntry = {
   user: {
     id: string;
     email: string;
-    profile: { id: string; userId: string; firstName: string; lastName: string; phone: string | null } | null;
+    profile: {
+      id: string;
+      userId: string;
+      firstName: string;
+      lastName: string;
+      phone: string | null;
+    } | null;
   };
 };
 
@@ -61,10 +76,11 @@ export default function ScopesPanel({
   const [logFor, setLogFor] = useState<string | null>(null);
   const [pulling, setPulling] = useState(false);
   const [pullMsg, setPullMsg] = useState<string | null>(null);
-
+  const [showPullMenu, setShowPullMenu] = useState(false);
   const totalEstimated = scopes.reduce((s, sc) => s + sc.estimatedHours, 0);
   const totalActual = scopes.reduce(
-    (s, sc) => s + sc.timeEntries.reduce((a, t) => a + t.hours, 0), 0
+    (s, sc) => s + sc.timeEntries.reduce((a, t) => a + t.hours, 0),
+    0,
   );
 
   async function refresh() {
@@ -75,28 +91,35 @@ export default function ScopesPanel({
   async function pullFromQuote(quoteId: string) {
     setPulling(true);
     setPullMsg(null);
-    const res = await fetch(`/api/projects/${projectId}/scopes/pull-from-quote`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ quoteId }),
-    });
+    const res = await fetch(
+      `/api/projects/${projectId}/scopes/pull-from-quote`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quoteId }),
+      },
+    );
     if (res.ok) {
       const { created, skipped } = await res.json();
-      setPullMsg(`Added ${created} scope${created !== 1 ? "s" : ""}${skipped > 0 ? `, ${skipped} already existed` : ""}`);
+      setPullMsg(
+        `Added ${created} scope${created !== 1 ? "s" : ""}${skipped > 0 ? `, ${skipped} already existed` : ""}`,
+      );
       await refresh();
     }
     setPulling(false);
   }
 
   async function deleteScope(id: string) {
-    await fetch(`/api/projects/${projectId}/scopes/${id}`, { method: "DELETE" });
+    await fetch(`/api/projects/${projectId}/scopes/${id}`, {
+      method: "DELETE",
+    });
     await refresh();
   }
 
   async function deleteEntry(scopeId: string, entryId: string) {
     await fetch(
       `/api/projects/${projectId}/scopes/${scopeId}/time-entries/${entryId}`,
-      { method: "DELETE" }
+      { method: "DELETE" },
     );
     await refresh();
   }
@@ -118,41 +141,63 @@ export default function ScopesPanel({
         </div>
         <div className="flex items-center gap-3">
           {scopes.length > 0 && (
-            <span className={`text-xs font-medium ${totalActual > totalEstimated ? "text-red-600" : "text-[#999]"}`}>
+            <span
+              className={`text-xs font-medium ${totalActual > totalEstimated ? "text-red-600" : "text-[#999]"}`}
+            >
               {totalActual.toFixed(1)} / {totalEstimated}h
             </span>
           )}
           {/* Pull from quote dropdown */}
           {acceptedQuotes.length > 0 && (
-            <div className="relative group">
+            <div className="relative">
               <button
                 disabled={pulling}
+                onClick={() => setShowPullMenu((p) => !p)}
                 className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-[#E5E3DE] text-[#666] hover:border-[#111] hover:text-[#111] transition-colors disabled:opacity-40"
               >
                 <Download size={11} />
                 Pull from Quote
               </button>
-              <div className="absolute right-0 top-full mt-1 bg-white border border-[#E5E3DE] rounded-xl shadow-lg z-10 min-w-48 hidden group-hover:block">
-                {acceptedQuotes.map((q) => (
-                  <button
-                    key={q.id}
-                    onClick={() => pullFromQuote(q.id)}
-                    className="w-full text-left px-4 py-2.5 text-xs text-[#111] hover:bg-[#F7F6F3] first:rounded-t-xl last:rounded-b-xl"
-                  >
-                    <span className="font-mono font-semibold">#{q.id.slice(0, 8).toUpperCase()}</span>
-                    <span className="text-[#999] ml-2">{new Date(q.createdAt).toLocaleDateString()}</span>
-                  </button>
-                ))}
-              </div>
+              {showPullMenu && (
+                <>
+                  {/* backdrop to close on outside click */}
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setShowPullMenu(false)}
+                  />
+                  <div className="absolute right-0 top-full mt-1 bg-white border border-[#E5E3DE] rounded-xl shadow-lg z-20 min-w-48">
+                    {acceptedQuotes.map((q) => (
+                      <button
+                        key={q.id}
+                        onClick={() => {
+                          pullFromQuote(q.id);
+                          setShowPullMenu(false);
+                        }}
+                        className="w-full text-left px-4 py-2.5 text-xs text-[#111] hover:bg-[#F7F6F3] first:rounded-t-xl last:rounded-b-xl"
+                      >
+                        <span className="font-mono font-semibold">
+                          #{q.id.slice(0, 8).toUpperCase()}
+                        </span>
+                        <span className="text-[#999] ml-2">
+                          {new Date(q.createdAt).toLocaleDateString()}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           )}
-          <button
-            onClick={() => { setShowAdd(true); setEditingId(null); }}
+          {/* <button
+            onClick={() => {
+              setShowAdd(true);
+              setEditingId(null);
+            }}
             className="flex items-center gap-1.5 text-xs font-semibold bg-[#111] text-white px-3 py-1.5 rounded-lg hover:bg-[#333] transition-colors"
           >
             <Plus size={11} />
             Add Scope
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -160,7 +205,10 @@ export default function ScopesPanel({
       {pullMsg && (
         <div className="px-6 py-2.5 bg-green-50 border-b border-green-100 text-xs font-medium text-green-700 flex items-center justify-between">
           {pullMsg}
-          <button onClick={() => setPullMsg(null)} className="text-green-500 hover:text-green-700">
+          <button
+            onClick={() => setPullMsg(null)}
+            className="text-green-500 hover:text-green-700"
+          >
             <X size={12} />
           </button>
         </div>
@@ -170,7 +218,10 @@ export default function ScopesPanel({
       {showAdd && (
         <ScopeForm
           projectId={projectId}
-          onSaved={async () => { await refresh(); setShowAdd(false); }}
+          onSaved={async () => {
+            await refresh();
+            setShowAdd(false);
+          }}
           onCancel={() => setShowAdd(false)}
         />
       )}
@@ -185,9 +236,10 @@ export default function ScopesPanel({
         <div className="divide-y divide-[#F7F6F3]">
           {scopes.map((sc) => {
             const actual = sc.timeEntries.reduce((s, t) => s + t.hours, 0);
-            const pct = sc.estimatedHours > 0
-              ? Math.min((actual / sc.estimatedHours) * 100, 100)
-              : 0;
+            const pct =
+              sc.estimatedHours > 0
+                ? Math.min((actual / sc.estimatedHours) * 100, 100)
+                : 0;
             const over = actual > sc.estimatedHours && sc.estimatedHours > 0;
             const isExpanded = !!expanded[sc.id];
 
@@ -197,7 +249,10 @@ export default function ScopesPanel({
                   <ScopeForm
                     projectId={projectId}
                     existing={sc}
-                    onSaved={async () => { await refresh(); setEditingId(null); }}
+                    onSaved={async () => {
+                      await refresh();
+                      setEditingId(null);
+                    }}
                     onCancel={() => setEditingId(null)}
                   />
                 ) : (
@@ -207,7 +262,11 @@ export default function ScopesPanel({
                   >
                     <div className="flex items-center gap-3">
                       <span className="text-[#ccc]">
-                        {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                        {isExpanded ? (
+                          <ChevronDown size={14} />
+                        ) : (
+                          <ChevronRight size={14} />
+                        )}
                       </span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-4">
@@ -217,10 +276,14 @@ export default function ScopesPanel({
                                 {sc.item.itemNumber}
                               </span>
                             )}
-                            <span className="text-sm font-semibold text-[#111]">{sc.name}</span>
+                            <span className="text-sm font-semibold text-[#111]">
+                              {sc.name}
+                            </span>
                           </div>
                           <div className="flex items-center gap-3 flex-shrink-0">
-                            <span className={`text-xs font-medium ${over ? "text-red-600" : "text-[#666]"}`}>
+                            <span
+                              className={`text-xs font-medium ${over ? "text-red-600" : "text-[#666]"}`}
+                            >
                               {actual.toFixed(1)} / {sc.estimatedHours}h
                             </span>
                             <div
@@ -238,7 +301,10 @@ export default function ScopesPanel({
                                 Log Hours
                               </button>
                               <button
-                                onClick={() => { setEditingId(sc.id); setShowAdd(false); }}
+                                onClick={() => {
+                                  setEditingId(sc.id);
+                                  setShowAdd(false);
+                                }}
                                 className="p-1.5 rounded-lg text-[#999] hover:text-[#111] hover:bg-[#F0EEE9] transition-colors"
                               >
                                 <Pencil size={12} />
@@ -271,13 +337,19 @@ export default function ScopesPanel({
                         scopeId={sc.id}
                         teamUsers={teamUsers}
                         currentUserId={currentUserId}
-                        onSaved={async () => { await refresh(); setLogFor(null); }}
+                        onSaved={async () => {
+                          await refresh();
+                          setLogFor(null);
+                        }}
                         onCancel={() => setLogFor(null)}
                       />
                     ) : (
                       <div className="px-6 pt-3 pb-2">
                         <button
-                          onClick={(e) => { e.stopPropagation(); setLogFor(sc.id); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setLogFor(sc.id);
+                          }}
                           className="flex items-center gap-1.5 text-xs font-semibold text-[#666] hover:text-[#111] transition-colors"
                         >
                           <Plus size={11} />
@@ -287,7 +359,9 @@ export default function ScopesPanel({
                     )}
 
                     {sc.timeEntries.length === 0 ? (
-                      <p className="px-6 py-3 text-xs text-[#bbb]">No hours logged yet</p>
+                      <p className="px-6 py-3 text-xs text-[#bbb]">
+                        No hours logged yet
+                      </p>
                     ) : (
                       <div className="divide-y divide-[#F0EEE9]">
                         {sc.timeEntries.map((entry) => (
@@ -312,7 +386,9 @@ export default function ScopesPanel({
                                   </span>
                                 </div>
                                 {entry.notes && (
-                                  <p className="text-xs text-[#999] mt-0.5">{entry.notes}</p>
+                                  <p className="text-xs text-[#999] mt-0.5">
+                                    {entry.notes}
+                                  </p>
                                 )}
                               </div>
                             </div>
@@ -350,12 +426,17 @@ function ScopeForm({
   onCancel: () => void;
 }) {
   const [name, setName] = useState(existing?.name ?? "");
-  const [hours, setHours] = useState(existing?.estimatedHours?.toString() ?? "");
+  const [hours, setHours] = useState(
+    existing?.estimatedHours?.toString() ?? "",
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSave() {
-    if (!name.trim()) { setError("Name is required"); return; }
+    if (!name.trim()) {
+      setError("Name is required");
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -457,8 +538,14 @@ function LogHoursForm({
   const [error, setError] = useState<string | null>(null);
 
   async function handleSave() {
-    if (!hours || parseFloat(hours) <= 0) { setError("Enter valid hours"); return; }
-    if (!userId) { setError("Select a team member"); return; }
+    if (!hours || parseFloat(hours) <= 0) {
+      setError("Enter valid hours");
+      return;
+    }
+    if (!userId) {
+      setError("Select a team member");
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -473,7 +560,7 @@ function LogHoursForm({
             notes: notes.trim() || null,
             date,
           }),
-        }
+        },
       );
       if (!res.ok) {
         const b = await res.json().catch(() => ({}));
@@ -490,7 +577,9 @@ function LogHoursForm({
 
   return (
     <div className="px-6 py-4 border-b border-[#F0EEE9] bg-white">
-      <p className="text-xs font-semibold text-[#666] uppercase tracking-widest mb-3">Log Hours</p>
+      <p className="text-xs font-semibold text-[#666] uppercase tracking-widest mb-3">
+        Log Hours
+      </p>
       <div className="flex items-start gap-3 flex-wrap">
         <select
           value={userId}
@@ -498,7 +587,9 @@ function LogHoursForm({
           className="text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111] bg-white"
         >
           {teamUsers.map((u) => (
-            <option key={u.id} value={u.id}>{userName(u)}</option>
+            <option key={u.id} value={u.id}>
+              {userName(u)}
+            </option>
           ))}
         </select>
         <div className="flex items-center gap-1.5 border border-[#E5E3DE] rounded-xl px-3 py-2 bg-white w-28">
@@ -535,7 +626,10 @@ function LogHoursForm({
         >
           {saving ? "…" : "Log"}
         </button>
-        <button onClick={onCancel} className="text-[#999] hover:text-[#111] mt-2">
+        <button
+          onClick={onCancel}
+          className="text-[#999] hover:text-[#111] mt-2"
+        >
           <X size={15} />
         </button>
       </div>
