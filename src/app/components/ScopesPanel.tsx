@@ -135,10 +135,14 @@ export default function ScopesPanel({
         <div className="flex items-center gap-2.5">
           <Target size={15} className="text-[#999]" />
           <h3 className="font-semibold text-sm text-[#111]">Scope & Hours</h3>
+
           {scopes.length > 0 && (
             <span className="text-xs text-[#bbb]">{scopes.length}</span>
           )}
         </div>
+        <p className="text-xs text-[#bbb]">
+          Pulls <code>SERVICE</code> items
+        </p>
         <div className="flex items-center gap-3">
           {scopes.length > 0 && (
             <span
