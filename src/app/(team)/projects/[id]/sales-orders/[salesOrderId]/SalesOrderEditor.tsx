@@ -13,10 +13,10 @@ import {
   Check,
   ShoppingCart,
 } from "lucide-react";
-import { SalesOrderWithDetails } from "./page";
+import { SalesOrderForClient } from "./page";
 import { SalesOrderStatus } from "@prisma/client";
 
-type SOLine = SalesOrderWithDetails["lines"][number];
+type SOLine = SalesOrderForClient["lines"][number];
 
 const STATUS_CONFIG: Record<
   SalesOrderStatus,
@@ -43,7 +43,7 @@ export default function SalesOrderEditor({
   salesOrder: initialSO,
   projectId,
 }: {
-  salesOrder: SalesOrderWithDetails;
+  salesOrder: SalesOrderForClient;
   projectId: string;
 }) {
   const router = useRouter();

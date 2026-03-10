@@ -405,6 +405,7 @@ enum NoteDocumentType {
   QUOTE
   BILL_OF_MATERIALS
   CHANGE_ORDER
+  SALES_ORDER
 }
 
 model Note {
@@ -425,7 +426,6 @@ enum SalesOrderStatus {
   CLOSED
 }
 
-// 2. Add this model
 model SalesOrder {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
@@ -433,14 +433,12 @@ model SalesOrder {
 
   status SalesOrderStatus @default(OPEN)
 
-  // Snapshot of the quote at conversion time
   projectId String
   project   Project @relation(fields: [projectId], references: [id])
 
   customerId String
   customer   Customer @relation(fields: [customerId], references: [id])
 
-  // Link back to the originating quote (nullable in case quote is deleted)
   quoteId String? @unique
   quote   Quote?  @relation(fields: [quoteId], references: [id])
 
@@ -458,7 +456,6 @@ model SalesOrderLine {
   price       Decimal  @db.Decimal(10, 2)
   cost        Decimal? @db.Decimal(10, 2)
 
-  // Optional: preserve item reference from quote line
   itemId String?
   item   Item?   @relation(fields: [itemId], references: [id])
 }
