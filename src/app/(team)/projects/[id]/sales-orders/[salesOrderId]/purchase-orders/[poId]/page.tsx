@@ -33,10 +33,24 @@ export default async function PODetailPage({
   if (!po || po.projectId !== id || po.salesOrderId !== salesOrderId) {
     return notFound();
   }
+  // Serialize Decimals on salesOrderLine (price + cost)
+  const serialized = {
+    ...po,
+    lines: po.lines.map((l) => ({
+      ...l,
+      salesOrderLine: l.salesOrderLine
+        ? {
+            ...l.salesOrderLine,
+            price: l.salesOrderLine.price.toNumber(),
+            cost: l.salesOrderLine.cost?.toNumber() ?? null,
+          }
+        : null,
+    })),
+  };
 
   return (
     <PODetailClient
-      po={po}
+      po={serialized}
       projectId={id}
       salesOrderId={salesOrderId}
       currentUserId={currentUserId}

@@ -7,7 +7,7 @@ import { authOptions } from "@/lib/auth";
 import SalesOrderEditor from "./SalesOrderEditor";
 import NotesPanel from "@/app/components/NotesPanel";
 import PurchaseOrdersPanel from "@/app/components/PurchaseOrderPanel";
-import { POWithDetails } from "@/types/purchaseOrder";
+import { POWithDetails, POWithDetailsForClient } from "@/types/purchaseOrder";
 
 export type SalesOrderWithDetails = Prisma.SalesOrderGetPayload<{
   include: {
@@ -68,6 +68,20 @@ export default async function SalesOrderPage({
     })),
   };
 
+  const serializedPOs: POWithDetailsForClient[] = (purchaseOrders as POWithDetails[]).map((po) => ({
+    ...po,
+    lines: po.lines.map((line) => ({
+      ...line,
+      salesOrderLine: line.salesOrderLine
+        ? {
+            ...line.salesOrderLine,
+            price: line.salesOrderLine.price.toNumber(),
+            cost: line.salesOrderLine.cost?.toNumber() ?? null,
+          }
+        : null,
+    })),
+  }));
+
   return (
     <div className="bg-[#F7F6F3] min-h-screen">
       <SalesOrderEditor salesOrder={serialized} projectId={id} />
@@ -76,7 +90,7 @@ export default async function SalesOrderPage({
           projectId={id}
           salesOrderId={salesOrderId}
           salesOrderLines={serialized.lines}
-          initialPOs={purchaseOrders as POWithDetails[]}
+          initialPOs={serializedPOs}
         />
         <NotesPanel
           documentType="SALES_ORDER"

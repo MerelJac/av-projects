@@ -15,3 +15,17 @@ export type POWithDetails = Prisma.PurchaseOrderGetPayload<{
     };
   };
 }>;
+
+type SalesOrderLineRaw = NonNullable<POWithDetails["lines"][number]["salesOrderLine"]>;
+type SalesOrderLineForClient = Omit<SalesOrderLineRaw, "price" | "cost"> & {
+  price: number;
+  cost: number | null;
+};
+
+type POLineForClient = Omit<POWithDetails["lines"][number], "salesOrderLine"> & {
+  salesOrderLine: SalesOrderLineForClient | null;
+};
+
+export type POWithDetailsForClient = Omit<POWithDetails, "lines"> & {
+  lines: POLineForClient[];
+};

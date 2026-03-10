@@ -13,7 +13,7 @@ import {
   Send,
   X,
 } from "lucide-react";
-import { POWithDetails } from "@/types/purchaseOrder";
+import { POWithDetailsForClient } from "@/types/purchaseOrder";
 import Link from "next/link";
 
 type Item = { id: string; itemNumber: string; manufacturer: string | null };
@@ -94,9 +94,9 @@ export default function PurchaseOrdersPanel({
   projectId: string;
   salesOrderId: string;
   salesOrderLines: SOLine[];
-  initialPOs: POWithDetails[];
+  initialPOs: POWithDetailsForClient[];
 }) {
-  const [pos, setPOs] = useState<POWithDetails[]>(initialPOs);
+  const [pos, setPOs] = useState<POWithDetailsForClient[]>(initialPOs);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [showNewPO, setShowNewPO] = useState(false);
 
@@ -207,7 +207,7 @@ function PORow({
   onMarkSent,
   onRefresh,
 }: {
-  po: POWithDetails;
+  po: POWithDetailsForClient;
   projectId: string;
   salesOrderId: string;
   expanded: boolean;
@@ -399,7 +399,7 @@ function LogShipmentForm({
   onSaved,
   onCancel,
 }: {
-  po: POWithDetails;
+  po: POWithDetailsForClient;
   projectId: string;
   salesOrderId: string;
   onSaved: () => void;
