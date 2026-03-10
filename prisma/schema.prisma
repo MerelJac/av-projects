@@ -244,6 +244,7 @@ model Project {
   quotes         Quote[]
   boms           BillOfMaterials[]
   salesOrders    SalesOrder[]
+  scopes         ProjectScope[]
 }
 
 model Subscription {
@@ -265,19 +266,28 @@ model Subscription {
   createdAt DateTime @default(now())
 }
 
+model ProjectScope {
+  id             String      @id @default(uuid())
+  projectId      String
+  project        Project     @relation(fields: [projectId], references: [id])
+  name           String
+  estimatedHours Float       @default(0)
+  timeEntries    TimeEntry[]
+  createdAt      DateTime    @default(now())
+}
+
 model TimeEntry {
-  id String @id @default(uuid())
-
+  id        String        @id @default(uuid())
   projectId String
-  project   Project @relation(fields: [projectId], references: [id])
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
-
-  hours Float
-  notes String?
-
-  createdAt DateTime @default(now())
+  project   Project       @relation(fields: [projectId], references: [id])
+  userId    String
+  user      User          @relation(fields: [userId], references: [id])
+  scopeId   String?
+  scope     ProjectScope? @relation(fields: [scopeId], references: [id])
+  hours     Float
+  notes     String?
+  date      DateTime      @default(now())
+  createdAt DateTime      @default(now())
 }
 
 model ItemPriceHistory {

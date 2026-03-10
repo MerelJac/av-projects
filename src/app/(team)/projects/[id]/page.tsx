@@ -17,6 +17,7 @@ import {
 import ChangeOrderNotes from "@/app/components/ChangeOrderNotes";
 import AllShipments from "@/app/components/shipments/AllShipments";
 import MilestonesPanel from "@/app/components/MilestonesPanel";
+import ScopesPanel from "@/app/components/ScopesPanel";
 
 const quoteStatusStyles: Record<string, string> = {
   ACCEPTED: "bg-green-100 text-green-700",
@@ -34,30 +35,40 @@ export default async function ProjectPage({
   const session = await getServerSession(authOptions);
   const currentUserId = session?.user?.id;
 
-  const project = await prisma.project.findUnique({
-    where: { id },
-    include: {
-      customer: true,
-      shipments: true,
-      timeEntries: true,
-      purchaseOrders: true,
-      milestones: { orderBy: { dueDate: "asc" } },
-      quotes: {
-        include: {
-          lines: { include: { item: true, bundle: true } },
+  const [project, teamUsers] = await Promise.all([
+    prisma.project.findUnique({
+      where: { id },
+      include: {
+        customer: true,
+        shipments: true,
+        timeEntries: true,
+        purchaseOrders: true,
+        milestones: { orderBy: { dueDate: "asc" } },
+        quotes: {
+          include: { lines: { include: { item: true, bundle: true } } },
+          orderBy: { createdAt: "desc" },
         },
-        orderBy: { createdAt: "desc" },
-      },
-      changeOrders: { orderBy: { createdAt: "desc" } },
-      boms: {
-        include: {
-          lines: { include: { item: true } },
-          quotes: true,
+        changeOrders: { orderBy: { createdAt: "desc" } },
+        boms: {
+          include: { lines: { include: { item: true } }, quotes: true },
+          orderBy: { createdAt: "desc" },
         },
-        orderBy: { createdAt: "desc" },
+        scopes: {
+          include: {
+            timeEntries: {
+              include: { user: { include: { profile: true } } },
+              orderBy: { date: "desc" },
+            },
+          },
+          orderBy: { createdAt: "asc" },
+        },
       },
-    },
-  });
+    }),
+    prisma.user.findMany({
+      where: { role: "TEAM" },
+      include: { profile: true },
+    }),
+  ]);
 
   if (!project) return notFound();
 
@@ -65,10 +76,6 @@ export default async function ProjectPage({
     (sum, co) => sum + co.amount,
     0,
   );
-
-  const completedMilestones = project.milestones.filter(
-    (m) => m.completed,
-  ).length;
 
   const shipments = await prisma.shipment.findMany({
     include: {
@@ -113,42 +120,49 @@ export default async function ProjectPage({
 
         {/* Stats Row */}
         <div className="grid grid-cols-3 gap-4">
-          <div className="bg-white border border-[#E5E3DE] rounded-2xl p-5 flex items-center gap-4">
+          <div className="bg-white border border-[#E5E3DE] rounded-2xl p-5 flex items-center gap-4 hover:border-[#111] hover:shadow-sm hover:bg-[#FAFAF9] transition-all duration-150">
             <div className="w-10 h-10 rounded-xl bg-[#F0EEE9] flex items-center justify-center flex-shrink-0">
               <Truck size={16} className="text-[#666]" />
             </div>
-            <div>
+            <Link href={`/projects/${project.id}/shipments`}>
               <p className="text-2xl font-bold text-[#111]">
                 {project.shipments.length}
               </p>
               <p className="text-xs text-[#999]">Shipments</p>
-            </div>
+            </Link>
           </div>
-          <div className="bg-white border border-[#E5E3DE] rounded-2xl p-5 flex items-center gap-4">
+          <div className="bg-white border border-[#E5E3DE] rounded-2xl p-5 flex items-center gap-4 hover:border-[#111] hover:shadow-sm hover:bg-[#FAFAF9] transition-all duration-150">
             <div className="w-10 h-10 rounded-xl bg-[#F0EEE9] flex items-center justify-center flex-shrink-0">
               <Clock size={16} className="text-[#666]" />
             </div>
-            <div>
+            <Link href={`/projects/${project.id}/milestones`}>
               <p className="text-2xl font-bold text-[#111]">
                 {project.timeEntries
                   .reduce((sum, t) => sum + t.hours, 0)
                   .toFixed(1)}
               </p>
               <p className="text-xs text-[#999]">Hours Logged</p>
-            </div>
+            </Link>
           </div>
-          <div className="bg-white border border-[#E5E3DE] rounded-2xl p-5 flex items-center gap-4">
+          <div className="bg-white border border-[#E5E3DE] rounded-2xl p-5 flex items-center gap-4 hover:border-[#111] hover:shadow-sm hover:bg-[#FAFAF9] transition-all duration-150">
             <div className="w-10 h-10 rounded-xl bg-[#F0EEE9] flex items-center justify-center flex-shrink-0">
               <ShoppingCart size={16} className="text-[#666]" />
             </div>
-            <div>
+            <Link href={`/projects/${project.id}/purchase-orders`}>
               <p className="text-2xl font-bold text-[#111]">
                 {project.purchaseOrders.length}
               </p>
               <p className="text-xs text-[#999]">Purchase Orders</p>
-            </div>
+            </Link>
           </div>
         </div>
+
+        <ScopesPanel
+          projectId={project.id}
+          initialScopes={project.scopes}
+          teamUsers={teamUsers}
+          currentUserId={currentUserId}
+        />
 
         {/* BOMs */}
         <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
