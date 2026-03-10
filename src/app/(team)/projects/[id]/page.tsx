@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import ChangeOrderNotes from "@/app/components/ChangeOrderNotes";
 import AllShipments from "@/app/components/shipments/AllShipments";
+import MilestonesPanel from "@/app/components/MilestonesPanel";
 
 const quoteStatusStyles: Record<string, string> = {
   ACCEPTED: "bg-green-100 text-green-700",
@@ -264,53 +265,13 @@ export default async function ProjectPage({
         </div>
 
         {/* Milestones */}
-        <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#F0EEE9] flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <Milestone size={15} className="text-[#999]" />
-              <h3 className="font-semibold text-sm text-[#111]">Milestones</h3>
-              <span className="text-xs text-[#bbb]">
-                {project.milestones.length}
-              </span>
-            </div>
-            {project.milestones.length > 0 && (
-              <span className="text-xs text-[#999]">
-                {completedMilestones}/{project.milestones.length} complete
-              </span>
-            )}
-          </div>
-          {project.milestones.length === 0 ? (
-            <div className="px-6 py-10 text-center">
-              <p className="text-sm text-[#bbb]">No milestones yet</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-[#F7F6F3]">
-              {project.milestones.map((m) => (
-                <div key={m.id} className="px-6 py-3.5 flex items-center gap-3">
-                  <div
-                    className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
-                      m.completed
-                        ? "bg-green-500 border-green-500"
-                        : "border-[#ccc]"
-                    }`}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p
-                      className={`text-sm ${m.completed ? "line-through text-[#999]" : "text-[#111]"}`}
-                    >
-                      {m.name}
-                    </p>
-                  </div>
-                  {m.dueDate && (
-                    <span className="text-xs text-[#999] flex-shrink-0">
-                      {new Date(m.dueDate).toLocaleDateString()}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <MilestonesPanel
+          projectId={project.id}
+          initialMilestones={project.milestones.map((m) => ({
+            ...m,
+            dueDate: m.dueDate?.toISOString() ?? null,
+          }))}
+        />
 
         <AllShipments shipments={shipments} />
         {/* Change Orders */}
