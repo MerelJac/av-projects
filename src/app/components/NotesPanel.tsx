@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import { StickyNote, Trash2, Send } from "lucide-react";
 
-type NoteDocumentType = "QUOTE" | "BILL_OF_MATERIALS" | "CHANGE_ORDER" | "SALES_ORDER"; // reuse existing enum values where possible, add new ones as needed
+type NoteDocumentType = "QUOTE" | "BILL_OF_MATERIALS" | "CHANGE_ORDER" | "SALES_ORDER"; 
 
 type NoteUser = {
   id: string;

@@ -156,24 +156,6 @@ model Item {
   salesOrderLines    SalesOrderLine[]
 }
 
-model Shipment {
-  id String @id @default(uuid())
-
-  projectId String
-  project   Project @relation(fields: [projectId], references: [id])
-
-  itemId String?
-  item   Item?   @relation(fields: [itemId], references: [id])
-
-  quantity Int
-
-  carrier  String?
-  tracking String?
-
-  shippedBy String?
-  createdAt DateTime @default(now())
-}
-
 enum ItemType {
   HARDWARE
   SOFTWARE
@@ -341,40 +323,6 @@ model ProjectMilestone {
   completed Boolean   @default(false)
 }
 
-model PurchaseOrder {
-  id String @id @default(uuid())
-
-  vendor String
-
-  projectId String?
-  project   Project? @relation(fields: [projectId], references: [id])
-
-  status POStatus @default(DRAFT)
-
-  createdAt DateTime @default(now())
-
-  lines PurchaseOrderLine[]
-}
-
-model PurchaseOrderLine {
-  id String @id @default(uuid())
-
-  poId          String
-  purchaseOrder PurchaseOrder @relation(fields: [poId], references: [id])
-
-  itemId String
-  item   Item   @relation(fields: [itemId], references: [id])
-
-  quantity Int
-  cost     Float
-}
-
-enum POStatus {
-  DRAFT
-  SENT
-  RECEIVED
-}
-
 model BillOfMaterials {
   id        String   @id @default(uuid())
   name      String
@@ -426,36 +374,87 @@ enum SalesOrderStatus {
   CLOSED
 }
 
-model SalesOrder {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model PurchaseOrder {
+  id           String              @id @default(uuid())
+  vendor       String
+  notes        String?
+  projectId    String?
+  project      Project?            @relation(fields: [projectId], references: [id])
+  salesOrderId String?
+  salesOrder   SalesOrder?         @relation(fields: [salesOrderId], references: [id])
+  status       POStatus            @default(DRAFT)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  lines        PurchaseOrderLine[]
+  shipments    Shipment[]
+}
 
-  status SalesOrderStatus @default(OPEN)
-
-  projectId String
-  project   Project @relation(fields: [projectId], references: [id])
-
-  customerId String
-  customer   Customer @relation(fields: [customerId], references: [id])
-
-  quoteId String? @unique
-  quote   Quote?  @relation(fields: [quoteId], references: [id])
-
-  lines        SalesOrderLine[]
-  quoteBundles QuoteBundle[]
+model PurchaseOrderLine {
+  id               String          @id @default(uuid())
+  poId             String
+  purchaseOrder    PurchaseOrder   @relation(fields: [poId], references: [id], onDelete: Cascade)
+  itemId           String
+  item             Item            @relation(fields: [itemId], references: [id])
+  salesOrderLineId String?
+  salesOrderLine   SalesOrderLine? @relation(fields: [salesOrderLineId], references: [id])
+  quantity         Int
+  receivedQuantity Int             @default(0)
+  cost             Float
 }
 
 model SalesOrderLine {
-  id           String     @id @default(cuid())
-  salesOrderId String
-  salesOrder   SalesOrder @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
+  id                 String              @id @default(cuid())
+  salesOrderId       String
+  salesOrder         SalesOrder          @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
+  description        String
+  quantity           Int
+  price              Decimal             @db.Decimal(10, 2)
+  cost               Decimal?            @db.Decimal(10, 2)
+  itemId             String?
+  item               Item?               @relation(fields: [itemId], references: [id])
+  purchaseOrderLines PurchaseOrderLine[]
+}
 
-  description String
-  quantity    Int
-  price       Decimal  @db.Decimal(10, 2)
-  cost        Decimal? @db.Decimal(10, 2)
+model SalesOrder {
+  id             String           @id @default(cuid())
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  status         SalesOrderStatus @default(OPEN)
+  projectId      String
+  project        Project          @relation(fields: [projectId], references: [id])
+  customerId     String
+  customer       Customer         @relation(fields: [customerId], references: [id])
+  quoteId        String?          @unique
+  quote          Quote?           @relation(fields: [quoteId], references: [id])
+  lines          SalesOrderLine[]
+  quoteBundles   QuoteBundle[]
+  purchaseOrders PurchaseOrder[]
+  shipments      Shipment[]
+}
 
-  itemId String?
-  item   Item?   @relation(fields: [itemId], references: [id])
+model Shipment {
+  id               String         @id @default(uuid())
+  projectId        String
+  project          Project        @relation(fields: [projectId], references: [id])
+  purchaseOrderId  String?
+  purchaseOrder    PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id])
+  salesOrderId     String?
+  salesOrder       SalesOrder?    @relation(fields: [salesOrderId], references: [id])
+  itemId           String?
+  item             Item?          @relation(fields: [itemId], references: [id])
+  quantity         Int
+  receivedQuantity Int            @default(0)
+  carrier          String?
+  tracking         String?
+  shippedBy        String?
+  notes            String?
+  receivedAt       DateTime?
+  createdAt        DateTime       @default(now())
+}
+
+enum POStatus {
+  DRAFT
+  SENT
+  PARTIALLY_RECEIVED
+  RECEIVED
 }

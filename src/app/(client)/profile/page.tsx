@@ -9,7 +9,6 @@ import { LogoutButton } from "@/app/components/Logout";
 import ClientProfileSection from "@/app/components/clients/ClientProfileSection";
 import { ClientProfilePageUser } from "@/types/client";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 
 export default async function ClientProfilePage() {
   const session = await getServerSession(authOptions);

@@ -6,6 +6,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import SalesOrderEditor from "./SalesOrderEditor";
 import NotesPanel from "@/app/components/NotesPanel";
+import PurchaseOrdersPanel from "@/app/components/PurchaseOrderPanel";
+import { POWithDetails } from "@/types/purchaseOrder";
 
 export type SalesOrderWithDetails = Prisma.SalesOrderGetPayload<{
   include: {
@@ -16,7 +18,6 @@ export type SalesOrderWithDetails = Prisma.SalesOrderGetPayload<{
   };
 }>;
 
-// Plain serializable version safe to pass to Client Components
 export type SalesOrderForClient = Omit<SalesOrderWithDetails, "lines"> & {
   lines: Array<
     Omit<SalesOrderWithDetails["lines"][number], "price" | "cost"> & {
@@ -35,19 +36,29 @@ export default async function SalesOrderPage({
   const currentUserId = session?.user?.id;
   const { id, salesOrderId } = await params;
 
-  const salesOrder = await prisma.salesOrder.findUnique({
-    where: { id: salesOrderId },
-    include: {
-      customer: true,
-      project: true,
-      quote: { select: { id: true } },
-      lines: { include: { item: true }, orderBy: { id: "asc" } },
-    },
-  });
+  const [salesOrder, purchaseOrders] = await Promise.all([
+    prisma.salesOrder.findUnique({
+      where: { id: salesOrderId },
+      include: {
+        customer: true,
+        project: true,
+        quote: { select: { id: true } },
+        lines: { include: { item: true }, orderBy: { id: "asc" } },
+      },
+    }),
+    prisma.purchaseOrder.findMany({
+      where: { salesOrderId },
+      include: {
+        lines: { include: { item: true, salesOrderLine: true } },
+        shipments: { include: { item: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
 
   if (!salesOrder || salesOrder.projectId !== id) return notFound();
 
-  // Serialize Decimal → number so Next.js can pass it to the Client Component
+  // Serialize Decimals for client
   const serialized: SalesOrderForClient = {
     ...salesOrder,
     lines: salesOrder.lines.map((l) => ({
@@ -58,9 +69,15 @@ export default async function SalesOrderPage({
   };
 
   return (
-    <div className="bg-[#F7F6F3]">
+    <div className="bg-[#F7F6F3] min-h-screen">
       <SalesOrderEditor salesOrder={serialized} projectId={id} />
-      <div className="max-w-5xl mx-auto px-6 pb-10">
+      <div className="max-w-5xl mx-auto px-6 pb-10 space-y-6">
+        <PurchaseOrdersPanel
+          projectId={id}
+          salesOrderId={salesOrderId}
+          salesOrderLines={serialized.lines}
+          initialPOs={purchaseOrders as POWithDetails[]}
+        />
         <NotesPanel
           documentType="SALES_ORDER"
           documentId={salesOrder.id}
