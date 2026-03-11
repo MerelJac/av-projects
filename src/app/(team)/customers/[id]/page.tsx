@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, Mail, Phone, Tag } from "lucide-react";
 import DeleteCustomerButton from "./DeleteCustomerButton";
+import CustomerSubscriptionsPanel from "../../subscriptions/CustomerSubscriptionPanel";
 
 const quoteStatusStyles: Record<string, string> = {
   ACCEPTED: "bg-green-100 text-green-700",
@@ -29,10 +30,17 @@ export default async function CustomerPage({
 
   if (!customer) return notFound();
 
+  const [subs, items] = await Promise.all([
+    prisma.subscription.findMany({
+      where: { customerId: customer.id },
+      include: { item: true },
+    }),
+    prisma.item.findMany({ where: { type: "SUBSCRIPTION", active: true } }),
+  ]);
+
   return (
     <div className="min-h-screen bg-[#F7F6F3]">
       <div className="max-w-5xl mx-auto px-6 py-10 space-y-6">
-
         {/* Header */}
         <div className="flex items-start justify-between">
           <div>
@@ -84,10 +92,14 @@ export default async function CustomerPage({
           <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
             <div className="px-5 py-4 border-b border-[#F0EEE9] flex items-center justify-between">
               <h3 className="text-sm font-semibold text-[#111]">Projects</h3>
-              <span className="text-xs text-[#bbb]">{customer.projects.length}</span>
+              <span className="text-xs text-[#bbb]">
+                {customer.projects.length}
+              </span>
             </div>
             {customer.projects.length === 0 ? (
-              <p className="px-5 py-8 text-sm text-[#bbb] text-center">No projects yet</p>
+              <p className="px-5 py-8 text-sm text-[#bbb] text-center">
+                No projects yet
+              </p>
             ) : (
               <div className="divide-y divide-[#F7F6F3]">
                 {customer.projects.map((project) => (
@@ -97,14 +109,19 @@ export default async function CustomerPage({
                     className="flex items-center justify-between px-5 py-3.5 hover:bg-[#FAFAF9] transition-colors group"
                   >
                     <div>
-                      <p className="text-sm font-medium text-[#111]">{project.name}</p>
+                      <p className="text-sm font-medium text-[#111]">
+                        {project.name}
+                      </p>
                       {project.totalBudget != null && (
                         <p className="text-xs text-[#999] mt-0.5">
                           ${project.totalBudget.toLocaleString()}
                         </p>
                       )}
                     </div>
-                    <ArrowRight size={13} className="text-[#ccc] group-hover:text-[#111] transition-colors" />
+                    <ArrowRight
+                      size={13}
+                      className="text-[#ccc] group-hover:text-[#111] transition-colors"
+                    />
                   </Link>
                 ))}
               </div>
@@ -115,23 +132,33 @@ export default async function CustomerPage({
           <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
             <div className="px-5 py-4 border-b border-[#F0EEE9] flex items-center justify-between">
               <h3 className="text-sm font-semibold text-[#111]">Quotes</h3>
-              <span className="text-xs text-[#bbb]">{customer.quotes.length}</span>
+              <span className="text-xs text-[#bbb]">
+                {customer.quotes.length}
+              </span>
             </div>
             {customer.quotes.length === 0 ? (
-              <p className="px-5 py-8 text-sm text-[#bbb] text-center">No quotes yet</p>
+              <p className="px-5 py-8 text-sm text-[#bbb] text-center">
+                No quotes yet
+              </p>
             ) : (
               <div className="divide-y divide-[#F7F6F3]">
                 {customer.quotes.map((quote) => (
                   <Link
                     key={quote.id}
-                    href={quote.projectId ? `/projects/${quote.projectId}/quotes/${quote.id}` : `/quotes/${quote.id}`}
+                    href={
+                      quote.projectId
+                        ? `/projects/${quote.projectId}/quotes/${quote.id}`
+                        : `/quotes/${quote.id}`
+                    }
                     className="flex items-center justify-between px-5 py-3.5 hover:bg-[#FAFAF9] transition-colors group"
                   >
                     <div className="flex items-center gap-2.5">
                       <span className="text-xs font-mono font-semibold text-[#111]">
                         #{quote.id.slice(0, 8).toUpperCase()}
                       </span>
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${quoteStatusStyles[quote.status]}`}>
+                      <span
+                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${quoteStatusStyles[quote.status]}`}
+                      >
                         {quote.status}
                       </span>
                     </div>
@@ -141,7 +168,10 @@ export default async function CustomerPage({
                           ${quote.total.toLocaleString()}
                         </span>
                       )}
-                      <ArrowRight size={13} className="text-[#ccc] group-hover:text-[#111] transition-colors" />
+                      <ArrowRight
+                        size={13}
+                        className="text-[#ccc] group-hover:text-[#111] transition-colors"
+                      />
                     </div>
                   </Link>
                 ))}
@@ -149,6 +179,11 @@ export default async function CustomerPage({
             )}
           </div>
         </div>
+        <CustomerSubscriptionsPanel
+          customerId={id}
+          initialSubscriptions={subs}
+          availableItems={items}
+        />
       </div>
     </div>
   );
