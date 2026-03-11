@@ -1,4 +1,4 @@
-import { Role } from "./enums";
+import { Role } from "@prisma/client";
 import { Profile } from "./profile";
 
 export type User = {
@@ -6,5 +6,8 @@ export type User = {
   email: string;
   role: Role;
   trainerId?: string | null;
-  profile?: Profile
+  profile?: Profile | null;
 };
+
+
+export type UserWithProfile = User & { profile: Profile | null };

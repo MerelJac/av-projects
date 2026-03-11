@@ -1,24 +1,15 @@
 "use client";
+
 import { useState } from "react";
-import {
-  Pencil,
-  X,
-  Phone,
-  Mail,
-  Calendar,
-  Dumbbell,
-  AlertTriangle,
-  FileCheck,
-} from "lucide-react";
+import { Pencil, X, Phone, User } from "lucide-react";
 import { ClientProfileEditor } from "./ClientProfileEditor";
-import { ClientProfilePageUser } from "@/types/client";
-import { formatDateFromInputReturnString } from "@/app/utils/format/formatDateFromInput";
 import { formatPhoneDisplay } from "@/app/utils/format/formatPhoneNumber";
+import { UserWithProfile } from "@/types/user";
 
 export default function ClientProfileSection({
   user,
 }: {
-  user: ClientProfilePageUser;
+  user: UserWithProfile;
 }) {
   const [isEditing, setIsEditing] = useState(false);
 
@@ -30,11 +21,10 @@ export default function ClientProfileSection({
   return (
     <>
       {/* Profile Card */}
-      <section className="mx-5 mb-4  bg-white border border-surface2 rounded-2xl overflow-hidden">
+      <section className="mx-5 mb-4 bg-white border border-surface2 rounded-2xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-surface2">
           <div className="flex items-center gap-3">
-            {/* Avatar */}
             <div className="trainer-avatar text-lg">
               {profile?.firstName?.[0] ?? "?"}
             </div>
@@ -55,7 +45,6 @@ export default function ClientProfileSection({
 
         {/* Info rows */}
         <div className="divide-y divide-surface2">
-          {/* Phone */}
           <div className="flex items-center gap-3 px-5 py-3.5">
             <div className="w-8 h-8 rounded-xl bg-secondary-color/10 flex items-center justify-center flex-shrink-0">
               <Phone size={14} className="text-secondary-color" />
@@ -77,77 +66,25 @@ export default function ClientProfileSection({
             </div>
           </div>
 
-          {/* DOB */}
           <div className="flex items-center gap-3 px-5 py-3.5">
             <div className="w-8 h-8 rounded-xl bg-secondary-color/10 flex items-center justify-center flex-shrink-0">
-              <Calendar size={14} className="text-secondary-color" />
+              <User size={14} className="text-secondary-color" />
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-[10px] font-semibold tracking-widest uppercase text-muted mb-0.5">
-                Date of Birth
+                Role
               </p>
-              <p className="text-sm font-medium text-muted">
-                {profile?.dob
-                  ? formatDateFromInputReturnString(profile.dob)
-                  : "N/A"}
-              </p>
+              {role ? (
+                <p className="text-sm font-medium text-muted">{role}</p>
+              ) : (
+                <p className="text-sm text-muted italic">Not provided</p>
+              )}
             </div>
           </div>
-
-          {/* Experience */}
-          <div className="flex items-center gap-3 px-5 py-3.5">
-            <div className="w-8 h-8 rounded-xl bg-secondary-color/10 flex items-center justify-center flex-shrink-0">
-              <Dumbbell size={14} className="text-secondary-color" />
-            </div>
-            <div>
-              <p className="text-[10px] font-semibold tracking-widest uppercase text-muted mb-0.5">
-                Experience
-              </p>
-              <p className="text-sm font-medium text-muted">
-                {profile?.experience || "Not specified"}
-              </p>
-            </div>
-          </div>
-
-          {/* Injuries */}
-          {profile?.injuryNotes && (
-            <div className="flex items-start gap-3 px-5 py-3.5">
-              <div className="w-8 h-8 rounded-xl bg-danger/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <AlertTriangle size={14} className="text-danger" />
-              </div>
-              <div>
-                <p className="text-[10px] font-semibold tracking-widest uppercase text-danger/80 mb-0.5">
-                  Injuries / Limitations
-                </p>
-                <p className="text-sm text-muted/80 ">{profile.injuryNotes}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Waiver */}
-          {profile?.waiverSignedAt && (
-            <div className="flex items-center gap-3 px-5 py-3.5">
-              <div className="w-8 h-8 rounded-xl bg-mint/10 flex items-center justify-center flex-shrink-0">
-                <FileCheck size={14} className="text-mint" />
-              </div>
-              <div>
-                <p className="text-[10px] font-semibold tracking-widest uppercase text-muted mb-0.5">
-                  Waiver {profile.waiverVersion}
-                </p>
-                <a
-                  href="/waiver"
-                  target="_blank"
-                  className="text-sm font-medium text-mint hover:underline"
-                >
-                  Signed {new Date(profile.waiverSignedAt).toLocaleDateString()}
-                </a>
-              </div>
-            </div>
-          )}
         </div>
       </section>
 
-      {/* EDIT MODAL */}
+      {/* Edit Modal */}
       {isEditing && (
         <div className="fixed inset-0 z-50 bg-white/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
           <div className="bg-white border border-surface2 rounded-2xl w-full max-w-md relative max-h-[90vh] overflow-y-auto">
@@ -166,11 +103,8 @@ export default function ClientProfileSection({
               clientId={user.id}
               firstName={profile?.firstName}
               lastName={profile?.lastName}
-              dob={profile?.dob}
-              experience={profile?.experience}
-              injuryNotes={profile?.injuryNotes}
-              phone={profile?.phone}
               email={user.email}
+              phone={profile?.phone ?? ""}
               onSave={() => setIsEditing(false)}
               role={role}
             />

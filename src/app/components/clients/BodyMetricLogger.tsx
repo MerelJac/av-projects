@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { addMyBodyMetric } from "@/app/(client)/profile/actions";
+import { addMyBodyMetric } from "@/app/(team)/profile/actions";
 
 export function BodyMetricLogger() {
   const [weight, setWeight] = useState("");
