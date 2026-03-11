@@ -3,7 +3,7 @@ import { CheckCircle2, Clock, Truck } from "lucide-react";
 import Link from "next/link";
 export default async function AllShipments({ shipments }: { shipments: ShipmentWithRelations[] }) {
     return (
-        <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
+        <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-x-auto">
           <div className="px-5 py-3.5 border-b border-[#F0EEE9] flex items-center gap-2">
             <Truck size={14} className="text-[#999]" />
             <h3 className="text-sm font-semibold text-[#111]">All Shipments</h3>
@@ -12,7 +12,7 @@ export default async function AllShipments({ shipments }: { shipments: ShipmentW
           {shipments.length === 0 ? (
             <p className="px-5 py-12 text-sm text-[#bbb] text-center">No shipments logged yet</p>
           ) : (
-            <table className="w-full">
+            <table className="w-full min-w-[900px]">
               <thead>
                 <tr className="border-b border-[#F0EEE9]">
                   <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-5 py-3">Date</th>
