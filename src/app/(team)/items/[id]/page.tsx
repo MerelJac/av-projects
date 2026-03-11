@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2, XCircle } from "lucide-react";
+import { PriceHistory } from "@/app/api/items/PriceHistory";
 
 const typeStyles: Record<string, string> = {
   HARDWARE: "bg-blue-50 text-blue-700",
@@ -37,7 +38,6 @@ export default async function ItemPage({
   return (
     <div className="min-h-screen bg-[#F7F6F3]">
       <div className="max-w-4xl mx-auto px-6 py-10 space-y-6">
-
         <Link
           href="/items"
           className="flex items-center gap-2 text-sm text-[#666] hover:text-[#111] transition-colors"
@@ -50,7 +50,9 @@ export default async function ItemPage({
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2.5 mb-1">
-              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${typeStyles[item.type] ?? "bg-gray-100 text-gray-600"}`}>
+              <span
+                className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${typeStyles[item.type] ?? "bg-gray-100 text-gray-600"}`}
+              >
                 {item.type}
               </span>
               {!item.active && (
@@ -82,7 +84,9 @@ export default async function ItemPage({
         {/* Pricing */}
         <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
           <div className="px-6 py-4 border-b border-[#F0EEE9]">
-            <p className="text-xs font-semibold uppercase tracking-widest text-[#888]">Pricing</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#888]">
+              Pricing
+            </p>
           </div>
           <div className="grid grid-cols-4 divide-x divide-[#F0EEE9]">
             {[
@@ -93,22 +97,32 @@ export default async function ItemPage({
               <div key={label} className="px-6 py-5">
                 <p className="text-xs text-[#999] mb-1">{label}</p>
                 <p className="text-xl font-bold text-[#111]">
-                  {value != null
-                    ? `$${value.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
-                    : <span className="text-[#ccc] font-normal text-base">—</span>
-                  }
+                  {value != null ? (
+                    `$${value.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                  ) : (
+                    <span className="text-[#ccc] font-normal text-base">—</span>
+                  )}
                 </p>
               </div>
             ))}
             <div className="px-6 py-5">
               <p className="text-xs text-[#999] mb-1">Margin</p>
-              <p className={`text-xl font-bold ${
-                margin == null ? "text-[#ccc]"
-                : parseFloat(margin) >= 20 ? "text-green-600"
-                : parseFloat(margin) >= 10 ? "text-amber-600"
-                : "text-red-600"
-              }`}>
-                {margin != null ? `${margin}%` : <span className="font-normal text-base">—</span>}
+              <p
+                className={`text-xl font-bold ${
+                  margin == null
+                    ? "text-[#ccc]"
+                    : parseFloat(margin) >= 20
+                      ? "text-green-600"
+                      : parseFloat(margin) >= 10
+                        ? "text-amber-600"
+                        : "text-red-600"
+                }`}
+              >
+                {margin != null ? (
+                  `${margin}%`
+                ) : (
+                  <span className="font-normal text-base">—</span>
+                )}
               </p>
             </div>
           </div>
@@ -117,7 +131,9 @@ export default async function ItemPage({
         {/* Details */}
         <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
           <div className="px-6 py-4 border-b border-[#F0EEE9]">
-            <p className="text-xs font-semibold uppercase tracking-widest text-[#888]">Details</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#888]">
+              Details
+            </p>
           </div>
           <div className="grid grid-cols-3 divide-x divide-[#F0EEE9]">
             <div className="px-6 py-5">
@@ -129,10 +145,19 @@ export default async function ItemPage({
             <div className="px-6 py-5">
               <p className="text-xs text-[#999] mb-1">Approved</p>
               <div className="flex items-center gap-1.5">
-                {item.approved
-                  ? <><CheckCircle2 size={14} className="text-green-500" /><span className="text-sm font-medium text-green-600">Approved</span></>
-                  : <><XCircle size={14} className="text-[#ccc]" /><span className="text-sm text-[#999]">Not approved</span></>
-                }
+                {item.approved ? (
+                  <>
+                    <CheckCircle2 size={14} className="text-green-500" />
+                    <span className="text-sm font-medium text-green-600">
+                      Approved
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <XCircle size={14} className="text-[#ccc]" />
+                    <span className="text-sm text-[#999]">Not approved</span>
+                  </>
+                )}
               </div>
             </div>
             <div className="px-6 py-5">
@@ -144,13 +169,22 @@ export default async function ItemPage({
           </div>
         </div>
 
+        <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden mt-6">
+          <div className="px-5 py-4 border-b border-[#F0EEE9]">
+            <h2 className="text-sm font-semibold text-[#111]">Price History</h2>
+          </div>
+          <PriceHistory itemId={item.id} />
+        </div>
+
         {/* Customer Pricing */}
         <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
           <div className="px-6 py-4 border-b border-[#F0EEE9] flex items-center justify-between">
             <p className="text-xs font-semibold uppercase tracking-widest text-[#888]">
               Customer Pricing
             </p>
-            <span className="text-xs text-[#bbb]">{item.customerPrices.length}</span>
+            <span className="text-xs text-[#bbb]">
+              {item.customerPrices.length}
+            </span>
           </div>
           {item.customerPrices.length === 0 ? (
             <p className="px-6 py-10 text-sm text-[#bbb] text-center">
@@ -160,31 +194,61 @@ export default async function ItemPage({
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#F0EEE9]">
-                  <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-6 py-3">Customer</th>
-                  <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">Price</th>
-                  <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-6 py-3">vs List</th>
-                  <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-6 py-3">Since</th>
+                  <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-6 py-3">
+                    Customer
+                  </th>
+                  <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">
+                    Price
+                  </th>
+                  <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-6 py-3">
+                    vs List
+                  </th>
+                  <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-6 py-3">
+                    Since
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {item.customerPrices.map((p) => {
-                  const diff = item.price ? ((p.price - item.price) / item.price) * 100 : null;
+                  const diff = item.price
+                    ? ((p.price - item.price) / item.price) * 100
+                    : null;
                   return (
-                    <tr key={p.id} className="border-b border-[#F7F6F3] last:border-0 hover:bg-[#FAFAF9] transition-colors">
+                    <tr
+                      key={p.id}
+                      className="border-b border-[#F7F6F3] last:border-0 hover:bg-[#FAFAF9] transition-colors"
+                    >
                       <td className="px-6 py-3.5">
-                        <Link href={`/customers/${p.customerId}`} className="text-sm font-medium text-[#111] hover:underline">
+                        <Link
+                          href={`/customers/${p.customerId}`}
+                          className="text-sm font-medium text-[#111] hover:underline"
+                        >
                           {p.customer.name}
                         </Link>
                       </td>
                       <td className="px-3 py-3.5 text-right text-sm font-semibold text-[#111]">
-                        ${p.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        $
+                        {p.price.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                        })}
                       </td>
                       <td className="px-6 py-3.5 text-right text-sm">
                         {diff != null ? (
-                          <span className={diff < 0 ? "text-red-500" : diff > 0 ? "text-green-600" : "text-[#999]"}>
-                            {diff > 0 ? "+" : ""}{diff.toFixed(1)}%
+                          <span
+                            className={
+                              diff < 0
+                                ? "text-red-500"
+                                : diff > 0
+                                  ? "text-green-600"
+                                  : "text-[#999]"
+                            }
+                          >
+                            {diff > 0 ? "+" : ""}
+                            {diff.toFixed(1)}%
                           </span>
-                        ) : <span className="text-[#ccc]">—</span>}
+                        ) : (
+                          <span className="text-[#ccc]">—</span>
+                        )}
                       </td>
                       <td className="px-6 py-3.5 text-right text-xs text-[#999]">
                         {new Date(p.createdAt).toLocaleDateString()}
@@ -196,7 +260,6 @@ export default async function ItemPage({
             </table>
           )}
         </div>
-
       </div>
     </div>
   );
