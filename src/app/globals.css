@@ -981,7 +981,7 @@ body {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  background: linear-gradient(90deg, var(--accent2), var(--accent1));
   border-radius: 3px 3px 0 0;
 }
 .wc-top {
@@ -1287,7 +1287,7 @@ body {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1301,7 +1301,7 @@ body {
   width: 46px;
   height: 46px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
   display: flex;
   align-items: center;
   justify-content: center;
