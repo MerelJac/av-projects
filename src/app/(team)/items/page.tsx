@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { Plus, ArrowRight } from "lucide-react";
+import { Plus, ArrowRight, Upload } from "lucide-react";
 
 const typeStyles: Record<string, string> = {
   HARDWARE: "bg-blue-50 text-blue-700",
@@ -21,13 +21,22 @@ export default async function ItemsPage() {
           <h1 className="text-2xl font-bold text-[#111] tracking-tight">
             Items
           </h1>
-          <Link
-            href="/items/new"
-            className="flex items-center gap-1.5 text-sm font-semibold bg-[#111] text-white px-4 py-2 rounded-xl hover:bg-[#333] transition-colors"
-          >
-            <Plus size={14} />
-            Add Item
-          </Link>
+          <div className="flex items-center justify-between gap-4">
+            <Link
+              href="/items/new"
+              className="flex items-center gap-1.5 text-sm font-semibold bg-[#111] text-white px-4 py-2 rounded-xl hover:bg-[#333] transition-colors"
+            >
+              <Plus size={14} />
+              Add Item
+            </Link>
+            <Link
+              href="/items/import"
+              className="flex items-center gap-1.5 text-sm font-medium text-[#666] hover:text-[#111] px-3 py-2 rounded-xl hover:bg-white transition-colors border border-[#E5E3DE]"
+            >
+              <Upload size={14} />
+              Import CSV
+            </Link>
+          </div>
         </div>
 
         <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">

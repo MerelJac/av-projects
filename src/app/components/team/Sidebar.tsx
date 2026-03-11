@@ -166,7 +166,7 @@ export default function SidebarLayout({
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 p-6 pt-20 md:pt-6 overflow-y-auto">
+      <main className="flex-1 p-6 pt-20 md:pt-6 overflow-y-auto bg-[#F7F6F3]">
         {children}
       </main>
     </div>
