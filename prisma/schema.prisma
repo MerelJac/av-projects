@@ -143,10 +143,10 @@ model Item {
   category String?
   type     ItemType
 
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
-  customerPrices CustomerItemPrice[]
-
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  customerPrices     CustomerItemPrice[]
+  description        String?
   priceHistory       ItemPriceHistory[]
   shipments          Shipment[]
   quoteLines         QuoteLine[]
@@ -351,16 +351,18 @@ model BillOfMaterials {
 
 model BOMLine {
   id String @id @default(uuid())
-
   bomId String
   bom   BillOfMaterials @relation(fields: [bomId], references: [id])
-
   itemId String
   item   Item   @relation(fields: [itemId], references: [id])
-
-  quantity Int
-  notes    String?
+  quantity  Int
+  notes     String?
+  section   String?
+  costEach  Float?
+  sellEach  Float?
+  sortOrder Int?
 }
+
 
 enum NoteDocumentType {
   QUOTE

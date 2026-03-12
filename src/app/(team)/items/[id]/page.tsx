@@ -72,6 +72,9 @@ export default async function ItemPage({
             {item.manufacturer && (
               <p className="text-sm text-[#666] mt-1">{item.manufacturer}</p>
             )}
+            {item.description && (
+              <p className="text-sm text-[#888] mt-2 max-w-lg">{item.description}</p>
+            )}
           </div>
           <Link
             href={`/items/${item.id}/edit`}

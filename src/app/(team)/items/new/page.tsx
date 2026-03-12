@@ -17,6 +17,7 @@ export default function NewItemPage() {
   const [price, setPrice] = useState("");
   const [lastSoldPrice, setLastSoldPrice] = useState("");
   const [eolDate, setEolDate] = useState("");
+  const [description, setDescription] = useState("");
   const [active, setActive] = useState(true);
   const [approved, setApproved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -41,6 +42,7 @@ export default function NewItemPage() {
           cost: cost ? parseFloat(cost) : null,
           price: price ? parseFloat(price) : null,
           lastSoldPrice: lastSoldPrice ? parseFloat(lastSoldPrice) : null,
+          description: description.trim() || null,
           eolDate: eolDate || null,
           active,
           approved,
@@ -109,6 +111,16 @@ export default function NewItemPage() {
                   onChange={(e) => setManufacturer(e.target.value)}
                   placeholder="e.g. Crestron, Extron…"
                   className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#111]"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-[#666] block mb-1">Description</label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Brief description of the item…"
+                  rows={2}
+                  className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#111] resize-none"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">

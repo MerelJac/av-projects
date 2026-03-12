@@ -10,12 +10,16 @@ import {
   Package,
   AlertCircle,
   CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  GripVertical,
 } from "lucide-react";
 
 type Item = {
   id: string;
   itemNumber: string;
   manufacturer: string | null;
+  description?: string | null; // add to Item model if not present
   price: number | null;
   cost: number | null;
   category: string | null;
@@ -27,8 +31,11 @@ type BOMLine = {
   itemId: string;
   item: Item;
   quantity: number;
-  notes: string | null;
+  notes: string | null; // used as description/note per row
+  costEach?: number | null; // override cost
+  sellEach?: number | null; // override sell/price
   sortOrder?: number;
+  section?: string; // grouping label e.g. "Crestron", "Call One"
 };
 
 type Quote = {
@@ -54,6 +61,15 @@ const quoteStatusColors: Record<string, string> = {
   REJECTED: "bg-red-100 text-red-600",
 };
 
+const DEFAULT_SECTIONS = [
+  "OFE",
+  "Extron",
+  "Crestron",
+  "Legrand",
+  "Call One",
+  "Other",
+];
+
 export default function BOMEditor({
   bom,
   items,
@@ -74,10 +90,24 @@ export default function BOMEditor({
   const [itemSearch, setItemSearch] = useState("");
   const [showItemPicker, setShowItemPicker] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(
+    new Set(),
+  );
+  const [toast, setToast] = useState<{
+    type: "success" | "error";
+    msg: string;
+  } | null>(null);
+  const [addingToSection, setAddingToSection] = useState<string>("Other");
   const searchRef = useRef<HTMLInputElement>(null);
+  const [tariff, setTariff] = useState<number>(0);
+  const [customSections, setCustomSections] = useState<string[]>([]);
 
-  function effectivePrice(itemId: string, standardPrice: number | null): number | null {
+  const allSections = [...DEFAULT_SECTIONS, ...customSections];
+
+  function effectivePrice(
+    itemId: string,
+    standardPrice: number | null,
+  ): number | null {
     return customerPrices[itemId] ?? standardPrice;
   }
 
@@ -90,7 +120,9 @@ export default function BOMEditor({
     (i) =>
       !lines.some((l) => l.itemId === i.id) &&
       (i.itemNumber.toLowerCase().includes(itemSearch.toLowerCase()) ||
-        (i.manufacturer ?? "").toLowerCase().includes(itemSearch.toLowerCase()) ||
+        (i.manufacturer ?? "")
+          .toLowerCase()
+          .includes(itemSearch.toLowerCase()) ||
         (i.category ?? "").toLowerCase().includes(itemSearch.toLowerCase())),
   );
 
@@ -102,21 +134,19 @@ export default function BOMEditor({
       quantity: 1,
       notes: null,
       sortOrder: lines.length,
+      section: addingToSection,
+      costEach: item.cost,
+      sellEach: effectivePrice(item.id, item.price),
     };
     setLines((prev) => [...prev, newLine]);
     setItemSearch("");
     setSaved(false);
   }
 
-  function updateQuantity(lineId: string, qty: number) {
+  function updateField(lineId: string, field: keyof BOMLine, value: unknown) {
     setLines((prev) =>
-      prev.map((l) => (l.id === lineId ? { ...l, quantity: Math.max(1, qty) } : l)),
+      prev.map((l) => (l.id === lineId ? { ...l, [field]: value } : l)),
     );
-    setSaved(false);
-  }
-
-  function updateNotes(lineId: string, notes: string) {
-    setLines((prev) => prev.map((l) => (l.id === lineId ? { ...l, notes } : l)));
     setSaved(false);
   }
 
@@ -125,21 +155,68 @@ export default function BOMEditor({
     setSaved(false);
   }
 
+  function toggleSection(section: string) {
+    setCollapsedSections((prev) => {
+      const next = new Set(prev);
+      next.has(section) ? next.delete(section) : next.add(section);
+      return next;
+    });
+  }
+
+  const linesBySection = allSections.reduce<Record<string, BOMLine[]>>(
+    (acc, s) => {
+      acc[s] = lines.filter((l) => (l.section ?? "Other") === s);
+      return acc;
+    },
+    {},
+  );
+
+  // Totals
+  const hardwareLines = lines.filter((l) => l.item.type !== "SERVICE");
+  const serviceLines = lines.filter((l) => l.item.type === "SERVICE");
+
+  const totalHardwareSell = hardwareLines.reduce(
+    (sum, l) =>
+      sum +
+      (l.sellEach ?? effectivePrice(l.itemId, l.item.price) ?? 0) * l.quantity,
+    0,
+  );
+  const totalServiceSell = serviceLines.reduce(
+    (sum, l) =>
+      sum +
+      (l.sellEach ?? effectivePrice(l.itemId, l.item.price) ?? 0) * l.quantity,
+    0,
+  );
+  const totalCostAll = lines.reduce(
+    (sum, l) => sum + (l.costEach ?? l.item.cost ?? 0) * l.quantity,
+    0,
+  );
+  const grandTotal = totalHardwareSell + totalServiceSell + tariff;
+  const gm =
+    grandTotal > 0 ? ((grandTotal - totalCostAll) / grandTotal) * 100 : 0;
+
   async function handleSave() {
     setSaving(true);
     try {
-      const res = await fetch(`/api/projects/${projectId}/boms/${bom.id}/lines`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          lines: lines.map((l, i) => ({
-            itemId: l.itemId,
-            quantity: l.quantity,
-            notes: l.notes,
-            sortOrder: i,
-          })),
-        }),
-      });
+      const res = await fetch(
+        `/api/projects/${projectId}/boms/${bom.id}/lines`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            lines: lines.map((l, i) => ({
+              itemId: l.itemId,
+              quantity: l.quantity,
+              notes: l.notes,
+              section: l.section ?? "Other",
+              costEach: l.costEach,
+              sellEach: l.sellEach,
+              sortOrder: i,
+            })),
+            tariff,
+          }),
+        },
+      );
       if (!res.ok) throw new Error();
       setSaved(true);
       showToast("success", "BOM saved");
@@ -186,27 +263,27 @@ export default function BOMEditor({
     }
   }
 
-  const totalCost = lines.reduce((sum, l) => sum + (l.item.cost ?? 0) * l.quantity, 0);
-  const totalPrice = lines.reduce(
-    (sum, l) => sum + (effectivePrice(l.itemId, l.item.price) ?? 0) * l.quantity,
-    0,
-  );
-
   return (
     <div className="min-h-screen bg-[#F7F6F3]">
       {/* Toast */}
       {toast && (
-        <div className={`fixed top-5 right-5 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-medium shadow-lg border transition-all ${
-          toast.type === "success"
-            ? "bg-white border-green-200 text-green-700"
-            : "bg-white border-red-200 text-red-600"
-        }`}>
-          {toast.type === "success" ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
+        <div
+          className={`fixed top-5 right-5 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-medium shadow-lg border transition-all ${
+            toast.type === "success"
+              ? "bg-white border-green-200 text-green-700"
+              : "bg-white border-red-200 text-red-600"
+          }`}
+        >
+          {toast.type === "success" ? (
+            <CheckCircle2 size={15} />
+          ) : (
+            <AlertCircle size={15} />
+          )}
           {toast.msg}
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete Confirm */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
@@ -217,13 +294,18 @@ export default function BOMEditor({
             <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center mb-4">
               <Trash2 size={18} className="text-red-500" />
             </div>
-            <h2 className="text-base font-bold text-[#111] mb-1">Delete BOM?</h2>
+            <h2 className="text-base font-bold text-[#111] mb-1">
+              Delete BOM?
+            </h2>
             <p className="text-sm text-[#666] mb-1">
-              <span className="font-semibold text-[#111]">{bom.name}</span> will be permanently deleted.
+              <span className="font-semibold text-[#111]">{bom.name}</span> will
+              be permanently deleted.
             </p>
             {bom.quotes.length > 0 && (
               <p className="text-sm text-amber-600 bg-amber-50 rounded-xl px-3 py-2 mt-3">
-                ⚠️ This BOM has {bom.quotes.length} generated quote{bom.quotes.length !== 1 ? "s" : ""}. The quotes will remain but will no longer be linked to this BOM.
+                ⚠️ This BOM has {bom.quotes.length} generated quote
+                {bom.quotes.length !== 1 ? "s" : ""}. They will remain but will
+                no longer be linked.
               </p>
             )}
             <div className="flex gap-3 mt-5">
@@ -245,7 +327,7 @@ export default function BOMEditor({
         </div>
       )}
 
-      <div className="max-w-5xl mx-auto px-6 py-10">
+      <div className="max-w-7xl mx-auto px-6 py-10">
         {/* Back */}
         <button
           onClick={() => router.push(`/projects/${projectId}`)}
@@ -263,10 +345,14 @@ export default function BOMEditor({
               <span>·</span>
               <span>{bom.project.name}</span>
             </div>
-            <h1 className="text-2xl font-bold text-[#111] tracking-tight">{bom.name}</h1>
+            <h1 className="text-2xl font-bold text-[#111] tracking-tight">
+              {bom.name}
+            </h1>
             <p className="text-sm text-[#888] mt-1">
               {lines.length} item{lines.length !== 1 ? "s" : ""}
-              {!saved && <span className="text-amber-600 ml-2">· Unsaved changes</span>}
+              {!saved && (
+                <span className="text-amber-600 ml-2">· Unsaved changes</span>
+              )}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -295,26 +381,46 @@ export default function BOMEditor({
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-6">
-          {/* Line Items — left 2/3 */}
-          <div className="col-span-2 space-y-4">
-            {/* Add item */}
+        <div className="grid grid-cols-4 gap-6">
+          {/* Main table — left 3/4 */}
+          <div className="col-span-3 space-y-4">
+            {/* Add Item */}
             <div className="bg-white border border-[#E5E3DE] rounded-2xl">
-              <div className="px-5 py-4 border-b border-[#F0EEE9]">
+              <div className="px-5 py-4 border-b border-[#F0EEE9] flex items-center justify-between">
                 <p className="text-xs font-semibold uppercase tracking-widest text-[#888]">
-                  Add Items
+                  Add Item
                 </p>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-[#999]">Add to section:</span>
+                  <select
+                    value={addingToSection}
+                    onChange={(e) => setAddingToSection(e.target.value)}
+                    className="text-xs border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111]"
+                  >
+                    {allSections.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div className="p-4 relative">
                 <div className="relative">
-                  <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#bbb]" />
+                  <Search
+                    size={14}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#bbb]"
+                  />
                   <input
                     ref={searchRef}
                     type="text"
                     value={itemSearch}
-                    onChange={(e) => { setItemSearch(e.target.value); setShowItemPicker(true); }}
+                    onChange={(e) => {
+                      setItemSearch(e.target.value);
+                      setShowItemPicker(true);
+                    }}
                     onFocus={() => setShowItemPicker(true)}
-                    placeholder="Search by item #, manufacturer, or category…"
+                    placeholder="Search by part #, manufacturer, or category…"
                     className="w-full pl-9 pr-4 py-2.5 border border-[#E5E3DE] rounded-xl text-sm text-[#111] placeholder:text-[#bbb] focus:outline-none focus:border-[#111] transition-colors"
                   />
                 </div>
@@ -324,7 +430,9 @@ export default function BOMEditor({
                     onMouseDown={(e) => e.preventDefault()}
                   >
                     {filteredItems.length === 0 ? (
-                      <p className="text-sm text-[#999] px-4 py-3">No matching items</p>
+                      <p className="text-sm text-[#999] px-4 py-3">
+                        No matching items
+                      </p>
                     ) : (
                       filteredItems.slice(0, 20).map((item) => (
                         <button
@@ -338,25 +446,34 @@ export default function BOMEditor({
                           className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-[#F7F6F3] transition-colors text-left border-b border-[#F0EEE9] last:border-0"
                         >
                           <div>
-                            <span className="text-sm font-medium text-[#111]">{item.itemNumber}</span>
-                            {item.manufacturer && (
-                              <span className="text-xs text-[#999] ml-2">{item.manufacturer}</span>
+                            <span className="text-sm font-medium text-[#111]">
+                              {item.manufacturer && (
+                                <span className="text-[#999] mr-1">
+                                  {item.manufacturer}
+                                </span>
+                              )}
+                              {item.itemNumber}
+                            </span>
+                            {item.description && (
+                              <span className="text-xs text-[#bbb] ml-2">
+                                {item.description}
+                              </span>
                             )}
                           </div>
                           <div className="flex items-center gap-3 text-xs text-[#999]">
                             {item.category && (
-                              <span className="bg-[#F0EEE9] px-2 py-0.5 rounded-md">{item.category}</span>
+                              <span className="bg-[#F0EEE9] px-2 py-0.5 rounded-md">
+                                {item.category}
+                              </span>
                             )}
-                            {(() => {
-                              const price = effectivePrice(item.id, item.price);
-                              const hasCustom = customerPrices[item.id] != null;
-                              return price != null ? (
-                                <span className={`font-medium ${hasCustom ? "text-blue-600" : "text-[#111]"}`}>
-                                  ${price.toLocaleString()}
-                                  {hasCustom && <span className="text-[10px] ml-1 text-[#bbb]">custom</span>}
-                                </span>
-                              ) : null;
-                            })()}
+                            <span className="text-[10px] bg-[#F0EEE9] px-2 py-0.5 rounded-md">
+                              {item.type}
+                            </span>
+                            {item.price != null && (
+                              <span className="font-medium text-[#111]">
+                                ${item.price.toLocaleString()}
+                              </span>
+                            )}
                             <Plus size={13} className="text-[#111]" />
                           </div>
                         </button>
@@ -367,85 +484,265 @@ export default function BOMEditor({
               </div>
             </div>
 
-            {/* Lines table */}
+            {/* BOM Table */}
             <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
               {lines.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <Package size={32} className="text-[#ddd] mb-3" />
-                  <p className="text-sm font-medium text-[#999]">No items yet</p>
-                  <p className="text-xs text-[#bbb] mt-1">Search above to add items to this BOM</p>
+                  <p className="text-sm font-medium text-[#999]">
+                    No items yet
+                  </p>
+                  <p className="text-xs text-[#bbb] mt-1">
+                    Search above to add items to this BOM
+                  </p>
                 </div>
               ) : (
-                <table className="w-full">
+                <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-[#F0EEE9]">
-                      <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-5 py-3">Item</th>
-                      <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3 w-24">Qty</th>
-                      <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3 w-28">Unit Price</th>
-                      <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-5 py-3 w-28">Extended</th>
-                      <th className="w-10" />
+                    <tr className="border-b border-[#F0EEE9] bg-[#FAFAF8]">
+                      <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-4 py-3 w-8" />
+                      <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">
+                        Manufacturer
+                      </th>
+                      <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">
+                        Part #
+                      </th>
+                      <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">
+                        Description / Notes
+                      </th>
+                      <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3 w-16">
+                        Qty
+                      </th>
+                      <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3 w-24">
+                        Cost Ea.
+                      </th>
+                      <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3 w-24">
+                        Cost Ext.
+                      </th>
+                      <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3 w-24">
+                        Sell Ea.
+                      </th>
+                      <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-4 py-3 w-24">
+                        Sell Ext.
+                      </th>
+                      <th className="w-8" />
                     </tr>
                   </thead>
                   <tbody>
-                    {lines.map((line) => (
-                      <tr key={line.id} className="border-b border-[#F7F6F3] last:border-0 group">
-                        <td className="px-5 py-3">
-                          <p className="text-sm font-medium text-[#111]">{line.item.itemNumber}</p>
-                          {line.item.manufacturer && (
-                            <p className="text-xs text-[#999] mt-0.5">{line.item.manufacturer}</p>
-                          )}
-                          <input
-                            type="text"
-                            value={line.notes ?? ""}
-                            onChange={(e) => updateNotes(line.id, e.target.value)}
-                            placeholder="Add note…"
-                            className="mt-1.5 w-full text-xs text-[#666] placeholder:text-[#ccc] focus:outline-none border-0 bg-transparent"
-                          />
-                        </td>
-                        <td className="px-3 py-3 text-right">
-                          <input
-                            type="number"
-                            min={1}
-                            value={line.quantity}
-                            onChange={(e) => updateQuantity(line.id, parseInt(e.target.value) || 1)}
-                            className="w-16 text-right text-sm border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111] transition-colors"
-                          />
-                        </td>
-                        <td className="px-3 py-3 text-right text-sm text-[#666]">
-                          {(() => {
-                            const price = effectivePrice(line.itemId, line.item.price);
-                            const hasCustom = customerPrices[line.itemId] != null;
-                            if (price == null) return "—";
-                            return (
-                              <div className="flex flex-col items-end gap-0.5">
-                                <span className={hasCustom ? "text-blue-600 font-medium" : ""}>
-                                  ${price.toLocaleString()}
-                                </span>
-                                {hasCustom && line.item.price != null && (
-                                  <span className="text-[10px] text-[#bbb] line-through">
-                                    ${line.item.price.toLocaleString()}
-                                  </span>
-                                )}
-                              </div>
-                            );
-                          })()}
-                        </td>
-                        <td className="px-5 py-3 text-right text-sm font-semibold text-[#111]">
-                          {(() => {
-                            const price = effectivePrice(line.itemId, line.item.price);
-                            return price != null ? `$${(price * line.quantity).toLocaleString()}` : "—";
-                          })()}
-                        </td>
-                        <td className="pr-3">
-                          <button
-                            onClick={() => removeLine(line.id)}
-                            className="opacity-0 group-hover:opacity-100 w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-[#ccc] hover:text-red-500 transition-all"
+                    {allSections.map((section) => {
+                      const sectionLines = linesBySection[section] ?? [];
+                      if (sectionLines.length === 0) return null;
+                      const collapsed = collapsedSections.has(section);
+                      const sectionSellTotal = sectionLines.reduce(
+                        (sum, l) =>
+                          sum +
+                          (l.sellEach ??
+                            effectivePrice(l.itemId, l.item.price) ??
+                            0) *
+                            l.quantity,
+                        0,
+                      );
+
+                      return (
+                        <>
+                          {/* Section header row */}
+                          <tr
+                            key={`section-${section}`}
+                            className="bg-[#F7F6F3] border-b border-t border-[#E5E3DE] cursor-pointer select-none"
+                            onClick={() => toggleSection(section)}
                           >
-                            <Trash2 size={13} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                            <td colSpan={2} className="px-4 py-2">
+                              <div className="flex items-center gap-1.5">
+                                {collapsed ? (
+                                  <ChevronRight
+                                    size={13}
+                                    className="text-[#999]"
+                                  />
+                                ) : (
+                                  <ChevronDown
+                                    size={13}
+                                    className="text-[#999]"
+                                  />
+                                )}
+                                <span className="text-xs font-bold uppercase tracking-widest text-[#555]">
+                                  {section}
+                                </span>
+                                <span className="text-[10px] text-[#bbb] ml-1">
+                                  {sectionLines.length} item
+                                  {sectionLines.length !== 1 ? "s" : ""}
+                                </span>
+                              </div>
+                            </td>
+                            <td colSpan={7} className="px-3 py-2 text-right">
+                              <span className="text-xs font-semibold text-[#888]">
+                                $
+                                {sectionSellTotal.toLocaleString(undefined, {
+                                  minimumFractionDigits: 2,
+                                })}
+                              </span>
+                            </td>
+                            <td />
+                          </tr>
+
+                          {/* Section lines */}
+                          {!collapsed &&
+                            sectionLines.map((line) => {
+                              const costEach =
+                                line.costEach ?? line.item.cost ?? 0;
+                              const sellEach =
+                                line.sellEach ??
+                                effectivePrice(line.itemId, line.item.price) ??
+                                0;
+                              const costExt = costEach * line.quantity;
+                              const sellExt = sellEach * line.quantity;
+
+                              return (
+                                <tr
+                                  key={line.id}
+                                  className="border-b border-[#F7F6F3] last:border-0 group hover:bg-[#FAFAF8]"
+                                >
+                                  {/* Drag handle */}
+                                  <td className="px-2 py-2 text-[#ddd] cursor-grab">
+                                    <GripVertical size={13} />
+                                  </td>
+                                  {/* Manufacturer */}
+                                  <td className="px-3 py-2">
+                                    <span className="text-xs text-[#666]">
+                                      {line.item.manufacturer ?? "—"}
+                                    </span>
+                                  </td>
+                                  {/* Part # */}
+                                  <td className="px-3 py-2">
+                                    <span className="text-xs font-mono font-semibold text-[#111]">
+                                      {line.item.itemNumber}
+                                    </span>
+                                  </td>
+                                  {/* Description + Notes */}
+                                  <td className="px-3 py-2 min-w-[180px]">
+                                    {line.item.description && (
+                                      <p className="text-xs text-[#444] mb-1">
+                                        {line.item.description}
+                                      </p>
+                                    )}
+                                    <input
+                                      type="text"
+                                      value={line.notes ?? ""}
+                                      onChange={(e) =>
+                                        updateField(
+                                          line.id,
+                                          "notes",
+                                          e.target.value,
+                                        )
+                                      }
+                                      placeholder="Add note…"
+                                      className="w-full text-xs text-[#666] placeholder:text-[#ccc] focus:outline-none border-0 bg-transparent border-b border-transparent focus:border-[#E5E3DE] transition-colors py-0.5"
+                                    />
+                                  </td>
+                                  {/* Qty */}
+                                  <td className="px-3 py-2 text-right">
+                                    <input
+                                      type="number"
+                                      min={1}
+                                      value={line.quantity}
+                                      onChange={(e) =>
+                                        updateField(
+                                          line.id,
+                                          "quantity",
+                                          parseInt(e.target.value) || 1,
+                                        )
+                                      }
+                                      className="w-14 text-right text-xs border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111] transition-colors"
+                                    />
+                                  </td>
+                                  {/* Cost Ea. */}
+                                  <td className="px-3 py-2 text-right">
+                                    <div className="relative">
+                                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[#bbb] text-xs">
+                                        $
+                                      </span>
+                                      <input
+                                        type="number"
+                                        step="0.01"
+                                        min={0}
+                                        value={
+                                          costEach === 0 &&
+                                          line.costEach == null
+                                            ? ""
+                                            : costEach
+                                        }
+                                        onChange={(e) =>
+                                          updateField(
+                                            line.id,
+                                            "costEach",
+                                            e.target.value === ""
+                                              ? null
+                                              : parseFloat(e.target.value),
+                                          )
+                                        }
+                                        placeholder="0.00"
+                                        className="w-20 text-right text-xs border border-[#E5E3DE] rounded-lg pl-5 pr-2 py-1 focus:outline-none focus:border-[#111] transition-colors"
+                                      />
+                                    </div>
+                                  </td>
+                                  {/* Cost Ext. */}
+                                  <td className="px-3 py-2 text-right text-xs text-[#999]">
+                                    $
+                                    {costExt.toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                    })}
+                                  </td>
+                                  {/* Sell Ea. */}
+                                  <td className="px-3 py-2 text-right">
+                                    <div className="relative">
+                                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[#bbb] text-xs">
+                                        $
+                                      </span>
+                                      <input
+                                        type="number"
+                                        step="0.01"
+                                        min={0}
+                                        value={
+                                          sellEach === 0 &&
+                                          line.sellEach == null
+                                            ? ""
+                                            : sellEach
+                                        }
+                                        onChange={(e) =>
+                                          updateField(
+                                            line.id,
+                                            "sellEach",
+                                            e.target.value === ""
+                                              ? null
+                                              : parseFloat(e.target.value),
+                                          )
+                                        }
+                                        placeholder="0.00"
+                                        className="w-20 text-right text-xs border border-[#E5E3DE] rounded-lg pl-5 pr-2 py-1 focus:outline-none focus:border-[#111] transition-colors"
+                                      />
+                                    </div>
+                                  </td>
+                                  {/* Sell Ext. */}
+                                  <td className="px-4 py-2 text-right text-xs font-semibold text-[#111]">
+                                    $
+                                    {sellExt.toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                    })}
+                                  </td>
+                                  {/* Delete */}
+                                  <td className="pr-2">
+                                    <button
+                                      onClick={() => removeLine(line.id)}
+                                      className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded-lg hover:bg-red-50 text-[#ccc] hover:text-red-500 transition-all"
+                                    >
+                                      <Trash2 size={12} />
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                        </>
+                      );
+                    })}
                   </tbody>
                 </table>
               )}
@@ -454,32 +751,109 @@ export default function BOMEditor({
 
           {/* Sidebar */}
           <div className="space-y-4">
+            {/* Summary */}
             <div className="bg-white border border-[#E5E3DE] rounded-2xl p-5">
-              <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-4">Summary</p>
-              <div className="space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-4">
+                Summary
+              </p>
+              <div className="space-y-2.5">
                 <div className="flex justify-between text-sm">
-                  <span className="text-[#666]">Total Cost</span>
+                  <span className="text-[#666]">Total Hardware</span>
                   <span className="font-semibold text-[#111]">
-                    ${totalCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    $
+                    {totalHardwareSell.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                    })}
                   </span>
                 </div>
+
+                {/* Tariff line */}
+                <div className="flex justify-between text-sm items-center">
+                  <span className="text-[#666]">Tariff</span>
+                  <div className="relative">
+                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[#bbb] text-xs">
+                      $
+                    </span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min={0}
+                      value={tariff || ""}
+                      onChange={(e) => {
+                        setTariff(parseFloat(e.target.value) || 0);
+                        setSaved(false);
+                      }}
+                      placeholder="0.00"
+                      className="w-24 text-right text-xs border border-[#E5E3DE] rounded-lg pl-5 pr-2 py-1 focus:outline-none focus:border-[#111] transition-colors"
+                    />
+                  </div>
+                </div>
+
                 <div className="flex justify-between text-sm">
-                  <span className="text-[#666]">Total Price</span>
+                  <span className="text-[#666]">Total Services</span>
                   <span className="font-semibold text-[#111]">
-                    ${totalPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    $
+                    {totalServiceSell.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                    })}
                   </span>
                 </div>
-                <div className="border-t border-[#F0EEE9] pt-3 flex justify-between text-sm">
-                  <span className="text-[#666]">Margin</span>
-                  <span className={`font-bold ${totalPrice > totalCost ? "text-green-600" : "text-red-600"}`}>
-                    {totalPrice > 0
-                      ? `${(((totalPrice - totalCost) / totalPrice) * 100).toFixed(1)}%`
-                      : "—"}
+
+                <div className="border-t border-[#F0EEE9] pt-2.5 flex justify-between text-sm">
+                  <span className="font-bold text-[#111]">Total</span>
+                  <span className="font-bold text-[#111]">
+                    $
+                    {grandTotal.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                    })}
+                  </span>
+                </div>
+
+                <div className="flex justify-between text-sm pt-1">
+                  <span className="text-[#666]">GM</span>
+                  <span
+                    className={`font-bold ${gm >= 30 ? "text-green-600" : gm >= 15 ? "text-amber-600" : "text-red-600"}`}
+                  >
+                    {grandTotal > 0 ? `${gm.toFixed(1)}%` : "—"}
                   </span>
                 </div>
               </div>
             </div>
 
+            {/* Cost breakdown */}
+            <div className="bg-white border border-[#E5E3DE] rounded-2xl p-5">
+              <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-4">
+                Cost Breakdown
+              </p>
+              <div className="space-y-2">
+                {allSections.map((section) => {
+                  const sLines = linesBySection[section] ?? [];
+                  if (sLines.length === 0) return null;
+                  const total = sLines.reduce(
+                    (s, l) =>
+                      s +
+                      (l.sellEach ??
+                        effectivePrice(l.itemId, l.item.price) ??
+                        0) *
+                        l.quantity,
+                    0,
+                  );
+                  return (
+                    <div key={section} className="flex justify-between text-xs">
+                      <span className="text-[#888]">{section}</span>
+                      <span className="font-semibold text-[#111]">
+                        $
+                        {total.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Quotes */}
             <div className="bg-white border border-[#E5E3DE] rounded-2xl p-5">
               <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-4">
                 Quotes from this BOM
@@ -508,7 +882,9 @@ export default function BOMEditor({
                             ${q.total.toLocaleString()}
                           </span>
                         )}
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${quoteStatusColors[q.status]}`}>
+                        <span
+                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${quoteStatusColors[q.status]}`}
+                        >
                           {q.status}
                         </span>
                       </div>
@@ -522,7 +898,10 @@ export default function BOMEditor({
       </div>
 
       {showItemPicker && (
-        <div className="fixed inset-0 z-10" onClick={() => setShowItemPicker(false)} />
+        <div
+          className="fixed inset-0 z-10"
+          onClick={() => setShowItemPicker(false)}
+        />
       )}
     </div>
   );

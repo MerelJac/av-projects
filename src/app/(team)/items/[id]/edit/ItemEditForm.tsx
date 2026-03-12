@@ -18,6 +18,7 @@ type Item = {
   active: boolean;
   approved: boolean;
   eolDate: string | null;
+  description: string | null;
 };
 
 export default function ItemEditForm({ item }: { item: Item }) {
@@ -36,6 +37,7 @@ export default function ItemEditForm({ item }: { item: Item }) {
     active: item.active,
     approved: item.approved,
     eolDate: item.eolDate ?? "",
+    description: item.description ?? "",
   });
 
   function set(key: keyof typeof form, value: string | boolean) {
@@ -64,6 +66,7 @@ export default function ItemEditForm({ item }: { item: Item }) {
           active: form.active,
           approved: form.approved,
           eolDate: form.eolDate || null,
+          description: form.description || null,
         }),
       });
       if (!res.ok) throw new Error();
@@ -110,6 +113,17 @@ export default function ItemEditForm({ item }: { item: Item }) {
               onChange={(e) => set("manufacturer", e.target.value)}
               placeholder="e.g. Cisco, Sony, Crestron"
               className="w-full text-sm text-[#111] border border-[#E5E3DE] rounded-xl px-3 py-2.5 placeholder:text-[#ccc] focus:outline-none focus:border-[#111] transition-colors"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-widest text-[#999]">Description</label>
+            <textarea
+              value={form.description}
+              onChange={(e) => set("description", e.target.value)}
+              placeholder="Brief description of the item…"
+              rows={2}
+              className="w-full text-sm text-[#111] border border-[#E5E3DE] rounded-xl px-3 py-2.5 placeholder:text-[#ccc] focus:outline-none focus:border-[#111] transition-colors resize-none"
             />
           </div>
 

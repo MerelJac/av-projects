@@ -27,7 +27,7 @@ export async function PUT(
   const { id } = await params;
   const body = await req.json();
   const {
-    itemNumber, manufacturer, cost, price, lastSoldPrice,
+    itemNumber, manufacturer, description, cost, price, lastSoldPrice,
     category, type, active, approved, eolDate,
     changedBy,
   } = body;
@@ -63,6 +63,7 @@ export async function PUT(
     ...(type          !== undefined && { type }),
     ...(active        !== undefined && { active }),
     ...(approved      !== undefined && { approved }),
+    ...(description   !== undefined && { description: description?.trim() || null }),
     ...(eolDate       !== undefined && { eolDate: eolDate ? new Date(eolDate) : null }),
   };
 

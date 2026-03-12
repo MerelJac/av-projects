@@ -104,7 +104,10 @@ export default async function ProjectPage({
             <h1 className="text-2xl font-bold text-[#111] tracking-tight">
               {project.name}
             </h1>
-            <BillingTermsEditor projectId={project.id} billingTerms={project.billingTerms ?? null} />
+            <BillingTermsEditor
+              projectId={project.id}
+              billingTerms={project.billingTerms ?? null}
+            />
           </div>
           {project.totalBudget != null && (
             <div className="text-right">
@@ -159,16 +162,6 @@ export default async function ProjectPage({
             </Link>
           </div>
         </div>
-
-        <ScopesPanel
-          projectId={project.id}
-          initialScopes={project.scopes}
-          teamUsers={teamUsers}
-          currentUserId={currentUserId}
-          acceptedQuotes={project.quotes
-            .filter((q) => q.status === "ACCEPTED")
-            .map((q) => ({ id: q.id, createdAt: q.createdAt.toISOString() }))}
-        />
 
         {/* BOMs */}
         <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
@@ -291,6 +284,16 @@ export default async function ProjectPage({
             ...m,
             dueDate: m.dueDate?.toISOString() ?? null,
           }))}
+        />
+
+        <ScopesPanel
+          projectId={project.id}
+          initialScopes={project.scopes}
+          teamUsers={teamUsers}
+          currentUserId={currentUserId}
+          acceptedQuotes={project.quotes
+            .filter((q) => q.status === "ACCEPTED")
+            .map((q) => ({ id: q.id, createdAt: q.createdAt.toISOString() }))}
         />
 
         <AllShipments shipments={shipments} />

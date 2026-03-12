@@ -11,7 +11,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { itemNumber, manufacturer, cost, price, lastSoldPrice, category, type, active, approved, eolDate } = body;
+  const { itemNumber, manufacturer, description, cost, price, lastSoldPrice, category, type, active, approved, eolDate } = body;
 
   if (!itemNumber?.trim()) {
     return NextResponse.json({ error: "itemNumber is required" }, { status: 400 });
@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
       type,
       active: active ?? true,
       approved: approved ?? false,
+      description: description?.trim() || null,
       eolDate: eolDate ? new Date(eolDate) : null,
     },
   });

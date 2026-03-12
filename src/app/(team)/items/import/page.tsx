@@ -8,6 +8,7 @@ const ITEM_FIELDS = [
   { key: "itemNumber", label: "Item Number", required: true },
   { key: "manufacturer", label: "Manufacturer", required: false },
   { key: "type", label: "Type", required: true, hint: "HARDWARE, SOFTWARE, SUBSCRIPTION, SERVICE" },
+  { key: "description", label: "Description", required: false },
   { key: "cost", label: "Cost", required: false },
   { key: "price", label: "Price", required: false },
   { key: "category", label: "Category", required: false },

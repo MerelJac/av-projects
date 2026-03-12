@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "BOMLine" ADD COLUMN     "costEach" DOUBLE PRECISION,
+ADD COLUMN     "section" TEXT,
+ADD COLUMN     "sellEach" DOUBLE PRECISION,
+ADD COLUMN     "sortOrder" INTEGER;
