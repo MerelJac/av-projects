@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
       const data = {
         manufacturer: row.manufacturer?.trim() || null,
         type,
+        description: row.description?.trim() || null,
         cost: parseFloat_(row.cost),
         price: parseFloat_(row.price),
         category: row.category?.trim() || null,
