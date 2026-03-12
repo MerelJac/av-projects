@@ -109,9 +109,16 @@ export default async function CustomerPage({
                     className="flex items-center justify-between px-5 py-3.5 hover:bg-[#FAFAF9] transition-colors group"
                   >
                     <div>
-                      <p className="text-sm font-medium text-[#111]">
-                        {project.name}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-[#111]">
+                          {project.name}
+                        </p>
+                        {project.billingTerms && (
+                          <span className="text-[10px] font-semibold uppercase tracking-widest px-2 py-0.5 bg-[#F0EEE9] text-[#666] rounded-md">
+                            {project.billingTerms}
+                          </span>
+                        )}
+                      </div>
                       {project.totalBudget != null && (
                         <p className="text-xs text-[#999] mt-0.5">
                           ${project.totalBudget.toLocaleString()}

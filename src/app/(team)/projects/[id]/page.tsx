@@ -7,7 +7,6 @@ import {
   FileText,
   Package,
   GitBranch,
-  Milestone,
   Truck,
   Clock,
   ShoppingCart,
@@ -18,6 +17,7 @@ import ChangeOrderNotes from "@/app/components/ChangeOrderNotes";
 import AllShipments from "@/app/components/shipments/AllShipments";
 import MilestonesPanel from "@/app/components/MilestonesPanel";
 import ScopesPanel from "@/app/components/ScopesPanel";
+import BillingTermsEditor from "@/app/components/BillingTermsEditor";
 
 const quoteStatusStyles: Record<string, string> = {
   ACCEPTED: "bg-green-100 text-green-700",
@@ -104,11 +104,7 @@ export default async function ProjectPage({
             <h1 className="text-2xl font-bold text-[#111] tracking-tight">
               {project.name}
             </h1>
-            {project.billingTerms && (
-              <span className="inline-block mt-2 text-[10px] font-semibold uppercase tracking-widest px-2.5 py-1 bg-[#111] text-white rounded-lg">
-                {project.billingTerms}
-              </span>
-            )}
+            <BillingTermsEditor projectId={project.id} billingTerms={project.billingTerms ?? null} />
           </div>
           {project.totalBudget != null && (
             <div className="text-right">

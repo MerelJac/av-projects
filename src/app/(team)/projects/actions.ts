@@ -22,6 +22,17 @@ export async function createProject(formData: FormData) {
 
   redirect(`/projects/${project.id}`);
 }
+
+export async function updateProjectBillingTerms(formData: FormData) {
+  const projectId = formData.get("projectId") as string;
+  const billingTerms = formData.get("billingTerms") as BillingTerms | null;
+
+  await prisma.project.update({
+    where: { id: projectId },
+    data: { billingTerms: billingTerms || null },
+  });
+
+}
 export async function generateQuoteFromBOM(bomId: string, projectId: string) {
   const bom = await prisma.billOfMaterials.findUnique({
     where: { id: bomId },
