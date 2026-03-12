@@ -528,7 +528,7 @@ export default function BOMEditor({
             </div>
 
             {/* BOM Table */}
-            <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
+            <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-x-auto">
               {lines.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <Package size={32} className="text-[#ddd] mb-3" />
@@ -540,7 +540,7 @@ export default function BOMEditor({
                   </p>
                 </div>
               ) : (
-                <table className="w-full text-sm">
+                <table className="w-full text-sm min-w-[900px]">
                   <thead>
                     <tr className="border-b border-[#F0EEE9] bg-[#FAFAF8]">
                       <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-4 py-3 w-8" />
