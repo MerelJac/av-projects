@@ -129,7 +129,7 @@ export default function TeamDashboardClient({ data }: { data: DashboardData }) {
         </div>
 
         {/* KPI Row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-7 gap-3">
           <KpiCard label="Projects" value={String(kpis.activeProjects)} icon={Activity} accent="#6366f1" href="/projects" />
           <KpiCard label="Open SOs" value={String(kpis.openSalesOrders)} sub={fmt$(kpis.openSOValue) + " pipeline"} icon={Package} accent="#0ea5e9" href="/sales-orders" />
           <KpiCard label="Revenue 30d" value={fmt$(kpis.revenue30d)} sub="Paid invoices" icon={DollarSign} accent="#22c55e" />
