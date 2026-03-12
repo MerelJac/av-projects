@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, Fragment } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -13,6 +13,7 @@ import {
   ChevronDown,
   ChevronRight,
   GripVertical,
+  Pencil,
 } from "lucide-react";
 
 type Item = {
@@ -61,15 +62,6 @@ const quoteStatusColors: Record<string, string> = {
   REJECTED: "bg-red-100 text-red-600",
 };
 
-const DEFAULT_SECTIONS = [
-  "OFE",
-  "Extron",
-  "Crestron",
-  "Legrand",
-  "Call One",
-  "Other",
-];
-
 export default function BOMEditor({
   bom,
   items,
@@ -93,16 +85,37 @@ export default function BOMEditor({
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(
     new Set(),
   );
+
+  const [editingSectionName, setEditingSectionName] = useState<string | null>(
+    null,
+  );
+  const [editingSectionValue, setEditingSectionValue] = useState("");
   const [toast, setToast] = useState<{
     type: "success" | "error";
     msg: string;
   } | null>(null);
-  const [addingToSection, setAddingToSection] = useState<string>("Other");
+  const [addingToSection, setAddingToSection] = useState<string>(() => {
+    const s = bom.lines[0]?.section ?? "General";
+    return s;
+  });
   const searchRef = useRef<HTMLInputElement>(null);
   const [tariff, setTariff] = useState<number>(0);
-  const [customSections, setCustomSections] = useState<string[]>([]);
+  const [sections, setSections] = useState<string[]>(() => {
+    // derive existing sections from loaded lines, preserving order
+    const seen = new Set<string>();
+    const result: string[] = [];
+    for (const l of bom.lines) {
+      const s = l.section ?? "General";
+      if (!seen.has(s)) {
+        seen.add(s);
+        result.push(s);
+      }
+    }
+    return result.length > 0 ? result : ["General"];
+  });
+  const [newSectionName, setNewSectionName] = useState("");
 
-  const allSections = [...DEFAULT_SECTIONS, ...customSections];
+  const allSections = sections;
 
   function effectivePrice(
     itemId: string,
@@ -125,6 +138,18 @@ export default function BOMEditor({
           .includes(itemSearch.toLowerCase()) ||
         (i.category ?? "").toLowerCase().includes(itemSearch.toLowerCase())),
   );
+
+  function commitSectionRename(oldName: string) {
+    const newName = editingSectionValue.trim();
+    setEditingSectionName(null);
+    if (!newName || newName === oldName) return;
+    setSections((prev) => prev.map((s) => (s === oldName ? newName : s)));
+    setLines((prev) =>
+      prev.map((l) => (l.section === oldName ? { ...l, section: newName } : l)),
+    );
+    if (addingToSection === oldName) setAddingToSection(newName);
+    setSaved(false);
+  }
 
   function addLine(item: Item) {
     const newLine: BOMLine = {
@@ -391,13 +416,30 @@ export default function BOMEditor({
                   Add Item
                 </p>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-[#999]">Add to section:</span>
+                  <input
+                    type="text"
+                    value={newSectionName}
+                    onChange={(e) => setNewSectionName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && newSectionName.trim()) {
+                        const name = newSectionName.trim();
+                        if (!sections.includes(name)) {
+                          setSections((prev) => [...prev, name]);
+                          setAddingToSection(name);
+                        }
+                        setNewSectionName("");
+                      }
+                    }}
+                    placeholder="New section…"
+                    className="text-xs border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111] w-28"
+                  />
+                  <span className="text-xs text-[#999]">Add to:</span>
                   <select
                     value={addingToSection}
                     onChange={(e) => setAddingToSection(e.target.value)}
                     className="text-xs border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111]"
                   >
-                    {allSections.map((s) => (
+                    {sections.map((s) => (
                       <option key={s} value={s}>
                         {s}
                       </option>
@@ -405,6 +447,7 @@ export default function BOMEditor({
                   </select>
                 </div>
               </div>
+
               <div className="p-4 relative">
                 <div className="relative">
                   <Search
@@ -544,29 +587,64 @@ export default function BOMEditor({
                       );
 
                       return (
-                        <>
+                        <Fragment key={section}>
                           {/* Section header row */}
-                          <tr
-                            key={`section-${section}`}
-                            className="bg-[#F7F6F3] border-b border-t border-[#E5E3DE] cursor-pointer select-none"
-                            onClick={() => toggleSection(section)}
-                          >
+                          <tr className="bg-[#F7F6F3] border-b border-t border-[#E5E3DE] select-none">
                             <td colSpan={2} className="px-4 py-2">
                               <div className="flex items-center gap-1.5">
-                                {collapsed ? (
-                                  <ChevronRight
-                                    size={13}
-                                    className="text-[#999]"
+                                <button
+                                  onClick={() => toggleSection(section)}
+                                  className="focus:outline-none"
+                                >
+                                  {collapsed ? (
+                                    <ChevronRight
+                                      size={13}
+                                      className="text-[#999]"
+                                    />
+                                  ) : (
+                                    <ChevronDown
+                                      size={13}
+                                      className="text-[#999]"
+                                    />
+                                  )}
+                                </button>
+
+                                {editingSectionName === section ? (
+                                  <input
+                                    autoFocus
+                                    value={editingSectionValue}
+                                    onChange={(e) =>
+                                      setEditingSectionValue(e.target.value)
+                                    }
+                                    onBlur={() => commitSectionRename(section)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter")
+                                        commitSectionRename(section);
+                                      if (e.key === "Escape")
+                                        setEditingSectionName(null);
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="text-xs font-bold uppercase tracking-widest text-[#555] bg-white border border-[#E5E3DE] rounded px-2 py-0.5 focus:outline-none focus:border-[#111] w-36"
                                   />
                                 ) : (
-                                  <ChevronDown
-                                    size={13}
-                                    className="text-[#999]"
-                                  />
+                                  <button
+                                    className="flex items-center gap-1.5 group focus:outline-none"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEditingSectionName(section);
+                                      setEditingSectionValue(section);
+                                    }}
+                                  >
+                                    <span className="text-xs font-bold uppercase tracking-widest text-[#555]">
+                                      {section}
+                                    </span>
+                                    <Pencil
+                                      size={11}
+                                      className="text-[#bbb] opacity-0 group-hover:opacity-100 transition-opacity"
+                                    />
+                                  </button>
                                 )}
-                                <span className="text-xs font-bold uppercase tracking-widest text-[#555]">
-                                  {section}
-                                </span>
+
                                 <span className="text-[10px] text-[#bbb] ml-1">
                                   {sectionLines.length} item
                                   {sectionLines.length !== 1 ? "s" : ""}
@@ -740,7 +818,7 @@ export default function BOMEditor({
                                 </tr>
                               );
                             })}
-                        </>
+                        </Fragment>
                       );
                     })}
                   </tbody>

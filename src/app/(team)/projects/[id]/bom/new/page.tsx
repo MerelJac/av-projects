@@ -1,9 +1,15 @@
 "use client";
+import { use } from "react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ArrowLeft, FileSpreadsheet } from "lucide-react";
 
-export default function NewBOMPage({ params }: { params: { id: string } }) {
+export default function NewBOMPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
   const router = useRouter();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -15,23 +21,23 @@ export default function NewBOMPage({ params }: { params: { id: string } }) {
     if (!name.trim()) return;
     setLoading(true);
     setError(null);
-
     try {
-      const res = await fetch(`/api/projects/${params.id}/boms`, {
+      const res = await fetch(`/api/projects/${id}/boms`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), description: description.trim() }),
+        body: JSON.stringify({
+          name: name.trim(),
+          description: description.trim(),
+        }),
       });
-
       if (!res.ok) throw new Error("Failed to create BOM");
       const data = await res.json();
-      router.push(`/projects/${params.id}/bom/${data.id}`);
-    } catch (err) {
+      router.push(`/projects/${id}/bom/${data.id}`);
+    } catch {
       setError("Something went wrong. Please try again.");
       setLoading(false);
     }
   }
-
   return (
     <div className="min-h-screen bg-[#F7F6F3]">
       <div className="max-w-2xl mx-auto px-6 py-10">
@@ -50,13 +56,20 @@ export default function NewBOMPage({ params }: { params: { id: string } }) {
             <FileSpreadsheet size={22} className="text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-[#111] tracking-tight">New Bill of Materials</h1>
-            <p className="text-sm text-[#888] mt-0.5">Define the items and quantities for this project</p>
+            <h1 className="text-2xl font-bold text-[#111] tracking-tight">
+              New Bill of Materials
+            </h1>
+            <p className="text-sm text-[#888] mt-0.5">
+              Define the items and quantities for this project
+            </p>
           </div>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden"
+        >
           <div className="p-8 space-y-6">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-widest text-[#888] mb-2">
@@ -75,7 +88,10 @@ export default function NewBOMPage({ params }: { params: { id: string } }) {
 
             <div>
               <label className="block text-xs font-semibold uppercase tracking-widest text-[#888] mb-2">
-                Description <span className="text-[#bbb] font-normal normal-case tracking-normal">optional</span>
+                Description{" "}
+                <span className="text-[#bbb] font-normal normal-case tracking-normal">
+                  optional
+                </span>
               </label>
               <textarea
                 value={description}
@@ -95,7 +111,9 @@ export default function NewBOMPage({ params }: { params: { id: string } }) {
 
           {/* Footer */}
           <div className="px-8 py-5 bg-[#F7F6F3] border-t border-[#E5E3DE] flex items-center justify-between">
-            <p className="text-xs text-[#999]">You can add line items after creating the BOM</p>
+            <p className="text-xs text-[#999]">
+              You can add line items after creating the BOM
+            </p>
             <button
               type="submit"
               disabled={loading || !name.trim()}
