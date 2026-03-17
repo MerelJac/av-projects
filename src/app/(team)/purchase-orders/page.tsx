@@ -82,8 +82,11 @@ export default async function PurchaseOrdersPage() {
                   const totalCost = po.lines.reduce((s, l) => s + l.cost * l.quantity, 0);
                   const soId = po.salesOrderId;
                   const projId = po.projectId;
-                  const href = soId && projId
-                    ? `/projects/${projId}/sales-orders/${soId}/purchase-orders/${po.id}`
+                  // const href = soId && projId
+                  //   ? `/projects/${projId}/sales-orders/${soId}/purchase-orders/${po.id}`
+                  //   : "#";
+                    const href =  projId
+                    ? `/projects/${projId}/purchase-orders/${po.id}`
                     : "#";
 
                   return (

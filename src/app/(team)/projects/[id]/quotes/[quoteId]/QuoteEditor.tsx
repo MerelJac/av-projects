@@ -14,10 +14,12 @@ import {
   FileText,
   Edit2,
   Check,
+  Package,
 } from "lucide-react";
 import { QuoteWithDetails } from "./page";
 import { QuoteStatus } from "@prisma/client";
 import ConvertToSalesOrderButton from "@/app/components/team/sales-orders/ConvertToSalesOrderButton";
+import CreatePOModal from "@/app/components/team/purchase-orders/CreatePOModal";
 
 // Derive types directly from the Prisma payload
 type QuoteLine = QuoteWithDetails["lines"][number];
@@ -69,6 +71,9 @@ export default function QuoteEditor({
   const [newBundleName, setNewBundleName] = useState("");
   const [showBundleInput, setShowBundleInput] = useState(false);
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
+  const [showPOModal, setShowPOModal] = useState(false);
+  const [showPDFPreview, setShowPDFPreview] = useState(false);
+  const pdfUrl = `/api/projects/${projectId}/quotes/${initialQuote.id}/pdf`;
 
   const showToast = (type: "success" | "error", msg: string) => {
     setToast({ type, msg });
@@ -107,7 +112,7 @@ export default function QuoteEditor({
       quoteId: initialQuote.id,
       createdAt: new Date(),
       bomId: null,
-      salesOrderId: null, 
+      salesOrderId: null,
     } satisfies Bundle;
     setBundles((prev) => [...prev, tempBundle]);
     setNewBundleName("");
@@ -218,7 +223,10 @@ export default function QuoteEditor({
               {initialQuote.boms.length > 0 && (
                 <>
                   <span>·</span>
-                  <span>from BOM: {initialQuote.boms.map((q) => q.bom.name).join(", ")}</span>
+                  <span>
+                    from BOM:{" "}
+                    {initialQuote.boms.map((q) => q.bom.name).join(", ")}
+                  </span>
                 </>
               )}
             </div>
@@ -262,6 +270,10 @@ export default function QuoteEditor({
                   {unbundledLines.length} unbundled
                 </p>
               </div>
+              <p className="text-xs text-[#bbb] px-5 py-2 italic">
+                Add items to bundles & click &apos;Save Changes&apos; before
+                previewing quote.
+              </p>
 
               {unbundledLines.length === 0 ? (
                 <p className="text-sm text-[#bbb] px-5 py-8 text-center">
@@ -511,20 +523,85 @@ export default function QuoteEditor({
                 existingSalesOrderId={initialQuote.salesOrder?.id}
               />
             )}
+
+            <button
+              onClick={() => setShowPOModal(true)}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-[#111] border border-[#E5E3DE] hover:bg-[#F7F6F3] transition-colors"
+            >
+              <Package size={14} />
+              Create Purchase Order
+            </button>
+
+            {showPOModal && (
+              <CreatePOModal
+                projectId={projectId}
+                quoteId={initialQuote.id}
+                lines={lines}
+                onClose={() => setShowPOModal(false)}
+              />
+            )}
+
             {/* Actions */}
             <div className="bg-white border border-[#E5E3DE] rounded-2xl p-5 space-y-2">
               <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-4">
                 Actions
               </p>
-              <button className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-[#111] border border-[#E5E3DE] hover:bg-[#F7F6F3] transition-colors">
+              <button
+                onClick={() => setShowPDFPreview(true)}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-[#111] border border-[#E5E3DE] hover:bg-[#F7F6F3] transition-colors"
+              >
+                <Eye size={14} />
+                Preview PDF
+              </button>
+              <a
+                href={`${pdfUrl}?download=true`}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-[#111] border border-[#E5E3DE] hover:bg-[#F7F6F3] transition-colors"
+              >
                 <FileText size={14} />
                 Export PDF
-              </button>
+              </a>
               <button className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-[#111] border border-[#E5E3DE] hover:bg-[#F7F6F3] transition-colors">
                 <Send size={14} />
                 Send to Customer
               </button>
             </div>
+
+            {/* PDF Preview Modal */}
+            {showPDFPreview && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center">
+                <div
+                  className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                  onClick={() => setShowPDFPreview(false)}
+                />
+                <div className="relative bg-white rounded-2xl shadow-2xl border border-[#E5E3DE] w-[800px] h-[90vh] mx-4 flex flex-col overflow-hidden">
+                  <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#F0EEE9]">
+                    <p className="text-sm font-semibold text-[#111]">
+                      Quote #{initialQuote.id.slice(0, 8).toUpperCase()}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={pdfUrl}
+                        className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#111] text-white hover:bg-[#333] transition-colors"
+                      >
+                        <FileText size={12} />
+                        Download
+                      </a>
+                      <button
+                        onClick={() => setShowPDFPreview(false)}
+                        className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-[#F7F6F3] text-[#999] hover:text-[#111] transition-colors"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                  <iframe
+                    src={`${pdfUrl}?preview=true`}
+                    className="flex-1 w-full"
+                    title="Quote PDF Preview"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

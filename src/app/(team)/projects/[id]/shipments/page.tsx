@@ -20,8 +20,9 @@ export default async function ProjectShipmentsPage({
   const shipments = await prisma.shipment.findMany({
     where: { projectId: id },
     include: {
-      project: true,
+      project: { include: { customer: true } },
       item: true,
+      lines: { include: { item: true } },
       purchaseOrder: { select: { id: true, vendor: true } },
       salesOrder: { include: { customer: true } },
     },
@@ -34,7 +35,6 @@ export default async function ProjectShipmentsPage({
   return (
     <div className="min-h-screen bg-[#F7F6F3]">
       <div className="max-w-6xl mx-auto px-6 py-10">
-
         {/* Back */}
         <Link
           href={`/projects/${id}`}
@@ -47,7 +47,9 @@ export default async function ProjectShipmentsPage({
         {/* Header */}
         <div className="mb-8">
           <p className="text-xs text-[#999] mb-1">{project.customer.name}</p>
-          <h1 className="text-2xl font-bold text-[#111] tracking-tight">Shipments</h1>
+          <h1 className="text-2xl font-bold text-[#111] tracking-tight">
+            Shipments
+          </h1>
         </div>
 
         {/* Summary cards */}
@@ -90,35 +92,79 @@ export default async function ProjectShipmentsPage({
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#F0EEE9]">
-                  <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-5 py-3">Date</th>
-                  <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">Item</th>
-                  <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">Vendor</th>
-                  <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">Carrier</th>
-                  <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">Tracking</th>
-                  <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">Qty</th>
-                  <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-5 py-3">Status</th>
+                  <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-5 py-3">
+                    Date
+                  </th>
+                  <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">
+                    Item
+                  </th>
+                  <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">
+                    Vendor
+                  </th>
+                  <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">
+                    Carrier
+                  </th>
+                  <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">
+                    Tracking
+                  </th>
+                  <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">
+                    Qty
+                  </th>
+                  <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-5 py-3">
+                    Status
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {shipments.map((s) => {
-                  const poHref = s.purchaseOrder && s.salesOrderId
-                    ? `/projects/${id}/sales-orders/${s.salesOrderId}/purchase-orders/${s.purchaseOrder.id}`
-                    : null;
+                  const poHref =
+                    s.purchaseOrder && s.salesOrderId
+                      ? `/projects/${id}/sales-orders/${s.salesOrderId}/purchase-orders/${s.purchaseOrder.id}`
+                      : null;
 
                   return (
-                    <tr key={s.id} className="border-b border-[#F7F6F3] last:border-0 hover:bg-[#FAFAF9] transition-colors">
+                    <tr
+                      key={s.id}
+                      className="border-b border-[#F7F6F3] last:border-0 hover:bg-[#FAFAF9] transition-colors"
+                    >
                       <td className="px-5 py-3.5">
-                        <p className="text-xs text-[#111]">{s.createdAt.toLocaleDateString()}</p>
+                        <p className="text-xs text-[#111]">
+                          {s.createdAt.toLocaleDateString()}
+                        </p>
                         <p className="text-[10px] text-[#bbb]">
-                          {s.createdAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          {s.createdAt.toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </p>
                       </td>
+                      {/* Items — from ShipmentLines if present, fallback to legacy itemId */}
                       <td className="px-3 py-3.5">
-                        {s.item ? (
+                        {s.lines && s.lines.length > 0 ? (
+                          <div className="space-y-0.5">
+                            {s.lines.map((line) => (
+                              <div
+                                key={line.id}
+                                className="flex items-center gap-1.5"
+                              >
+                                <span className="text-xs font-mono font-semibold text-[#111]">
+                                  {line.item?.itemNumber ?? "—"}
+                                </span>
+                                <span className="text-[10px] text-[#999]">
+                                  ×{line.quantity}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : s.item ? (
                           <>
-                            <p className="text-xs font-mono font-semibold text-[#111]">{s.item.itemNumber}</p>
+                            <p className="text-xs font-mono font-semibold text-[#111]">
+                              {s.item.itemNumber}
+                            </p>
                             {s.item.manufacturer && (
-                              <p className="text-[10px] text-[#999]">{s.item.manufacturer}</p>
+                              <p className="text-[10px] text-[#999]">
+                                {s.item.manufacturer}
+                              </p>
                             )}
                           </>
                         ) : (
@@ -131,10 +177,12 @@ export default async function ProjectShipmentsPage({
                             {s.purchaseOrder?.vendor ?? "—"}
                           </Link>
                         ) : (
-                          s.purchaseOrder?.vendor ?? "—"
+                          (s.purchaseOrder?.vendor ?? "—")
                         )}
                       </td>
-                      <td className="px-3 py-3.5 text-sm text-[#666]">{s.carrier ?? "—"}</td>
+                      <td className="px-3 py-3.5 text-sm text-[#666]">
+                        {s.carrier ?? "—"}
+                      </td>
                       <td className="px-3 py-3.5">
                         {s.tracking ? (
                           <span className="text-xs font-mono bg-[#F7F6F3] px-2 py-0.5 rounded text-[#444]">
@@ -160,7 +208,9 @@ export default async function ProjectShipmentsPage({
                           </span>
                         )}
                         {s.notes && (
-                          <p className="text-[10px] text-[#999] mt-0.5 max-w-[160px] truncate">{s.notes}</p>
+                          <p className="text-[10px] text-[#999] mt-0.5 max-w-[160px] truncate">
+                            {s.notes}
+                          </p>
                         )}
                       </td>
                     </tr>

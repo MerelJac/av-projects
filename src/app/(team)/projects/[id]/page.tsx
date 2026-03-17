@@ -42,7 +42,10 @@ export default async function ProjectPage({
         customer: true,
         shipments: true,
         timeEntries: true,
-        purchaseOrders: true,
+        purchaseOrders: {
+          include: { lines: true },
+          orderBy: { createdAt: "desc" },
+        },
         milestones: { orderBy: { dueDate: "asc" } },
         quotes: {
           include: { lines: { include: { item: true, bundle: true } } },
@@ -295,6 +298,81 @@ export default async function ProjectPage({
             .filter((q) => q.status === "ACCEPTED")
             .map((q) => ({ id: q.id, createdAt: q.createdAt.toISOString() }))}
         />
+
+        {/* Purchase Orders */}
+        <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-[#F0EEE9] flex items-center gap-2.5">
+            <ShoppingCart size={15} className="text-[#999]" />
+            <h3 className="font-semibold text-sm text-[#111]">
+              Purchase Orders
+            </h3>
+            <span className="text-xs text-[#bbb]">
+              {project.purchaseOrders.length}
+            </span>
+          </div>
+          {project.purchaseOrders.length === 0 ? (
+            <div className="px-6 py-10 text-center">
+              <p className="text-sm text-[#bbb]">
+                No purchase orders yet — create one from a quote
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-[#F7F6F3]">
+              {project.purchaseOrders.map((po) => {
+                const receivedAll = po.lines.every(
+                  (l) => l.receivedQuantity >= l.quantity,
+                );
+                const receivedSome = po.lines.some(
+                  (l) => l.receivedQuantity > 0,
+                );
+                const statusLabel =
+                  po.status === "RECEIVED"
+                    ? "Received"
+                    : po.status === "PARTIALLY_RECEIVED"
+                      ? "Partial"
+                      : po.status === "SENT"
+                        ? "Sent"
+                        : "Draft";
+                const statusColor =
+                  po.status === "RECEIVED"
+                    ? "bg-green-100 text-green-700"
+                    : po.status === "PARTIALLY_RECEIVED"
+                      ? "bg-amber-100 text-amber-700"
+                      : po.status === "SENT"
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-gray-100 text-gray-600";
+                return (
+                  <Link
+                    key={po.id}
+                    href={`/projects/${project.id}/purchase-orders/${po.id}`}
+                    className="flex items-center justify-between px-6 py-4 hover:bg-[#FAFAF9] transition-colors group"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2.5">
+                        <p className="text-sm font-medium text-[#111]">
+                          {po.vendor}
+                        </p>
+                        <span
+                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusColor}`}
+                        >
+                          {statusLabel}
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#999] mt-0.5">
+                        {po.lines.length} line{po.lines.length !== 1 ? "s" : ""}{" "}
+                        · {new Date(po.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <ArrowRight
+                      size={14}
+                      className="text-[#ccc] group-hover:text-[#111] transition-colors"
+                    />
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
         <AllShipments shipments={shipments} />
         {/* Change Orders */}
