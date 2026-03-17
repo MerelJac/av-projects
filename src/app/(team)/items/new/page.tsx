@@ -25,8 +25,14 @@ export default function NewItemPage() {
   const [error, setError] = useState<string | null>(null);
 
   async function handleSave() {
-    if (!itemNumber.trim()) { setError("Item number is required"); return; }
-    if (!type) { setError("Type is required"); return; }
+    if (!itemNumber.trim()) {
+      setError("Item number is required");
+      return;
+    }
+    if (!type) {
+      setError("Type is required");
+      return;
+    }
 
     setSaving(true);
     setError(null);
@@ -47,7 +53,7 @@ export default function NewItemPage() {
           eolDate: eolDate || null,
           active,
           approved,
-          unit: unit.trim() || null
+          unit: unit.trim() || null,
         }),
       });
 
@@ -69,7 +75,6 @@ export default function NewItemPage() {
   return (
     <div className="min-h-screen bg-[#F7F6F3]">
       <div className="max-w-2xl mx-auto px-6 py-10">
-
         <Link
           href="/items"
           className="flex items-center gap-2 text-sm text-[#666] hover:text-[#111] mb-6 transition-colors"
@@ -83,19 +88,24 @@ export default function NewItemPage() {
             <Package size={18} className="text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-[#111] tracking-tight">New Item</h1>
+            <h1 className="text-2xl font-bold text-[#111] tracking-tight">
+              New Item
+            </h1>
             <p className="text-sm text-[#999]">Add an item to the catalog</p>
           </div>
         </div>
 
         <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
-
           {/* Identity */}
           <div className="px-6 py-5 border-b border-[#F0EEE9]">
-            <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-4">Identity</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-4">
+              Identity
+            </p>
             <div className="space-y-3">
               <div>
-                <label className="text-xs font-semibold text-[#666] block mb-1">Item Number *</label>
+                <label className="text-xs font-semibold text-[#666] block mb-1">
+                  Item Number *
+                </label>
                 <input
                   type="text"
                   value={itemNumber}
@@ -106,7 +116,9 @@ export default function NewItemPage() {
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-[#666] block mb-1">Manufacturer</label>
+                <label className="text-xs font-semibold text-[#666] block mb-1">
+                  Manufacturer
+                </label>
                 <input
                   type="text"
                   value={manufacturer}
@@ -116,17 +128,9 @@ export default function NewItemPage() {
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-[#666] block mb-1">Unit</label>
-                <input
-                  type="text"
-                  value={unit}
-                  onChange={(e) => setUnit(e.target.value)}
-                  placeholder="e.g. each, hour, etc"
-                  className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#111]"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-[#666] block mb-1">Description</label>
+                <label className="text-xs font-semibold text-[#666] block mb-1">
+                  Description
+                </label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -137,19 +141,25 @@ export default function NewItemPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-[#666] block mb-1">Type *</label>
+                  <label className="text-xs font-semibold text-[#666] block mb-1">
+                    Type *
+                  </label>
                   <select
                     value={type}
                     onChange={(e) => setType(e.target.value)}
                     className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#111] bg-white"
                   >
                     {ITEM_TYPES.map((t) => (
-                      <option key={t} value={t}>{t}</option>
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-[#666] block mb-1">Category</label>
+                  <label className="text-xs font-semibold text-[#666] block mb-1">
+                    Category
+                  </label>
                   <input
                     type="text"
                     value={category}
@@ -164,10 +174,14 @@ export default function NewItemPage() {
 
           {/* Pricing */}
           <div className="px-6 py-5 border-b border-[#F0EEE9]">
-            <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-4">Pricing</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-4">
+              Pricing
+            </p>
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="text-xs font-semibold text-[#666] block mb-1">Cost</label>
+                <label className="text-xs font-semibold text-[#666] block mb-1">
+                  Cost
+                </label>
                 <div className="flex items-center gap-1.5 border border-[#E5E3DE] rounded-xl px-3 py-2.5 focus-within:border-[#111]">
                   <span className="text-xs text-[#999]">$</span>
                   <input
@@ -182,7 +196,9 @@ export default function NewItemPage() {
                 </div>
               </div>
               <div>
-                <label className="text-xs font-semibold text-[#666] block mb-1">Price</label>
+                <label className="text-xs font-semibold text-[#666] block mb-1">
+                  Price
+                </label>
                 <div className="flex items-center gap-1.5 border border-[#E5E3DE] rounded-xl px-3 py-2.5 focus-within:border-[#111]">
                   <span className="text-xs text-[#999]">$</span>
                   <input
@@ -196,7 +212,8 @@ export default function NewItemPage() {
                   />
                 </div>
               </div>
-              <div>
+              {
+                /* <div>
                 <label className="text-xs font-semibold text-[#666] block mb-1">Last Sold</label>
                 <div className="flex items-center gap-1.5 border border-[#E5E3DE] rounded-xl px-3 py-2.5 focus-within:border-[#111]">
                   <span className="text-xs text-[#999]">$</span>
@@ -210,40 +227,65 @@ export default function NewItemPage() {
                     className="text-sm text-[#111] focus:outline-none bg-transparent w-full"
                   />
                 </div>
-              </div>
+              </div> */
+                <div>
+                  <label className="text-xs font-semibold text-[#666] block mb-1">
+                    Unit
+                  </label>
+                  <input
+                    type="text"
+                    value={unit}
+                    onChange={(e) => setUnit(e.target.value)}
+                    placeholder="e.g. each, hour, etc"
+                    className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#111]"
+                  />
+                </div>
+              }
             </div>
           </div>
 
           {/* Status */}
           <div className="px-6 py-5 border-b border-[#F0EEE9]">
-            <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-4">Status</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-4">
+              Status
+            </p>
             <div className="space-y-3">
               <label className="flex items-center justify-between cursor-pointer">
                 <div>
                   <p className="text-sm font-medium text-[#111]">Active</p>
-                  <p className="text-xs text-[#999]">Item is available for use in BOMs and quotes</p>
+                  <p className="text-xs text-[#999]">
+                    Item is available for use in BOMs and quotes
+                  </p>
                 </div>
                 <div
                   onClick={() => setActive((p) => !p)}
                   className={`w-10 h-6 rounded-full transition-colors cursor-pointer ${active ? "bg-[#111]" : "bg-[#E5E3DE]"}`}
                 >
-                  <div className={`w-4 h-4 bg-white rounded-full mt-1 transition-transform ${active ? "translate-x-5" : "translate-x-1"}`} />
+                  <div
+                    className={`w-4 h-4 bg-white rounded-full mt-1 transition-transform ${active ? "translate-x-5" : "translate-x-1"}`}
+                  />
                 </div>
               </label>
               <label className="flex items-center justify-between cursor-pointer">
                 <div>
                   <p className="text-sm font-medium text-[#111]">Approved</p>
-                  <p className="text-xs text-[#999]">Item has been reviewed and approved</p>
+                  <p className="text-xs text-[#999]">
+                    Item has been reviewed and approved
+                  </p>
                 </div>
                 <div
                   onClick={() => setApproved((p) => !p)}
                   className={`w-10 h-6 rounded-full transition-colors cursor-pointer ${approved ? "bg-[#111]" : "bg-[#E5E3DE]"}`}
                 >
-                  <div className={`w-4 h-4 bg-white rounded-full mt-1 transition-transform ${approved ? "translate-x-5" : "translate-x-1"}`} />
+                  <div
+                    className={`w-4 h-4 bg-white rounded-full mt-1 transition-transform ${approved ? "translate-x-5" : "translate-x-1"}`}
+                  />
                 </div>
               </label>
               <div>
-                <label className="text-xs font-semibold text-[#666] block mb-1">EOL Date</label>
+                <label className="text-xs font-semibold text-[#666] block mb-1">
+                  EOL Date
+                </label>
                 <input
                   type="date"
                   value={eolDate}
@@ -260,7 +302,9 @@ export default function NewItemPage() {
               <p className="text-xs text-red-600 flex items-center gap-1.5">
                 <AlertCircle size={12} /> {error}
               </p>
-            ) : <div />}
+            ) : (
+              <div />
+            )}
             <button
               onClick={handleSave}
               disabled={saving}

@@ -193,6 +193,15 @@ export default function ItemEditForm({ item }: { item: Item }) {
               </div>
             ))}
           </div>
+                    <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-widest text-[#999]">Unit</label>
+            <input
+              value={form.unit}
+              onChange={(e) => set("unit", e.target.value)}
+              placeholder="e.g. pcs, kg, m"
+              className="w-full text-sm text-[#111] border border-[#E5E3DE] rounded-xl px-3 py-2.5 placeholder:text-[#ccc] focus:outline-none focus:border-[#111] transition-colors"
+            />
+          </div>
         </div>
 
         {/* Status */}

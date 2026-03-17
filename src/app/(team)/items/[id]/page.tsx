@@ -75,9 +75,6 @@ export default async function ItemPage({
             {item.description && (
               <p className="text-sm text-[#888] mt-2 max-w-lg">{item.description}</p>
             )}
-             {item.unit && (
-              <p className="text-sm text-[#888] mt-2 max-w-lg">{item.unit}</p>
-            )}
           </div>
           <Link
             href={`/items/${item.id}/edit`}
@@ -141,7 +138,7 @@ export default async function ItemPage({
               Details
             </p>
           </div>
-          <div className="grid grid-cols-3 divide-x divide-[#F0EEE9]">
+          <div className="grid grid-cols-4 divide-x divide-[#F0EEE9]">
             <div className="px-6 py-5">
               <p className="text-xs text-[#999] mb-1">Category</p>
               <p className="text-sm font-medium text-[#111]">
@@ -170,6 +167,13 @@ export default async function ItemPage({
               <p className="text-xs text-[#999] mb-1">Added</p>
               <p className="text-sm font-medium text-[#111]">
                 {new Date(item.createdAt).toLocaleDateString()}
+              </p>
+            </div>
+
+                        <div className="px-6 py-5">
+              <p className="text-xs text-[#999] mb-1">Unit</p>
+              <p className="text-sm font-medium text-[#111]">
+                {item.unit ?? <span className="text-[#ccc]">—</span>}
               </p>
             </div>
           </div>
