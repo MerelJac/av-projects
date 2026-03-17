@@ -165,19 +165,18 @@ enum ItemType {
 }
 
 model Quote {
-  id                String           @id @default(uuid())
-  customerId        String
-  customer          Customer         @relation(fields: [customerId], references: [id])
-  projectId         String?
-  project           Project?         @relation(fields: [projectId], references: [id])
-  status            QuoteStatus      @default(DRAFT)
-  total             Float?
-  createdAt         DateTime         @default(now())
-  lines             QuoteLine[]
-  quoteBundles      QuoteBundle[]
-  billOfMaterials   BillOfMaterials? @relation(fields: [billOfMaterialsId], references: [id])
-  billOfMaterialsId String?
-  salesOrder        SalesOrder?
+  id           String        @id @default(uuid())
+  customerId   String
+  customer     Customer      @relation(fields: [customerId], references: [id])
+  projectId    String?
+  project      Project?      @relation(fields: [projectId], references: [id])
+  status       QuoteStatus   @default(DRAFT)
+  total        Float?
+  createdAt    DateTime      @default(now())
+  lines        QuoteLine[]
+  quoteBundles QuoteBundle[]
+  boms         QuoteBOM[]
+  salesOrder   SalesOrder?
 }
 
 enum QuoteStatus {
@@ -344,17 +343,27 @@ model BillOfMaterials {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  lines        BOMLine[]
-  quotes       Quote[]
+  lines  BOMLine[]
+  quotes QuoteBOM[]
+
   quoteBundles QuoteBundle[]
 }
 
+model QuoteBOM {
+  quoteId String
+  quote   Quote           @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  bomId   String
+  bom     BillOfMaterials @relation(fields: [bomId], references: [id], onDelete: Cascade)
+
+  @@id([quoteId, bomId])
+}
+
 model BOMLine {
-  id String @id @default(uuid())
-  bomId String
-  bom   BillOfMaterials @relation(fields: [bomId], references: [id])
-  itemId String
-  item   Item   @relation(fields: [itemId], references: [id])
+  id        String          @id @default(uuid())
+  bomId     String
+  bom       BillOfMaterials @relation(fields: [bomId], references: [id])
+  itemId    String
+  item      Item            @relation(fields: [itemId], references: [id])
   quantity  Int
   notes     String?
   section   String?
@@ -362,7 +371,6 @@ model BOMLine {
   sellEach  Float?
   sortOrder Int?
 }
-
 
 enum NoteDocumentType {
   QUOTE

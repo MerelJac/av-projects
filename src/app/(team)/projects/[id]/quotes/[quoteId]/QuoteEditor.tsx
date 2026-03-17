@@ -215,10 +215,10 @@ export default function QuoteEditor({
           <div>
             <div className="flex items-center gap-2 text-xs text-[#999] mb-1">
               <span>{initialQuote.customer.name}</span>
-              {initialQuote.billOfMaterials && (
+              {initialQuote.boms.length > 0 && (
                 <>
                   <span>·</span>
-                  <span>from BOM: {initialQuote.billOfMaterials.name}</span>
+                  <span>from BOM: {initialQuote.boms.map((q) => q.bom.name).join(", ")}</span>
                 </>
               )}
             </div>

@@ -18,6 +18,7 @@ import {
 import GenerateQuoteModal from "@/app/components/team/projects/bom/GenerateQuoteModal";
 import { BOM, BOMLine } from "@/types/bom";
 import { Item } from "@/types/item";
+import { calcBOMTotals } from "./actions";
 
 
 const quoteStatusColors: Record<string, string> = {
@@ -210,28 +211,8 @@ export default function BOMEditor({
   );
 
   // Totals
-  const hardwareLines = lines.filter((l) => l.item.type !== "SERVICE");
-  const serviceLines = lines.filter((l) => l.item.type === "SERVICE");
-
-  const totalHardwareSell = hardwareLines.reduce(
-    (sum, l) =>
-      sum +
-      (l.sellEach ?? effectivePrice(l.itemId, l.item.price) ?? 0) * l.quantity,
-    0,
-  );
-  const totalServiceSell = serviceLines.reduce(
-    (sum, l) =>
-      sum +
-      (l.sellEach ?? effectivePrice(l.itemId, l.item.price) ?? 0) * l.quantity,
-    0,
-  );
-  const totalCostAll = lines.reduce(
-    (sum, l) => sum + (l.costEach ?? l.item.cost ?? 0) * l.quantity,
-    0,
-  );
-  const grandTotal = totalHardwareSell + totalServiceSell + tariff;
-  const gm =
-    grandTotal > 0 ? ((grandTotal - totalCostAll) / grandTotal) * 100 : 0;
+  const { totalHardwareSell, totalServiceSell, totalCostAll, grandTotal, gm } =
+  calcBOMTotals(lines, customerPrices, tariff);
 
   async function handleSave() {
     setSaving(true);

@@ -1,10 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import BOMEditor from "../BomEditor";
-import { BOMItem, BOMType } from "@/types/bom";
+import { BOMItem, BOMLine, BOMType } from "@/types/bom";
 import NotesPanel from "@/app/components/NotesPanel";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { calcBOMTotals } from "../actions";
 
 export default async function BOMPage({
   params,
@@ -21,19 +22,17 @@ export default async function BOMPage({
       project: { include: { customer: true } },
       lines: { include: { item: true } },
       quotes: {
-        orderBy: { createdAt: "desc" },
-        select: { id: true, status: true, total: true, createdAt: true },
+        include: {
+          quote: {
+            select: { id: true, status: true, total: true, createdAt: true },
+          },
+        },
+        orderBy: { quote: { createdAt: "desc" } },
       },
     },
   });
 
   if (!bom || bom.project.id !== id) return notFound();
-
-  // also fetch all BOMs for this project for the modal
-  const projectBoms = await prisma.billOfMaterials.findMany({
-    where: { projectId: id },
-    include: { _count: { select: { lines: true } } },
-  });
 
   const [items, customerPrices] = await Promise.all([
     prisma.item.findMany({
@@ -55,21 +54,40 @@ export default async function BOMPage({
     }),
   ]);
 
+  const customerPricesRecord = Object.fromEntries(
+    customerPrices.map((cp) => [cp.itemId, cp.price]),
+  );
+
+  const projectBoms = await prisma.billOfMaterials.findMany({
+    where: { projectId: id },
+    include: { lines: { include: { item: true } } },
+  });
+
   return (
     <div className=" bg-[#F7F6F3]">
       <BOMEditor
-        bom={bom as BOMType}
+        bom={
+          {
+            ...bom,
+            quotes: bom.quotes.map((q) => q.quote),
+          } as BOMType
+        }
         items={items as BOMItem[]}
-        customerPrices={Object.fromEntries(
-          customerPrices.map((cp) => [cp.itemId, cp.price]),
-        )}
+        customerPrices={customerPricesRecord}
         projectId={id}
-        projectBoms={projectBoms.map((b) => ({
-          id: b.id,
-          name: b.name,
-          lineCount: b._count.lines,
-          total: 0, // or compute from lines if you include them
-        }))}
+        projectBoms={projectBoms.map((b) => {
+          const { grandTotal } = calcBOMTotals(
+            b.lines as BOMLine[],
+            customerPricesRecord,
+            0, // tariff unknown server-side, default 0
+          );
+          return {
+            id: b.id,
+            name: b.name,
+            lineCount: b.lines.length,
+            total: grandTotal,
+          };
+        })}
       />
       <div className="max-w-5xl mx-auto px-6 pb-10">
         <NotesPanel

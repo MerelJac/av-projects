@@ -27,7 +27,12 @@ export type BOMType = {
   projectId: string;
   project: { id: string; name: string; customer: { name: string } };
   lines: BOMLineType[];
-  quotes: { id: string; status: QuoteStatus; total: number | null; createdAt: Date }[];
+  quotes: {
+    id: string;
+    status: string;
+    total: number | null;
+    createdAt: Date;
+  }[];
 };
 
 export type BOMLine = {

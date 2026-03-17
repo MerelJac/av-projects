@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
-
+// DEPREACTED. replaces wtih src/app/api/projects/[id]/quotes/generate-from-boms/route.ts
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string; bomId: string }> },
