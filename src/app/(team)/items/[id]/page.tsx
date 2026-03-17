@@ -75,6 +75,9 @@ export default async function ItemPage({
             {item.description && (
               <p className="text-sm text-[#888] mt-2 max-w-lg">{item.description}</p>
             )}
+             {item.unit && (
+              <p className="text-sm text-[#888] mt-2 max-w-lg">{item.unit}</p>
+            )}
           </div>
           <Link
             href={`/items/${item.id}/edit`}

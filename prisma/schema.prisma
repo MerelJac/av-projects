@@ -48,7 +48,8 @@ model Invoice {
   issuedAt DateTime?
   paidAt   DateTime?
 
-  createdAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+  depositQuotes Quote[]
 }
 
 model QuoteBundle {
@@ -142,6 +143,7 @@ model Item {
 
   category String?
   type     ItemType
+  unit     String?
 
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
@@ -179,6 +181,13 @@ model Quote {
   boms           QuoteBOM[]
   salesOrder     SalesOrder?
   purchaseOrders PurchaseOrder[]
+
+  depositPct       Float? // e.g. 50.0
+  depositAmount    Float? // fixed override — if set, takes precedence over pct
+  depositPaid      Boolean   @default(false)
+  depositPaidAt    DateTime?
+  depositInvoiceId String?
+  depositInvoice   Invoice?  @relation(fields: [depositInvoiceId], references: [id])
 }
 
 enum QuoteStatus {

@@ -9,6 +9,7 @@ const ITEM_FIELDS = [
   { key: "manufacturer", label: "Manufacturer", required: false },
   { key: "type", label: "Type", required: true, hint: "HARDWARE, SOFTWARE, SUBSCRIPTION, SERVICE" },
   { key: "description", label: "Description", required: false },
+  { key: "unit", label: "Unit", required: false },
   { key: "cost", label: "Cost", required: false },
   { key: "price", label: "Price", required: false },
   { key: "category", label: "Category", required: false },
@@ -59,6 +60,7 @@ function autoMap(headers: string[]): Record<string, string> {
     price: ["price", "unitprice", "sellprice", "salesprice", "listprice"],
     category: ["category", "cat", "group", "productgroup"],
     active: ["active", "status", "enabled", "isactive"],
+    unit: ["unit", "uom", "measure", "measurement"],
   };
 
   for (const [field, aliasList] of Object.entries(aliases)) {

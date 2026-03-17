@@ -1,21 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import QuoteEditor from "./QuoteEditor";
-import { Prisma } from "@prisma/client";
+
 import NotesPanel from "@/app/components/NotesPanel";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth";
 
-export type QuoteWithDetails = Prisma.QuoteGetPayload<{
-  include: {
-    customer: true;
-    project: true;
-    boms: { include: { bom: { select: { id: true; name: true } } } };
-    lines: { include: { item: true; bundle: true } };
-    quoteBundles: { include: { lines: { include: { item: true } } } };
-    salesOrder: { select: { id: true } }; // ← add this
-  };
-}>;
 
 export default async function QuotePage({
   params,

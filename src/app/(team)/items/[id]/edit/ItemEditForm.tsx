@@ -19,6 +19,7 @@ type Item = {
   approved: boolean;
   eolDate: string | null;
   description: string | null;
+  unit: string | null;
 };
 
 export default function ItemEditForm({ item }: { item: Item }) {
@@ -38,6 +39,7 @@ export default function ItemEditForm({ item }: { item: Item }) {
     approved: item.approved,
     eolDate: item.eolDate ?? "",
     description: item.description ?? "",
+    unit: item.unit ?? "",
   });
 
   function set(key: keyof typeof form, value: string | boolean) {
@@ -67,6 +69,7 @@ export default function ItemEditForm({ item }: { item: Item }) {
           approved: form.approved,
           eolDate: form.eolDate || null,
           description: form.description || null,
+          unit: form.unit || null,  
         }),
       });
       if (!res.ok) throw new Error();
@@ -124,6 +127,16 @@ export default function ItemEditForm({ item }: { item: Item }) {
               placeholder="Brief description of the item…"
               rows={2}
               className="w-full text-sm text-[#111] border border-[#E5E3DE] rounded-xl px-3 py-2.5 placeholder:text-[#ccc] focus:outline-none focus:border-[#111] transition-colors resize-none"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-widest text-[#999]">Unit</label>
+            <input
+              value={form.unit}
+              onChange={(e) => set("unit", e.target.value)}
+              placeholder="e.g. pcs, kg, m"
+              className="w-full text-sm text-[#111] border border-[#E5E3DE] rounded-xl px-3 py-2.5 placeholder:text-[#ccc] focus:outline-none focus:border-[#111] transition-colors"
             />
           </div>
 

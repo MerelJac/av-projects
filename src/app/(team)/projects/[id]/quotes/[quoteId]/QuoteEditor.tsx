@@ -16,7 +16,7 @@ import {
   Check,
   Package,
 } from "lucide-react";
-import { QuoteWithDetails } from "./page";
+import { QuoteWithDetails } from "@/types/quote";
 import { QuoteStatus } from "@prisma/client";
 import ConvertToSalesOrderButton from "@/app/components/team/sales-orders/ConvertToSalesOrderButton";
 import CreatePOModal from "@/app/components/team/purchase-orders/CreatePOModal";
@@ -75,6 +75,21 @@ export default function QuoteEditor({
   const [showPDFPreview, setShowPDFPreview] = useState(false);
   const pdfUrl = `/api/projects/${projectId}/quotes/${initialQuote.id}/pdf`;
 
+  const [depositPct, setDepositPct] = useState<number | null>(
+    initialQuote.depositPct ?? null,
+  );
+  const [depositAmount, setDepositAmount] = useState<number | null>(
+    initialQuote.depositAmount ?? null,
+  );
+  const [depositPaid, setDepositPaid] = useState(
+    initialQuote.depositPaid ?? false,
+  );
+  const [depositPaidAt, setDepositPaidAt] = useState<string>(
+    initialQuote.depositPaidAt
+      ? new Date(initialQuote.depositPaidAt).toISOString().split("T")[0]
+      : "",
+  );
+  const [savingDeposit, setSavingDeposit] = useState(false);
   const showToast = (type: "success" | "error", msg: string) => {
     setToast({ type, msg });
     setTimeout(() => setToast(null), 3500);
@@ -88,6 +103,32 @@ export default function QuoteEditor({
       prev.map((l) => (l.id === lineId ? { ...l, ...updates } : l)),
     );
     setSaved(false);
+  }
+
+  async function handleSaveDeposit() {
+    setSavingDeposit(true);
+    try {
+      const res = await fetch(
+        `/api/projects/${projectId}/quotes/${initialQuote.id}/deposit`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            depositPct,
+            depositAmount,
+            depositPaid,
+            depositPaidAt: depositPaidAt || null,
+          }),
+        },
+      );
+      if (!res.ok) throw new Error();
+      showToast("success", "Deposit saved");
+      router.refresh();
+    } catch {
+      showToast("error", "Failed to save deposit");
+    } finally {
+      setSavingDeposit(false);
+    }
   }
 
   function removeLine(lineId: string) {
@@ -184,6 +225,13 @@ export default function QuoteEditor({
   const margin = subtotal > 0 ? ((subtotal - totalCost) / subtotal) * 100 : 0;
 
   const statusCfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.DRAFT;
+
+  const computedDeposit =
+    depositAmount != null
+      ? depositAmount
+      : depositPct != null && subtotal > 0
+        ? (depositPct / 100) * subtotal
+        : null;
 
   return (
     <div className="min-h-screen bg-[#F7F6F3]">
@@ -522,6 +570,134 @@ export default function QuoteEditor({
                 quoteId={initialQuote.id}
                 existingSalesOrderId={initialQuote.salesOrder?.id}
               />
+            )}
+
+            {status === "ACCEPTED" && (
+              <div className="bg-white border border-[#E5E3DE] rounded-2xl p-5 space-y-4">
+                <p className="text-xs font-semibold uppercase tracking-widest text-[#888]">
+                  Deposit
+                </p>
+
+                {/* Amount definition — % or fixed */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1">
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        step={0.1}
+                        value={depositPct ?? ""}
+                        onChange={(e) => {
+                          setDepositPct(
+                            e.target.value === ""
+                              ? null
+                              : parseFloat(e.target.value),
+                          );
+                          setDepositAmount(null); // pct takes over
+                        }}
+                        placeholder="50"
+                        className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 pr-7 focus:outline-none focus:border-[#111]"
+                      />
+                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[#999]">
+                        %
+                      </span>
+                    </div>
+                    <span className="text-xs text-[#999]">or</span>
+                    <div className="relative flex-1">
+                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[#999]">
+                        $
+                      </span>
+                      <input
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        value={depositAmount ?? ""}
+                        onChange={(e) => {
+                          setDepositAmount(
+                            e.target.value === ""
+                              ? null
+                              : parseFloat(e.target.value),
+                          );
+                          setDepositPct(null); // fixed takes over
+                        }}
+                        placeholder="0.00"
+                        className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 pl-6 focus:outline-none focus:border-[#111]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Computed amount display */}
+                  {computedDeposit != null && (
+                    <p className="text-xs text-[#888]">
+                      Deposit amount:{" "}
+                      <span className="font-semibold text-[#111]">
+                        $
+                        {computedDeposit.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                        })}
+                      </span>
+                      {depositPct != null && subtotal > 0 && (
+                        <span className="text-[#bbb] ml-1">
+                          ({depositPct}% of $
+                          {subtotal.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                          })}
+                          )
+                        </span>
+                      )}
+                    </p>
+                  )}
+                </div>
+
+                {/* Paid toggle */}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-[#666]">Deposit received</span>
+                  <button
+                    onClick={() => {
+                      const next = !depositPaid;
+                      setDepositPaid(next);
+                      if (next && !depositPaidAt) {
+                        setDepositPaidAt(
+                          new Date().toISOString().split("T")[0],
+                        );
+                      }
+                    }}
+                    className={`w-10 h-5 rounded-full transition-colors relative ${
+                      depositPaid ? "bg-green-500" : "bg-[#E5E3DE]"
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${
+                        depositPaid ? "left-5" : "left-0.5"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Date paid */}
+                {depositPaid && (
+                  <div>
+                    <label className="text-xs font-semibold text-[#888] uppercase tracking-widest block mb-1.5">
+                      Date paid
+                    </label>
+                    <input
+                      type="date"
+                      value={depositPaidAt}
+                      onChange={(e) => setDepositPaidAt(e.target.value)}
+                      className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111]"
+                    />
+                  </div>
+                )}
+
+                <button
+                  onClick={handleSaveDeposit}
+                  disabled={savingDeposit}
+                  className="w-full text-sm font-semibold py-2 rounded-xl bg-[#111] text-white hover:bg-[#333] disabled:opacity-40 transition-colors"
+                >
+                  {savingDeposit ? "Saving…" : "Save Deposit"}
+                </button>
+              </div>
             )}
 
             <button

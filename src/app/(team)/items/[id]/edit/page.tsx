@@ -44,6 +44,7 @@ export default async function ItemEditPage({
           approved: item.approved,
           eolDate: item.eolDate ? item.eolDate.toISOString().split("T")[0] : null,
           description: item.description,
+          unit: item.unit,
         }} />
       </div>
     </div>

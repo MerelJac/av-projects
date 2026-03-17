@@ -19,6 +19,7 @@ export default function NewItemPage() {
   const [eolDate, setEolDate] = useState("");
   const [description, setDescription] = useState("");
   const [active, setActive] = useState(true);
+  const [unit, setUnit] = useState("");
   const [approved, setApproved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,6 +47,7 @@ export default function NewItemPage() {
           eolDate: eolDate || null,
           active,
           approved,
+          unit: unit.trim() || null
         }),
       });
 
@@ -110,6 +112,16 @@ export default function NewItemPage() {
                   value={manufacturer}
                   onChange={(e) => setManufacturer(e.target.value)}
                   placeholder="e.g. Crestron, Extron…"
+                  className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#111]"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-[#666] block mb-1">Unit</label>
+                <input
+                  type="text"
+                  value={unit}
+                  onChange={(e) => setUnit(e.target.value)}
+                  placeholder="e.g. each, hour, etc"
                   className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#111]"
                 />
               </div>
