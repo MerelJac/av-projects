@@ -13,8 +13,13 @@ export default async function POPage({
     include: {
       project: { include: { customer: true } },
       lines: { include: { item: true } },
-      shipments: { orderBy: { createdAt: "desc" } },
       quote: { select: { id: true } },
+      shipments: {
+        include: {
+          lines: { include: { item: true } },
+        },
+        orderBy: { createdAt: "desc" },
+      },
     },
   });
 
