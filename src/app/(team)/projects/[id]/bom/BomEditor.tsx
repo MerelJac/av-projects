@@ -15,45 +15,10 @@ import {
   GripVertical,
   Pencil,
 } from "lucide-react";
+import GenerateQuoteModal from "@/app/components/team/projects/bom/GenerateQuoteModal";
+import { BOM, BOMLine } from "@/types/bom";
+import { Item } from "@/types/item";
 
-type Item = {
-  id: string;
-  itemNumber: string;
-  manufacturer: string | null;
-  description?: string | null; // add to Item model if not present
-  price: number | null;
-  cost: number | null;
-  category: string | null;
-  type: string;
-};
-
-type BOMLine = {
-  id: string;
-  itemId: string;
-  item: Item;
-  quantity: number;
-  notes: string | null; // used as description/note per row
-  costEach?: number | null; // override cost
-  sellEach?: number | null; // override sell/price
-  sortOrder?: number;
-  section?: string; // grouping label e.g. "Crestron", "Call One"
-};
-
-type Quote = {
-  id: string;
-  status: string;
-  total: number | null;
-  createdAt: Date;
-};
-
-type BOM = {
-  id: string;
-  name: string;
-  projectId: string;
-  project: { id: string; name: string; customer: { name: string } };
-  lines: BOMLine[];
-  quotes: Quote[];
-};
 
 const quoteStatusColors: Record<string, string> = {
   DRAFT: "bg-gray-100 text-gray-600",
@@ -67,14 +32,25 @@ export default function BOMEditor({
   items,
   projectId,
   customerPrices,
+  projectBoms,
 }: {
   bom: BOM;
   items: Item[];
   projectId: string;
   customerPrices: Record<string, number>;
+  projectBoms: { id: string; name: string; lineCount: number; total: number }[];
 }) {
   const router = useRouter();
-  const [lines, setLines] = useState<BOMLine[]>(bom.lines);
+  const [lines, setLines] = useState<BOMLine[]>(() =>
+    bom.lines.map((l) => {
+      const cost = l.costEach ?? l.item?.cost ?? 0;
+      const sell = l.sellEach ?? 0;
+      const derived =
+        sell > 0 && sell > cost ? ((sell - cost) / sell) * 100 : 20;
+      return { ...l, marginPct: parseFloat(derived.toFixed(2)) };
+    }),
+  );
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -152,6 +128,12 @@ export default function BOMEditor({
   }
 
   function addLine(item: Item) {
+    const cost = item.cost ?? 0;
+    const defaultMargin = 20;
+    const sell =
+      cost > 0
+        ? cost / (1 - defaultMargin / 100)
+        : (effectivePrice(item.id, item.price) ?? 0);
     const newLine: BOMLine = {
       id: `temp-${Date.now()}`,
       itemId: item.id,
@@ -161,10 +143,41 @@ export default function BOMEditor({
       sortOrder: lines.length,
       section: addingToSection,
       costEach: item.cost,
-      sellEach: effectivePrice(item.id, item.price),
+      sellEach: sell,
+      marginPct: defaultMargin,
     };
     setLines((prev) => [...prev, newLine]);
     setItemSearch("");
+    setSaved(false);
+  }
+
+  function updateMarginFromSell(lineId: string, sell: number | null) {
+    setLines((prev) =>
+      prev.map((l) => {
+        if (l.id !== lineId) return l;
+        const cost = l.costEach ?? l.item.cost ?? 0;
+        const s = sell ?? 0;
+        const m = s > 0 ? ((s - cost) / s) * 100 : 0;
+        return { ...l, sellEach: sell, marginPct: parseFloat(m.toFixed(2)) };
+      }),
+    );
+    setSaved(false);
+  }
+
+  function updateSellFromMargin(lineId: string, margin: number | null) {
+    setLines((prev) =>
+      prev.map((l) => {
+        if (l.id !== lineId) return l;
+        const cost = l.costEach ?? l.item.cost ?? 0;
+        const m = margin ?? 0;
+        const sell = m >= 100 ? cost : cost / (1 - m / 100);
+        return {
+          ...l,
+          marginPct: margin,
+          sellEach: parseFloat(sell.toFixed(2)),
+        };
+      }),
+    );
     setSaved(false);
   }
 
@@ -237,6 +250,7 @@ export default function BOMEditor({
               costEach: l.costEach,
               sellEach: l.sellEach,
               sortOrder: i,
+              marginPct: l.marginPct,
             })),
             tariff,
           }),
@@ -251,6 +265,19 @@ export default function BOMEditor({
     } finally {
       setSaving(false);
     }
+  }
+
+  function updateCost(lineId: string, cost: number | null) {
+    setLines((prev) =>
+      prev.map((l) => {
+        if (l.id !== lineId) return l;
+        const m = l.marginPct ?? 20;
+        const c = cost ?? 0;
+        const sell = m >= 100 ? c : c / (1 - m / 100);
+        return { ...l, costEach: cost, sellEach: parseFloat(sell.toFixed(2)) };
+      }),
+    );
+    setSaved(false);
   }
 
   async function handleGenerateQuote() {
@@ -308,6 +335,14 @@ export default function BOMEditor({
         </div>
       )}
 
+      {showGenerateModal && (
+        <GenerateQuoteModal
+          boms={projectBoms}
+          projectId={projectId}
+          onClose={() => setShowGenerateModal(false)}
+        />
+      )}
+  
       {/* Delete Confirm */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -396,8 +431,8 @@ export default function BOMEditor({
               {saving ? "Saving…" : saved ? "Saved ✓" : "Save Changes"}
             </button>
             <button
-              onClick={handleGenerateQuote}
-              disabled={generating || lines.length === 0}
+              onClick={() => setShowGenerateModal(true)}
+              disabled={lines.length === 0}
               className="flex items-center gap-2 bg-[#111] text-white text-sm font-semibold px-5 py-2 rounded-xl hover:bg-[#333] disabled:opacity-40 transition-colors"
             >
               <Zap size={14} />
@@ -555,6 +590,9 @@ export default function BOMEditor({
                       </th>
                       <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3 w-16">
                         Qty
+                      </th>
+                      <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3 w-16">
+                        Margin
                       </th>
                       <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3 w-24">
                         Cost Ea.
@@ -732,6 +770,33 @@ export default function BOMEditor({
                                       className="w-14 text-right text-xs border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111] transition-colors"
                                     />
                                   </td>
+
+                                  {/* Margin % */}
+                                  <td className="px-3 py-2 text-right">
+                                    <div className="relative">
+                                      <input
+                                        type="number"
+                                        step="0.1"
+                                        min={0}
+                                        max={99.9}
+                                        value={line.marginPct ?? ""}
+                                        onChange={(e) =>
+                                          updateSellFromMargin(
+                                            line.id,
+                                            e.target.value === ""
+                                              ? null
+                                              : parseFloat(e.target.value),
+                                          )
+                                        }
+                                        placeholder="20"
+                                        className="w-16 text-right text-xs border border-[#E5E3DE] rounded-lg pr-5 pl-2 py-1 focus:outline-none focus:border-[#111] text-blue-600 font-medium transition-colors"
+                                      />
+                                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[#bbb] text-xs">
+                                        %
+                                      </span>
+                                    </div>
+                                  </td>
+
                                   {/* Cost Ea. */}
                                   <td className="px-3 py-2 text-right">
                                     <div className="relative">
@@ -749,9 +814,8 @@ export default function BOMEditor({
                                             : costEach
                                         }
                                         onChange={(e) =>
-                                          updateField(
+                                          updateCost(
                                             line.id,
-                                            "costEach",
                                             e.target.value === ""
                                               ? null
                                               : parseFloat(e.target.value),
@@ -786,9 +850,8 @@ export default function BOMEditor({
                                             : sellEach
                                         }
                                         onChange={(e) =>
-                                          updateField(
+                                          updateMarginFromSell(
                                             line.id,
-                                            "sellEach",
                                             e.target.value === ""
                                               ? null
                                               : parseFloat(e.target.value),

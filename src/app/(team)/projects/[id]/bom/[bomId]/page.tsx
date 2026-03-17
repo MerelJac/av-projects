@@ -29,6 +29,12 @@ export default async function BOMPage({
 
   if (!bom || bom.project.id !== id) return notFound();
 
+  // also fetch all BOMs for this project for the modal
+  const projectBoms = await prisma.billOfMaterials.findMany({
+    where: { projectId: id },
+    include: { _count: { select: { lines: true } } },
+  });
+
   const [items, customerPrices] = await Promise.all([
     prisma.item.findMany({
       where: { active: true },
@@ -58,9 +64,19 @@ export default async function BOMPage({
           customerPrices.map((cp) => [cp.itemId, cp.price]),
         )}
         projectId={id}
+        projectBoms={projectBoms.map((b) => ({
+          id: b.id,
+          name: b.name,
+          lineCount: b._count.lines,
+          total: 0, // or compute from lines if you include them
+        }))}
       />
       <div className="max-w-5xl mx-auto px-6 pb-10">
-        <NotesPanel documentType="BILL_OF_MATERIALS" documentId={bomId} currentUserId={currentUserId} />
+        <NotesPanel
+          documentType="BILL_OF_MATERIALS"
+          documentId={bomId}
+          currentUserId={currentUserId}
+        />
       </div>
     </div>
   );
