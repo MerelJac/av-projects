@@ -5,21 +5,7 @@ import { getToken } from "next-auth/jwt";
 import { PurchaseOrderLine } from "@prisma/client";
 
 // GET /api/projects/:id/sales-orders/:salesOrderId/purchase-orders
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string; salesOrderId: string; poId: string }> },
-) {
-  const { poId } = await params;
-  const po = await prisma.purchaseOrder.findUnique({
-    where: { id: poId },
-    include: {
-      lines: { include: { item: true, salesOrderLine: true } },
-      shipments: { include: { item: true } },
-    },
-  });
-  if (!po) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json(po);
-}
+
 // POST /api/projects/:id/sales-orders/:salesOrderId/purchase-orders
 // Body: { vendor, notes, lines: [{ itemId, salesOrderLineId?, quantity, cost }] }
 export async function POST(

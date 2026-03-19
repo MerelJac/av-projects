@@ -1,6 +1,6 @@
 // src/app/api/projects/[id]/sales-orders/[salesOrderId]/route.ts
 import { prisma } from "@/lib/prisma";
-import { SalesOrderStatus } from "@prisma/client";
+import { SalesOrderLine, SalesOrderStatus } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
@@ -56,7 +56,7 @@ export async function PUT(
       data: {
         status: status as SalesOrderStatus,
         lines: {
-          create: lines.map((l: any) => ({
+          create: lines.map((l: SalesOrderLine) => ({
             description: l.description,
             quantity: l.quantity,
             price: l.price,

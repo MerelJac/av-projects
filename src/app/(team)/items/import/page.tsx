@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef } from "react";
 import Link from "next/link";
-import { ArrowLeft, Upload, AlertCircle, CheckCircle2, X, FileText, ChevronDown } from "lucide-react";
+import { ArrowLeft, Upload, AlertCircle, CheckCircle2,  FileText, ChevronDown } from "lucide-react";
 
 const ITEM_FIELDS = [
   { key: "itemNumber", label: "Item Number", required: true },

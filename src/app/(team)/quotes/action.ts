@@ -25,37 +25,6 @@ export async function addItemToQuote(
   });
 }
 
-export async function addSystemToQuote(
-  quoteId: string,
-  templateId: string
-) {
-  const template = await prisma.systemTemplate.findUnique({
-    where: { id: templateId },
-    include: { items: true },
-  });
-
-  if (!template) return;
-
-  for (const t of template.items) {
-    const item = await prisma.item.findUnique({
-      where: { id: t.itemId },
-    });
-
-    if (!item) continue;
-
-    await prisma.quoteLine.create({
-      data: {
-        quoteId,
-        itemId: item.id,
-        description: item.itemNumber,
-        quantity: t.quantity,
-        price: item.price ?? 0,
-        cost: item.cost ?? 0,
-      },
-    });
-  }
-}
-
 export async function convertQuoteToProject(
   quoteId: string
 ) {
