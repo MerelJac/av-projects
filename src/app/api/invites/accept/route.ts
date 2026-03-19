@@ -16,8 +16,7 @@ export async function POST(req: Request) {
     data: {
       email: invite.email,
       password, // 🔒 hash later
-      role: "TEAM",
-      trainerId: invite.trainerId,
+      role: "TEAM"
     },
   })
 

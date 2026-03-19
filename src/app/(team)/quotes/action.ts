@@ -25,23 +25,6 @@ export async function addItemToQuote(
   });
 }
 
-export async function convertQuoteToProject(
-  quoteId: string
-) {
-  const quote = await prisma.quote.findUnique({
-    where: { id: quoteId },
-  });
-
-  if (!quote) return;
-
-  await prisma.project.create({
-    data: {
-      name: `Project from Quote`,
-      customerId: quote.customerId,
-      quoteId,
-    },
-  });
-}
 
 export async function createQuote(formData: FormData) {
   const customerId = formData.get("customerId") as string;
