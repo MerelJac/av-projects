@@ -2,7 +2,6 @@
 "use client";
 
 import { useState, startTransition } from "react";
-import { updateTrainerProfile } from "@/app/(team)/trainer/profile/actions";
 
 export function TrainerProfileEditor({
   initialFirstName,
@@ -26,19 +25,19 @@ export function TrainerProfileEditor({
   function save() {
     setSaving(true);
     setError(null);
-    startTransition(async () => {
-      const result = await updateTrainerProfile(
-        firstName,
-        lastName,
-        email,
-        phone,
-      );
-      if (!result.ok) {
-        setError(result.error);
-        return;
-      }
-      setSaving(false);
-    });
+    // startTransition(async () => {
+    //   const result = await updateTrainerProfile(
+    //     firstName,
+    //     lastName,
+    //     email,
+    //     phone,
+    //   );
+    //   if (!result.ok) {
+    //     setError(result.error);
+    //     return;
+    //   }
+    //   setSaving(false);
+    // });
   }
 
   return (

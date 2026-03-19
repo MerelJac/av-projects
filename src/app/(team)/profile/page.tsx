@@ -5,7 +5,6 @@ import { authOptions } from "@/lib/auth";
 import { notFound } from "next/navigation";
 
 import { LogoutButton } from "@/app/components/Logout";
-import ClientProfileSection from "@/app/components/clients/ClientProfileSection";
 
 import { UserWithProfile } from "@/types/user";
 
@@ -33,7 +32,7 @@ export default async function ClientProfilePage() {
       </div>
 
       {/* Profile */}
-      <ClientProfileSection user={user} />
+
 
       {/* Logout */}
       <div className="pt-2 flex justify-center">

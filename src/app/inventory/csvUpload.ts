@@ -1,21 +1,59 @@
-import { prisma } from "@/lib/prisma"
-import Papa from "papaparse"
+import { prisma } from "@/lib/prisma";
+import { ItemType } from "@prisma/client";
+import Papa from "papaparse";
+
+const VALID_TYPES = new Set(Object.values(ItemType));
+
+function parseFloat_(val: unknown): number | null {
+  if (val === null || val === undefined || val === "") return null;
+  const n = parseFloat(String(val).replace(/[$,]/g, ""));
+  return isNaN(n) ? null : n;
+}
+
+function parseType(val: unknown): ItemType | null {
+  const upper = String(val ?? "").trim().toUpperCase();
+  return VALID_TYPES.has(upper as ItemType) ? (upper as ItemType) : null;
+}
 
 export async function uploadCSV(file: File) {
-  const text = await file.text()
-
-  const parsed = Papa.parse(text, {
+  const text = await file.text();
+  const { data } = Papa.parse<Record<string, string>>(text, {
     header: true,
-  })
+    skipEmptyLines: true,
+  });
 
-  for (const row of parsed.data as any[]) {
-    await prisma.item.create({
-      data: {
-        itemNumber: row.item_no,
-        manufacturer: row.manufacturer,
-        price: Number(row.price),
-        cost: Number(row.cost),
-      },
-    })
+  const results = { created: 0, updated: 0, skipped: 0, errors: [] as string[] };
+
+  for (const row of data) {
+    const itemNumber = row.item_no?.trim();
+    if (!itemNumber) {
+      results.errors.push(`Row missing item_no: ${JSON.stringify(row)}`);
+      results.skipped++;
+      continue;
+    }
+
+    const type = parseType(row.type) ?? ItemType.HARDWARE; // fallback default
+    const data_ = {
+      manufacturer: row.manufacturer?.trim() || null,
+      price: parseFloat_(row.price),
+      cost: parseFloat_(row.cost),
+      type,
+    };
+
+    try {
+      const existing = await prisma.item.findUnique({ where: { itemNumber } });
+      if (existing) {
+        await prisma.item.update({ where: { itemNumber }, data: data_ });
+        results.updated++;
+      } else {
+        await prisma.item.create({ data: { itemNumber, ...data_ } });
+        results.created++;
+      }
+    } catch (err) {
+      results.errors.push(`${itemNumber}: ${err instanceof Error ? err.message : "unknown error"}`);
+      results.skipped++;
+    }
   }
+
+  return results;
 }

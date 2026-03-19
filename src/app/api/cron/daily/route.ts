@@ -1,6 +1,5 @@
 // src/app/api/cron/daily/route.ts
 import { NextResponse } from "next/server";
-import { updateWorkoutStatus } from "@/scripts/updateWorkoutStatus";
 
 
 export async function GET(req: Request) {
@@ -14,14 +13,14 @@ export async function GET(req: Request) {
   try {
     console.log("🚀 Starting daily cron jobs...");
 
-    const missedWorkouts = await updateWorkoutStatus();
 
-    console.log("✅ Daily cron completed", { missedWorkouts });
 
-    return NextResponse.json({
-      success: true,
-      missedWorkouts,
-    });
+    // console.log("✅ Daily cron completed", { missedWorkouts });
+
+    // return NextResponse.json({
+    //   success: true,
+    //   missedWorkouts,
+    // });
   } catch (err) {
     console.error("❌ Daily cron failed:", err);
     return NextResponse.json(

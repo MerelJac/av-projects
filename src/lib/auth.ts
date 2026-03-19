@@ -46,9 +46,7 @@ export const authOptions: AuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = user.role;
-        token.trainerId = user.trainerId;
-      }
+        token.role = user.role;      }
       return token;
     },
 
@@ -56,7 +54,6 @@ export const authOptions: AuthOptions = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as Role;
-        session.user.trainerId = token.trainerId as string | null;
       }
       return session;
     },

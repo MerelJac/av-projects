@@ -9,7 +9,7 @@ export async function POST(req: Request) {
     secret: process.env.NEXTAUTH_SECRET!,
   })
 
-if (!token || (token.role !== "TRAINER" && token.role !== "ADMIN")){
+if (!token || (token.role !== "TEAM" && token.role !== "ADMIN")){
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
