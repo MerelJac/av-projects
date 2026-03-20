@@ -196,7 +196,7 @@ export default function POEditor({ po, projectId }: { po: PO; projectId: string 
   const totalReceived = lines.reduce((s, l) => s + l.receivedQuantity, 0);
 
   return (
-    <div className="min-h-screen bg-[#F7F6F3]">
+    <div className="bg-[#F7F6F3]">
       {toast && (
         <div className={`fixed top-5 right-5 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-medium shadow-lg border ${
           toast.type === "success" ? "bg-white border-green-200 text-green-700" : "bg-white border-red-200 text-red-600"

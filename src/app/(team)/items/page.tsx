@@ -15,7 +15,7 @@ export default async function ItemsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#F7F6F3]">
+    <div className="bg-[#F7F6F3]">
       <div className="max-w-5xl mx-auto px-6 py-10">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-bold text-[#111] tracking-tight">

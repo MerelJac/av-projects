@@ -12,6 +12,7 @@ import {
   FolderKanban,
   LucideIcon,
   Receipt,
+  ShoppingBag,
   Truck,
 } from "lucide-react";
 
@@ -32,6 +33,7 @@ const navItems = [
 
   { href: "/quotes", label: "Quotes", icon: FileText },
   { href: "/purchase-orders", label: "Purchase Orders", icon: CreditCard },
+    { href: "/sales-orders", label: "Sales Orders", icon: ShoppingBag },
   { href: "/shipments", label: "Shipments", icon: Truck },
   { href: "/time", label: "Time Tracking", icon: Clock },
   { href: "/invoices", label: "Invoices", icon: CreditCard },

@@ -110,7 +110,7 @@ export default function PODetailClient({
   const totalCost = po.lines.reduce((s, l) => s + l.cost * l.quantity, 0);
 
   return (
-    <div className="min-h-screen bg-[#F7F6F3]">
+    <div className="bg-[#F7F6F3]">
       {/* Toast */}
       {toast && (
         <div

@@ -23,7 +23,7 @@ export default async function CustomerPricing({
   });
 
   return (
-    <div className="min-h-screen bg-[#F7F6F3]">
+    <div className="bg-[#F7F6F3]">
       <div className="max-w-5xl mx-auto px-6 py-10">
 
         <Link

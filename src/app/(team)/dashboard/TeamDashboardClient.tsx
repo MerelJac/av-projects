@@ -106,7 +106,7 @@ export default function TeamDashboardClient({ data }: { data: DashboardData }) {
   const { kpis, milestones, recentTimeEntries, projectBurn, openSalesOrders, openPOs, overdueInvoices } = data;
 
   return (
-    <div className="min-h-screen bg-[#F7F6F3]">
+    <div className="bg-[#F7F6F3]">
       <div className="max-w-7xl mx-auto px-6 py-10 space-y-8">
 
         {/* Header */}

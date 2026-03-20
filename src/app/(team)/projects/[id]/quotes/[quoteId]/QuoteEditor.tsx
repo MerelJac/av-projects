@@ -234,7 +234,7 @@ export default function QuoteEditor({
         : null;
 
   return (
-    <div className="min-h-screen bg-[#F7F6F3]">
+    <div className="bg-[#F7F6F3]">
       {/* Toast */}
       {toast && (
         <div

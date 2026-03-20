@@ -110,7 +110,7 @@ export default function SalesOrderEditor({
   const statusCfg = STATUS_CONFIG[status];
 
   return (
-    <div className="min-h-screen bg-[#F7F6F3]">
+    <div className="bg-[#F7F6F3]">
       {/* Toast */}
       {toast && (
         <div

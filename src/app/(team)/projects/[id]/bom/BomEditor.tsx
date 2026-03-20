@@ -297,7 +297,7 @@ export default function BOMEditor({
   }
 
   return (
-    <div className="min-h-screen bg-[#F7F6F3]">
+    <div className="bg-[#F7F6F3]">
       {/* Toast */}
       {toast && (
         <div

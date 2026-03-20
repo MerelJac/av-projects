@@ -44,7 +44,7 @@ export default async function SubscriptionsPage() {
     .reduce((sum, s) => sum + (s.item.price ?? 0), 0);
 
   return (
-    <div className="min-h-screen bg-[#F7F6F3]">
+    <div className="bg-[#F7F6F3]">
       <div className="max-w-6xl mx-auto px-6 py-10 space-y-8">
 
         <div className="flex items-end justify-between">

@@ -73,7 +73,7 @@ export default function NewItemPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F7F6F3]">
+    <div className="bg-[#F7F6F3]">
       <div className="max-w-2xl mx-auto px-6 py-10">
         <Link
           href="/items"

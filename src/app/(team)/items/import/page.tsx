@@ -142,7 +142,7 @@ export default function ImportItemsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F7F6F3]">
+    <div className="bg-[#F7F6F3]">
       <div className="max-w-4xl mx-auto px-6 py-10">
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">

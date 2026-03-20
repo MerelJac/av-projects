@@ -36,7 +36,7 @@ export default async function ItemPage({
       : null;
 
   return (
-    <div className="min-h-screen bg-[#F7F6F3]">
+    <div className="bg-[#F7F6F3]">
       <div className="max-w-4xl mx-auto px-6 py-10 space-y-6">
         <Link
           href="/items"

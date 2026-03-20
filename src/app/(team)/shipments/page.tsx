@@ -18,7 +18,7 @@ export default async function ShipmentsPage() {
   const inTransit = shipments.filter((s) => !s.receivedAt).length;
 
   return (
-    <div className="min-h-screen bg-[#F7F6F3]">
+    <div className="bg-[#F7F6F3]">
       <div className="max-w-6xl mx-auto px-6 py-10">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-[#111] tracking-tight">
