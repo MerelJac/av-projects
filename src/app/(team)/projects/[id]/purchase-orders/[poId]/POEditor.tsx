@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Truck, CheckCircle2, AlertCircle, Plus, Clock, Send, Pencil, Trash2, Search } from "lucide-react";
+import { ArrowLeft, Truck, CheckCircle2, AlertCircle, Plus, Clock, Send, Pencil, Trash2, Search, FileText } from "lucide-react";
 
 type POLine = {
   id: string;
@@ -444,17 +444,27 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
               ))}
             </div>
 
-            {/* Resend button */}
-            {(status === "SENT" || status === "DRAFT") && (
-              <button
-                onClick={handleResend}
-                disabled={resending}
-                className="flex items-center gap-2 text-xs font-semibold bg-[#111] text-white px-3 py-1.5 rounded-xl hover:bg-[#333] disabled:opacity-40 transition-colors"
+            <div className="flex items-center gap-2">
+              <a
+                href={`/api/projects/${projectId}/purchase-orders/${po.id}/pdf?preview=true`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-xs font-semibold border border-[#E5E3DE] text-[#444] px-3 py-1.5 rounded-xl hover:bg-[#F0EEE9] transition-colors"
               >
-                <Send size={12} />
-                {resending ? "Sending…" : status === "DRAFT" ? "Send PO" : `Resend (Rev ${revision + 1})`}
-              </button>
-            )}
+                <FileText size={12} />
+                Export PDF
+              </a>
+              {(status === "SENT" || status === "DRAFT") && (
+                <button
+                  onClick={handleResend}
+                  disabled={resending}
+                  className="flex items-center gap-2 text-xs font-semibold bg-[#111] text-white px-3 py-1.5 rounded-xl hover:bg-[#333] disabled:opacity-40 transition-colors"
+                >
+                  <Send size={12} />
+                  {resending ? "Sending…" : status === "DRAFT" ? "Send PO" : `Resend (Rev ${revision + 1})`}
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
