@@ -43,7 +43,7 @@ export default async function ProjectPage({
         shipments: true,
         timeEntries: true,
         purchaseOrders: {
-          include: { lines: true },
+          include: { lines: true, vendor: { select: { name: true } } },
           orderBy: { createdAt: "desc" },
         },
         milestones: { orderBy: { dueDate: "asc" } },
@@ -187,7 +187,7 @@ export default async function ProjectPage({
           {project.boms.length === 0 ? (
             <div className="px-6 py-10 text-center">
               <p className="text-sm text-[#bbb]">
-                No BOMs yet — create one to start building quotes
+                No BOMs yet — create one to build quotes and purchase orders
               </p>
             </div>
           ) : (
@@ -313,7 +313,7 @@ export default async function ProjectPage({
           {project.purchaseOrders.length === 0 ? (
             <div className="px-6 py-10 text-center">
               <p className="text-sm text-[#bbb]">
-                No purchase orders yet — create one from a quote
+                No purchase orders yet — create one from a BOM or quote
               </p>
             </div>
           ) : (
@@ -350,7 +350,7 @@ export default async function ProjectPage({
                     <div>
                       <div className="flex items-center gap-2.5">
                         <p className="text-sm font-medium text-[#111]">
-                          {po.vendor}
+                          {po.poNumber ?? "PO"}{po.vendor ? ` · ${po.vendor.name}` : ""}
                         </p>
                         <span
                           className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusColor}`}

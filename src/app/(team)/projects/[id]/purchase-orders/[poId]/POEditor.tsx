@@ -1,7 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Truck, CheckCircle2, AlertCircle, Plus, Clock, Send, Pencil } from "lucide-react";
+import { ArrowLeft, Truck, CheckCircle2, AlertCircle, Plus, Clock, Send, Pencil, Trash2, Search } from "lucide-react";
 
 type POLine = {
   id: string;
@@ -90,6 +90,16 @@ export default function POEditor({ po, projectId }: { po: PO; projectId: string 
   // Resend state
   const [resending, setResending] = useState(false);
   const [revision, setRevision] = useState(po.revision);
+
+  // Add line state
+  const [showAddLine, setShowAddLine] = useState(false);
+  const [itemQuery, setItemQuery] = useState("");
+  const [itemResults, setItemResults] = useState<{ id: string; itemNumber: string; manufacturer: string | null; description: string | null }[]>([]);
+  const [selectedItem, setSelectedItem] = useState<{ id: string; itemNumber: string; manufacturer: string | null; description: string | null } | null>(null);
+  const [addQty, setAddQty] = useState("1");
+  const [addCost, setAddCost] = useState("");
+  const [addingLine, setAddingLine] = useState(false);
+  const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showToast = (type: "success" | "error", msg: string) => {
     setToast({ type, msg });
@@ -253,6 +263,57 @@ export default function POEditor({ po, projectId }: { po: PO; projectId: string 
     }
   }
 
+  async function handleDeleteLine(lineId: string) {
+    setLines((prev) => prev.filter((l) => l.id !== lineId));
+    try {
+      await fetch(`/api/projects/${projectId}/purchase-orders/${po.id}/lines/${lineId}`, {
+        method: "DELETE",
+      });
+    } catch {
+      showToast("error", "Failed to remove line");
+    }
+  }
+
+  function handleItemSearch(q: string) {
+    setItemQuery(q);
+    setSelectedItem(null);
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    if (!q.trim()) { setItemResults([]); return; }
+    searchTimeout.current = setTimeout(async () => {
+      const res = await fetch(`/api/items?q=${encodeURIComponent(q)}&limit=10`);
+      const data = await res.json();
+      setItemResults(data);
+    }, 250);
+  }
+
+  async function handleAddLine() {
+    if (!selectedItem) { showToast("error", "Select an item"); return; }
+    const qty = parseInt(addQty);
+    const cost = parseFloat(addCost);
+    if (!qty || isNaN(cost)) { showToast("error", "Valid quantity and cost required"); return; }
+    setAddingLine(true);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/purchase-orders/${po.id}/lines`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemId: selectedItem.id, quantity: qty, cost }),
+      });
+      if (!res.ok) throw new Error();
+      const line = await res.json();
+      setLines((prev) => [...prev, line]);
+      setShowAddLine(false);
+      setItemQuery("");
+      setItemResults([]);
+      setSelectedItem(null);
+      setAddQty("1");
+      setAddCost("");
+    } catch {
+      showToast("error", "Failed to add line");
+    } finally {
+      setAddingLine(false);
+    }
+  }
+
   const totalCost = lines.reduce((s, l) => s + l.cost * l.quantity, 0);
   const totalLines = lines.reduce((s, l) => s + l.quantity, 0);
   const totalReceived = lines.reduce((s, l) => s + l.receivedQuantity, 0);
@@ -353,7 +414,13 @@ export default function POEditor({ po, projectId }: { po: PO; projectId: string 
                 <span className="text-xs text-[#bbb]">{lines.length}</span>
               </div>
               {canEdit && (
-                <p className="text-xs text-[#999]">Click the edit icon to update cost or quantity</p>
+                <button
+                  onClick={() => setShowAddLine((v) => !v)}
+                  className="flex items-center gap-1.5 text-xs font-semibold bg-[#111] text-white px-3 py-1.5 rounded-lg hover:bg-[#333] transition-colors"
+                >
+                  <Plus size={12} />
+                  Add Item
+                </button>
               )}
             </div>
             <table className="w-full text-sm">
@@ -363,7 +430,7 @@ export default function POEditor({ po, projectId }: { po: PO; projectId: string 
                   <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-4 py-3 w-28">Ordered</th>
                   <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-4 py-3 w-28">Received</th>
                   <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-6 py-3 w-32">Cost (ea)</th>
-                  {canEdit && <th className="w-10" />}
+                  {canEdit && <th className="w-16" />}
                 </tr>
               </thead>
               <tbody>
@@ -461,12 +528,20 @@ export default function POEditor({ po, projectId }: { po: PO; projectId: string 
                               </button>
                             </div>
                           ) : (
-                            <button
-                              onClick={() => startEditLine(line)}
-                              className="p-1 rounded hover:bg-[#F0EEE9] text-[#bbb] hover:text-[#666]"
-                            >
-                              <Pencil size={13} />
-                            </button>
+                            <div className="flex items-center gap-0.5">
+                              <button
+                                onClick={() => startEditLine(line)}
+                                className="p-1 rounded hover:bg-[#F0EEE9] text-[#bbb] hover:text-[#666]"
+                              >
+                                <Pencil size={13} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteLine(line.id)}
+                                className="p-1 rounded hover:bg-red-50 text-[#bbb] hover:text-red-500"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
                           )}
                         </td>
                       )}
@@ -475,6 +550,97 @@ export default function POEditor({ po, projectId }: { po: PO; projectId: string 
                 })}
               </tbody>
             </table>
+
+            {/* Add line form */}
+            {showAddLine && (
+              <div className="px-6 py-5 border-t border-[#F0EEE9] bg-[#FAFAF8] space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-widest text-[#888]">Add Item</p>
+
+                {/* Item search */}
+                <div className="relative">
+                  <div className="flex items-center gap-2 border border-[#E5E3DE] rounded-xl px-3 py-2 bg-white focus-within:border-[#111]">
+                    <Search size={13} className="text-[#bbb] flex-shrink-0" />
+                    <input
+                      type="text"
+                      placeholder="Search by item number or description…"
+                      value={selectedItem ? `${selectedItem.itemNumber}${selectedItem.manufacturer ? ` · ${selectedItem.manufacturer}` : ""}` : itemQuery}
+                      onChange={(e) => handleItemSearch(e.target.value)}
+                      onFocus={() => { if (selectedItem) { setSelectedItem(null); setItemQuery(""); setItemResults([]); } }}
+                      className="flex-1 text-sm bg-transparent focus:outline-none"
+                    />
+                  </div>
+                  {itemResults.length > 0 && !selectedItem && (
+                    <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-[#E5E3DE] rounded-xl shadow-lg z-10 overflow-hidden max-h-52 overflow-y-auto">
+                      {itemResults.map((item) => (
+                        <button
+                          key={item.id}
+                          onClick={() => {
+                            setSelectedItem(item);
+                            setItemResults([]);
+                          }}
+                          className="w-full flex items-start gap-3 px-4 py-2.5 hover:bg-[#F7F6F3] text-left"
+                        >
+                          <div>
+                            <p className="text-sm font-medium text-[#111]">{item.itemNumber}</p>
+                            {(item.manufacturer || item.description) && (
+                              <p className="text-xs text-[#999] mt-0.5 truncate">
+                                {[item.manufacturer, item.description].filter(Boolean).join(" · ")}
+                              </p>
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Qty + cost */}
+                <div className="flex items-center gap-3">
+                  <div>
+                    <label className="text-xs text-[#999] block mb-1">Qty</label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={addQty}
+                      onChange={(e) => setAddQty(e.target.value)}
+                      className="w-20 text-sm border border-[#E5E3DE] rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#111]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-[#999] block mb-1">Cost each</label>
+                    <div className="relative">
+                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[#999]">$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={addCost}
+                        onChange={(e) => setAddCost(e.target.value)}
+                        placeholder="0.00"
+                        className="w-28 text-sm border border-[#E5E3DE] rounded-lg pl-6 pr-2 py-1.5 focus:outline-none focus:border-[#111]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    onClick={handleAddLine}
+                    disabled={addingLine || !selectedItem}
+                    className="flex items-center gap-2 bg-[#111] text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-[#333] disabled:opacity-40 transition-colors"
+                  >
+                    <Plus size={13} />
+                    {addingLine ? "Adding…" : "Add to PO"}
+                  </button>
+                  <button
+                    onClick={() => { setShowAddLine(false); setItemQuery(""); setItemResults([]); setSelectedItem(null); setAddQty("1"); setAddCost(""); }}
+                    className="text-sm text-[#999] hover:text-[#111] transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Shipments */}

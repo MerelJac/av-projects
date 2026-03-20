@@ -14,8 +14,10 @@ import {
   ChevronRight,
   GripVertical,
   Pencil,
+  ShoppingCart,
 } from "lucide-react";
 import GenerateQuoteModal from "@/app/components/team/projects/bom/GenerateQuoteModal";
+import CreatePOModal from "@/app/components/team/purchase-orders/CreatePOModal";
 import { BOM, BOMLine } from "@/types/bom";
 import { Item } from "@/types/item";
 import { calcBOMTotals } from "./actions";
@@ -52,6 +54,7 @@ export default function BOMEditor({
     }),
   );
   const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [showCreatePO, setShowCreatePO] = useState(false);
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -323,6 +326,21 @@ export default function BOMEditor({
           onClose={() => setShowGenerateModal(false)}
         />
       )}
+
+      {showCreatePO && (
+        <CreatePOModal
+          projectId={projectId}
+          lines={lines.map((l) => ({
+            id: l.id,
+            description: l.item.description ?? l.item.itemNumber,
+            quantity: l.quantity,
+            price: l.sellEach ?? 0,
+            cost: l.costEach ?? l.item.cost ?? null,
+            item: { id: l.item.id, itemNumber: l.item.itemNumber, manufacturer: l.item.manufacturer ?? null },
+          }))}
+          onClose={() => setShowCreatePO(false)}
+        />
+      )}
   
       {/* Delete Confirm */}
       {showDeleteConfirm && (
@@ -410,6 +428,14 @@ export default function BOMEditor({
               className="text-sm font-semibold px-4 py-2 rounded-xl border border-[#E5E3DE] bg-white hover:bg-[#F7F6F3] disabled:opacity-40 transition-colors"
             >
               {saving ? "Saving…" : saved ? "Saved ✓" : "Save Changes"}
+            </button>
+            <button
+              onClick={() => setShowCreatePO(true)}
+              disabled={lines.length === 0}
+              className="flex items-center gap-2 bg-white border border-[#E5E3DE] text-[#111] text-sm font-semibold px-4 py-2 rounded-xl hover:bg-[#F7F6F3] disabled:opacity-40 transition-colors"
+            >
+              <ShoppingCart size={14} />
+              Create PO
             </button>
             <button
               onClick={() => setShowGenerateModal(true)}

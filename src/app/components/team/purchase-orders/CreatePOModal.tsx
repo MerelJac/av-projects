@@ -22,7 +22,7 @@ export default function CreatePOModal({
   onClose,
 }: {
   projectId: string;
-  quoteId: string;
+  quoteId?: string;
   lines: QuoteLine[];
   onClose: () => void;
 }) {
@@ -36,8 +36,9 @@ export default function CreatePOModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch claimed lines on mount
+  // Fetch claimed lines on mount (only relevant when working from a quote)
   useEffect(() => {
+    if (!quoteId) { setLoadingClaimed(false); return; }
     fetch(`/api/projects/${projectId}/purchase-orders/claimed-lines?quoteId=${quoteId}`)
       .then((r) => r.json())
       .then((ids: string[]) => setClaimedIds(new Set(ids)))
