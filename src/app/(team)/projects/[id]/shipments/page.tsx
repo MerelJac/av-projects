@@ -174,10 +174,10 @@ export default async function ProjectShipmentsPage({
                       <td className="px-3 py-3.5 text-sm text-[#666]">
                         {poHref ? (
                           <Link href={poHref} className="hover:underline">
-                            {s.purchaseOrder?.vendor ?? "—"}
+                            {s.purchaseOrder?.vendor?.name ?? "—"}
                           </Link>
                         ) : (
-                          (s.purchaseOrder?.vendor ?? "—")
+                          (s.purchaseOrder?.vendor?.name ?? "—")
                         )}
                         
                       </td>

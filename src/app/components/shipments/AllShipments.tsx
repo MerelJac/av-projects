@@ -61,10 +61,10 @@ export default async function AllShipments({ shipments }: { shipments: ShipmentW
                       <td className="px-3 py-3.5 text-sm text-[#666]">
                         {poHref ? (
                           <Link href={poHref} className="hover:underline">
-                            {s.purchaseOrder?.vendor ?? "—"}
+                            {s.purchaseOrder?.vendor?.name ?? "—"}
                           </Link>
                         ) : (
-                          s.purchaseOrder?.vendor ?? "—"
+                          s.purchaseOrder?.vendor?.name ?? "—"
                         )}
                       </td>
                       <td className="px-3 py-3.5 text-sm text-[#666]">{s.carrier ?? "—"}</td>

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 export default async function PurchasingPage() {
 
   const pos = await prisma.purchaseOrder.findMany({
-    include: { project: true },
+    include: { project: true, vendor: { select: { name: true } } },
   });
 
   return (
@@ -27,7 +27,7 @@ export default async function PurchasingPage() {
           {pos.map((po) => (
             <tr key={po.id} className="border-t">
 
-              <td className="p-3">{po.vendor}</td>
+              <td className="p-3">{po.vendor?.name ?? "—"}</td>
 
               <td className="p-3">
                 {po.project?.name}
