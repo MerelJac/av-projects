@@ -44,7 +44,7 @@ type Shipment = {
 type PO = {
   id: string;
   vendor: string;
-  status: "DRAFT" | "SENT" | "PARTIALLY_RECEIVED" | "RECEIVED";
+  status: "DRAFT" | "SENT" | "PARTIALLY_RECEIVED" | "RECEIVED" | "CANCELLED";
   notes: string | null;
   createdAt: string;
   lines: POLine[];
@@ -80,6 +80,11 @@ const PO_STATUS: Record<
   },
   RECEIVED: {
     label: "Received",
+    color: "text-green-600 bg-green-50",
+    icon: <CheckCircle2 size={11} />,
+  },
+  CANCELLED: {
+    label: "cancelled",
     color: "text-green-600 bg-green-50",
     icon: <CheckCircle2 size={11} />,
   },

@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Truck, CheckCircle2, AlertCircle, Plus, Clock } from "lucide-react";
+import { ArrowLeft, Truck, CheckCircle2, AlertCircle, Plus, Clock, Send, Pencil } from "lucide-react";
 
 type POLine = {
   id: string;
@@ -9,6 +9,7 @@ type POLine = {
   quantity: number;
   receivedQuantity: number;
   cost: number;
+  costOverridden: boolean;
   item: {
     id: string;
     itemNumber: string;
@@ -38,7 +39,10 @@ type Shipment = {
 
 type PO = {
   id: string;
-  vendor: string;
+  poNumber: string | null;
+  revision: number;
+  sentAt: Date | null;
+  vendor: { id: string; name: string } | null;
   status: string;
   notes: string | null;
   createdAt: Date;
@@ -48,16 +52,20 @@ type PO = {
   quote: { id: string } | null;
 };
 
-const STATUS_OPTIONS = ["DRAFT", "SENT", "PARTIALLY_RECEIVED", "RECEIVED"] as const;
+const STATUS_OPTIONS = ["DRAFT", "SENT", "PARTIALLY_RECEIVED", "RECEIVED", "CANCELLED"] as const;
 const STATUS_LABELS: Record<string, string> = {
-  DRAFT: "Draft", SENT: "Sent",
-  PARTIALLY_RECEIVED: "Partially Received", RECEIVED: "Received",
+  DRAFT: "Draft",
+  SENT: "Sent",
+  PARTIALLY_RECEIVED: "Partially Received",
+  RECEIVED: "Received",
+  CANCELLED: "Cancelled",
 };
 const STATUS_COLORS: Record<string, string> = {
   DRAFT: "bg-gray-100 text-gray-600",
   SENT: "bg-blue-100 text-blue-700",
   PARTIALLY_RECEIVED: "bg-amber-100 text-amber-700",
   RECEIVED: "bg-green-100 text-green-700",
+  CANCELLED: "bg-red-100 text-red-600",
 };
 
 export default function POEditor({ po, projectId }: { po: PO; projectId: string }) {
@@ -66,11 +74,22 @@ export default function POEditor({ po, projectId }: { po: PO; projectId: string 
   const [lines, setLines] = useState<POLine[]>(po.lines);
   const [shipments, setShipments] = useState<Shipment[]>(po.shipments);
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+
+  // Shipment form
   const [showShipmentForm, setShowShipmentForm] = useState(false);
   const [tracking, setTracking] = useState("");
   const [carrier, setCarrier] = useState("");
   const [shipmentLineIds, setShipmentLineIds] = useState<Set<string>>(new Set());
   const [addingShipment, setAddingShipment] = useState(false);
+
+  // Inline line editing
+  const [editingLineId, setEditingLineId] = useState<string | null>(null);
+  const [editQty, setEditQty] = useState("");
+  const [editCost, setEditCost] = useState("");
+
+  // Resend state
+  const [resending, setResending] = useState(false);
+  const [revision, setRevision] = useState(po.revision);
 
   const showToast = (type: "success" | "error", msg: string) => {
     setToast({ type, msg });
@@ -91,12 +110,10 @@ export default function POEditor({ po, projectId }: { po: PO; projectId: string 
       );
       if (!res.ok) throw new Error();
 
-      // update shipment state
       setShipments((prev) =>
-        prev.map((s) => s.id === shipmentId ? { ...s, receivedAt: new Date() } : s),
+        prev.map((s) => (s.id === shipmentId ? { ...s, receivedAt: new Date() } : s)),
       );
 
-      // auto-update receivedQuantity on matching PO lines
       const updatedLineIds = new Set(
         shipment.lines.map((sl) => sl.poLineId).filter(Boolean),
       );
@@ -105,11 +122,7 @@ export default function POEditor({ po, projectId }: { po: PO; projectId: string 
           prev.map((l) => {
             if (!updatedLineIds.has(l.id)) return l;
             const shipLine = shipment.lines.find((sl) => sl.poLineId === l.id);
-            const newQty = Math.min(
-              l.quantity,
-              l.receivedQuantity + (shipLine?.quantity ?? 0),
-            );
-            // fire-and-forget PATCH for each line
+            const newQty = Math.min(l.quantity, l.receivedQuantity + (shipLine?.quantity ?? 0));
             fetch(`/api/projects/${projectId}/purchase-orders/${po.id}/lines/${l.id}`, {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
@@ -156,6 +169,54 @@ export default function POEditor({ po, projectId }: { po: PO; projectId: string 
     }
   }
 
+  function startEditLine(line: POLine) {
+    setEditingLineId(line.id);
+    setEditQty(String(line.quantity));
+    setEditCost(String(line.cost));
+  }
+
+  async function handleSaveLineEdit(lineId: string) {
+    const qty = parseInt(editQty);
+    const cost = parseFloat(editCost);
+    if (isNaN(qty) || isNaN(cost)) return;
+
+    setLines((prev) =>
+      prev.map((l) => (l.id === lineId ? { ...l, quantity: qty, cost, costOverridden: true } : l)),
+    );
+    setEditingLineId(null);
+
+    try {
+      await fetch(`/api/projects/${projectId}/purchase-orders/${po.id}/lines/${lineId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quantity: qty, cost }),
+      });
+    } catch {
+      showToast("error", "Failed to update line");
+    }
+  }
+
+  async function handleResend() {
+    if (!confirm(`Resend this PO as revision ${revision + 1}? This will increment the revision number.`)) return;
+    setResending(true);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/purchase-orders/${po.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resend: true }),
+      });
+      if (!res.ok) throw new Error();
+      setRevision((r) => r + 1);
+      setStatus("SENT");
+      showToast("success", `PO resent as revision ${revision + 1}`);
+      router.refresh();
+    } catch {
+      showToast("error", "Failed to resend PO");
+    } finally {
+      setResending(false);
+    }
+  }
+
   async function handleAddShipment() {
     if (!tracking.trim()) { showToast("error", "Tracking number required"); return; }
     if (shipmentLineIds.size === 0) { showToast("error", "Select at least one line"); return; }
@@ -192,8 +253,10 @@ export default function POEditor({ po, projectId }: { po: PO; projectId: string 
     }
   }
 
+  const totalCost = lines.reduce((s, l) => s + l.cost * l.quantity, 0);
   const totalLines = lines.reduce((s, l) => s + l.quantity, 0);
   const totalReceived = lines.reduce((s, l) => s + l.receivedQuantity, 0);
+  const canEdit = status === "DRAFT";
 
   return (
     <div className="bg-[#F7F6F3]">
@@ -231,61 +294,114 @@ export default function POEditor({ po, projectId }: { po: PO; projectId: string 
                 </>
               )}
             </div>
-            <h1 className="text-2xl font-bold text-[#111] tracking-tight">PO — {po.vendor}</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold text-[#111] tracking-tight">
+                {po.poNumber ?? `PO — ${po.vendor?.name ?? "Unknown Vendor"}`}
+              </h1>
+              {revision > 1 && (
+                <span className="text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                  Rev {revision}
+                </span>
+              )}
+            </div>
             <p className="text-sm text-[#888] mt-1">
-              {new Date(po.createdAt).toLocaleDateString()} · {totalReceived}/{totalLines} items received
+              {po.vendor?.name ?? "—"} · {new Date(po.createdAt).toLocaleDateString()}
+              {po.sentAt && ` · Sent ${new Date(po.sentAt).toLocaleDateString()}`}
+              {" · "}{totalReceived}/{totalLines} items received
+            </p>
+            <p className="text-xs text-[#aaa] mt-0.5 font-medium">
+              Total cost: ${totalCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </p>
           </div>
-          <div className="flex items-center gap-2 flex-wrap justify-end">
-            {STATUS_OPTIONS.map((s) => (
+
+          <div className="flex flex-col items-end gap-3">
+            {/* Status buttons */}
+            <div className="flex items-center gap-2 flex-wrap justify-end">
+              {STATUS_OPTIONS.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => handleStatusChange(s)}
+                  className={`text-xs font-semibold px-3 py-1.5 rounded-xl border transition-colors ${
+                    status === s ? `${STATUS_COLORS[s]} border-current` : "border-[#E5E3DE] text-[#999] hover:bg-[#F7F6F3]"
+                  }`}
+                >
+                  {STATUS_LABELS[s]}
+                </button>
+              ))}
+            </div>
+
+            {/* Resend button */}
+            {(status === "SENT" || status === "DRAFT") && (
               <button
-                key={s}
-                onClick={() => handleStatusChange(s)}
-                className={`text-xs font-semibold px-3 py-1.5 rounded-xl border transition-colors ${
-                  status === s ? `${STATUS_COLORS[s]} border-current` : "border-[#E5E3DE] text-[#999] hover:bg-[#F7F6F3]"
-                }`}
+                onClick={handleResend}
+                disabled={resending}
+                className="flex items-center gap-2 text-xs font-semibold bg-[#111] text-white px-3 py-1.5 rounded-xl hover:bg-[#333] disabled:opacity-40 transition-colors"
               >
-                {STATUS_LABELS[s]}
+                <Send size={12} />
+                {resending ? "Sending…" : status === "DRAFT" ? "Send PO" : `Resend (Rev ${revision + 1})`}
               </button>
-            ))}
+            )}
           </div>
         </div>
 
         <div className="space-y-6">
           {/* Lines */}
           <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-[#F0EEE9] flex items-center gap-2.5">
-              <h3 className="font-semibold text-sm text-[#111]">Line Items</h3>
-              <span className="text-xs text-[#bbb]">{lines.length}</span>
+            <div className="px-6 py-4 border-b border-[#F0EEE9] flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <h3 className="font-semibold text-sm text-[#111]">Line Items</h3>
+                <span className="text-xs text-[#bbb]">{lines.length}</span>
+              </div>
+              {canEdit && (
+                <p className="text-xs text-[#999]">Click the edit icon to update cost or quantity</p>
+              )}
             </div>
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[#F0EEE9] bg-[#FAFAF8]">
                   <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-6 py-3">Item</th>
-                  <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-4 py-3 w-24">Ordered</th>
+                  <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-4 py-3 w-28">Ordered</th>
                   <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-4 py-3 w-28">Received</th>
-                  <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-6 py-3 w-24">Cost</th>
+                  <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-6 py-3 w-32">Cost (ea)</th>
+                  {canEdit && <th className="w-10" />}
                 </tr>
               </thead>
               <tbody>
                 {lines.map((line) => {
                   const fullyReceived = line.receivedQuantity >= line.quantity;
+                  const isEditing = editingLineId === line.id;
                   return (
                     <tr key={line.id} className="border-b border-[#F7F6F3] last:border-0">
                       <td className="px-6 py-3">
                         {line.item ? (
                           <>
                             <p className="text-sm font-medium text-[#111]">
-                              {line.item.manufacturer && <span className="text-[#999] mr-1">{line.item.manufacturer}</span>}
+                              {line.item.manufacturer && (
+                                <span className="text-[#999] mr-1">{line.item.manufacturer}</span>
+                              )}
                               {line.item.itemNumber}
                             </p>
-                            {line.item.description && <p className="text-xs text-[#999] mt-0.5">{line.item.description}</p>}
+                            {line.item.description && (
+                              <p className="text-xs text-[#999] mt-0.5">{line.item.description}</p>
+                            )}
                           </>
                         ) : (
                           <p className="text-sm text-[#666]">—</p>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right text-sm text-[#666]">{line.quantity}</td>
+                      <td className="px-4 py-3 text-right">
+                        {isEditing ? (
+                          <input
+                            type="number"
+                            min={1}
+                            value={editQty}
+                            onChange={(e) => setEditQty(e.target.value)}
+                            className="w-16 text-right text-xs border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111]"
+                          />
+                        ) : (
+                          <span className="text-sm text-[#666]">{line.quantity}</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-2">
                           {fullyReceived && <CheckCircle2 size={13} className="text-green-500" />}
@@ -301,9 +417,59 @@ export default function POEditor({ po, projectId }: { po: PO; projectId: string 
                           />
                         </div>
                       </td>
-                      <td className="px-6 py-3 text-right text-sm text-[#666]">
-                        ${(line.cost * line.quantity).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      <td className="px-6 py-3 text-right">
+                        {isEditing ? (
+                          <div className="relative inline-flex">
+                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-[#999]">$</span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={editCost}
+                              onChange={(e) => setEditCost(e.target.value)}
+                              className="w-24 text-right text-xs border border-[#E5E3DE] rounded-lg pl-5 pr-2 py-1 focus:outline-none focus:border-[#111]"
+                            />
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-end gap-1">
+                            {line.costOverridden && (
+                              <span title="Cost manually overridden" className="text-[9px] font-semibold text-amber-600 bg-amber-50 px-1 py-0.5 rounded">
+                                OVR
+                              </span>
+                            )}
+                            <span className="text-sm text-[#666]">
+                              ${line.cost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            </span>
+                          </div>
+                        )}
                       </td>
+                      {canEdit && (
+                        <td className="px-2 py-3">
+                          {isEditing ? (
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => handleSaveLineEdit(line.id)}
+                                className="p-1 rounded hover:bg-green-50 text-green-600"
+                              >
+                                <CheckCircle2 size={13} />
+                              </button>
+                              <button
+                                onClick={() => setEditingLineId(null)}
+                                className="p-1 rounded hover:bg-[#F0EEE9] text-[#999]"
+                              >
+                                <AlertCircle size={13} />
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => startEditLine(line)}
+                              className="p-1 rounded hover:bg-[#F0EEE9] text-[#bbb] hover:text-[#666]"
+                            >
+                              <Pencil size={13} />
+                            </button>
+                          )}
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
@@ -328,7 +494,6 @@ export default function POEditor({ po, projectId }: { po: PO; projectId: string 
               </button>
             </div>
 
-            {/* Add shipment form */}
             {showShipmentForm && (
               <div className="px-6 py-5 border-b border-[#F0EEE9] bg-[#FAFAF8] space-y-4">
                 <div className="grid grid-cols-2 gap-3">
@@ -412,7 +577,6 @@ export default function POEditor({ po, projectId }: { po: PO; projectId: string 
               <div className="divide-y divide-[#F0EEE9]">
                 {shipments.map((s) => (
                   <div key={s.id} className="px-6 py-4">
-                    {/* Shipment header row */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2.5">
                         <p className="text-sm font-mono font-semibold text-[#111]">{s.tracking}</p>
@@ -439,7 +603,6 @@ export default function POEditor({ po, projectId }: { po: PO; projectId: string 
                       )}
                     </div>
 
-                    {/* Items in this shipment */}
                     {s.lines.length > 0 && (
                       <div className="mt-3 space-y-1.5 pl-1">
                         {s.lines.map((sl) => {

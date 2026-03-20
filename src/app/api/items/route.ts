@@ -2,9 +2,34 @@ import { prisma } from "@/lib/prisma";
 import { ItemType } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const q = searchParams.get("q")?.trim();
+  const limit = parseInt(searchParams.get("limit") ?? "200");
+
   const items = await prisma.item.findMany({
+    where: q
+      ? {
+          OR: [
+            { itemNumber: { contains: q, mode: "insensitive" } },
+            { manufacturer: { contains: q, mode: "insensitive" } },
+            { description: { contains: q, mode: "insensitive" } },
+          ],
+        }
+      : undefined,
     orderBy: { itemNumber: "asc" },
+    take: limit,
+    select: {
+      id: true,
+      itemNumber: true,
+      manufacturer: true,
+      description: true,
+      cost: true,
+      price: true,
+      type: true,
+      active: true,
+      preferredVendorId: true,
+    },
   });
   return NextResponse.json(items);
 }

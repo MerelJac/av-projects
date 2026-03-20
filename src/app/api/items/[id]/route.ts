@@ -29,6 +29,7 @@ export async function PUT(
   const {
     itemNumber, manufacturer, description, cost, price, lastSoldPrice,
     category, type, active, approved, eolDate,
+    preferredVendorId,
     changedBy,
   } = body;
 
@@ -64,7 +65,8 @@ export async function PUT(
     ...(active        !== undefined && { active }),
     ...(approved      !== undefined && { approved }),
     ...(description   !== undefined && { description: description?.trim() || null }),
-    ...(eolDate       !== undefined && { eolDate: eolDate ? new Date(eolDate) : null }),
+    ...(eolDate            !== undefined && { eolDate: eolDate ? new Date(eolDate) : null }),
+    ...(preferredVendorId  !== undefined && { preferredVendorId: preferredVendorId || null }),
   };
 
   const [item] = await prisma.$transaction([

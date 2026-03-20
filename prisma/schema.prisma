@@ -145,6 +145,9 @@ model Item {
   type     ItemType
   unit     String?
 
+  preferredVendorId String?
+  preferredVendor   Vendor? @relation("ItemPreferredVendor", fields: [preferredVendorId], references: [id])
+
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   customerPrices     CustomerItemPrice[]
@@ -158,6 +161,7 @@ model Item {
   salesOrderLines    SalesOrderLine[]
   scopes             ProjectScope[]
   shipmentLines      ShipmentLine[]
+  vendorPrices       VendorItemPrice[]
 }
 
 enum ItemType {
@@ -388,6 +392,7 @@ enum NoteDocumentType {
   BILL_OF_MATERIALS
   CHANGE_ORDER
   SALES_ORDER
+  PURCHASE_ORDER
 }
 
 model Note {
@@ -410,6 +415,9 @@ enum SalesOrderStatus {
 
 model PurchaseOrder {
   id            String              @id @default(uuid())
+  poNumber      String?
+  revision      Int                 @default(1)
+  sentAt        DateTime?
   vendorId      String?
   vendor        Vendor?             @relation(fields: [vendorId], references: [id])
   notes         String?
@@ -438,6 +446,7 @@ model PurchaseOrderLine {
   quantity         Int
   receivedQuantity Int             @default(0)
   cost             Float
+  costOverridden   Boolean         @default(false)
   shipmentLines    ShipmentLine[]
 }
 
@@ -464,7 +473,26 @@ model Vendor {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  purchaseOrders PurchaseOrder[]
+  purchaseOrders    PurchaseOrder[]
+  itemPrices        VendorItemPrice[]
+  preferredForItems Item[]            @relation("ItemPreferredVendor")
+}
+
+model VendorItemPrice {
+  id       String @id @default(uuid())
+  vendorId String
+  vendor   Vendor @relation(fields: [vendorId], references: [id])
+  itemId   String
+  item     Item   @relation(fields: [itemId], references: [id])
+
+  cost         Float
+  leadTimeDays Int?
+  notes        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([vendorId, itemId])
 }
 
 model SalesOrder {
@@ -524,4 +552,5 @@ enum POStatus {
   SENT
   PARTIALLY_RECEIVED
   RECEIVED
+  CANCELLED
 }

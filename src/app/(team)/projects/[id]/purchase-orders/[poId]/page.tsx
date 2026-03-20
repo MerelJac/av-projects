@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import POEditor from "./POEditor";
+
 export default async function POPage({
   params,
 }: {
@@ -11,6 +12,7 @@ export default async function POPage({
   const po = await prisma.purchaseOrder.findUnique({
     where: { id: poId },
     include: {
+      vendor: { select: { id: true, name: true } },
       project: { include: { customer: true } },
       lines: { include: { item: true } },
       quote: { select: { id: true } },

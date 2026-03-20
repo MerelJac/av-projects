@@ -5,8 +5,9 @@ import { Clock, Send, AlertCircle, CheckCircle2, Package } from "lucide-react";
 const STATUS_CONFIG = {
   DRAFT: { label: "Draft", color: "text-gray-500 bg-gray-100", icon: <Clock size={11} /> },
   SENT: { label: "Sent", color: "text-blue-600 bg-blue-50", icon: <Send size={11} /> },
-  PARTIALLY_RECEIVED: { label: "Partial", color: "text-amber-600 bg-amber-50", icon: <AlertCircle size={11} /> },
+  PARTIALLY_RECEIVED: { label: "Partial", color: "text-amber-6PurchaseOrdersPage00 bg-amber-50", icon: <AlertCircle size={11} /> },
   RECEIVED: { label: "Received", color: "text-green-600 bg-green-50", icon: <CheckCircle2 size={11} /> },
+    CANCELLED: { label: "Cancelled", color: "text-red-600 bg-red-50", icon: <AlertCircle size={11} /> },
 };
 
 export default async function PurchaseOrdersPage() {
@@ -14,6 +15,7 @@ export default async function PurchaseOrdersPage() {
     include: {
       project: true,
       salesOrder: { include: { customer: true } },
+      vendor: { select: { id: true, name: true } },
       lines: { include: { item: true } },
       shipments: true,
     },
@@ -25,6 +27,7 @@ export default async function PurchaseOrdersPage() {
     SENT: pos.filter((p) => p.status === "SENT").length,
     PARTIALLY_RECEIVED: pos.filter((p) => p.status === "PARTIALLY_RECEIVED").length,
     RECEIVED: pos.filter((p) => p.status === "RECEIVED").length,
+    CANCELLED: pos.filter((p) => p.status === "CANCELLED").length,
   };
 
   return (
@@ -99,7 +102,7 @@ export default async function PurchaseOrdersPage() {
                           {po.createdAt.toLocaleDateString()}
                         </p>
                       </td>
-                      <td className="px-3 py-3.5 text-sm text-[#111] font-semibold">{po.vendor}</td>
+                      <td className="px-3 py-3.5 text-sm text-[#111] font-semibold">{po.vendor?.name ?? "—"}</td>
                       <td className="px-3 py-3.5 text-sm text-[#666]">
                         {po.salesOrder?.customer.name ?? "—"}
                       </td>
