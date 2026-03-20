@@ -410,7 +410,8 @@ enum SalesOrderStatus {
 
 model PurchaseOrder {
   id            String              @id @default(uuid())
-  vendor        String
+  vendorId      String?
+  vendor        Vendor?             @relation(fields: [vendorId], references: [id])
   notes         String?
   projectId     String?
   project       Project?            @relation(fields: [projectId], references: [id])
@@ -451,6 +452,19 @@ model SalesOrderLine {
   itemId             String?
   item               Item?               @relation(fields: [itemId], references: [id])
   purchaseOrderLines PurchaseOrderLine[]
+}
+
+model Vendor {
+  id        String   @id @default(uuid())
+  name      String
+  email     String?
+  phone     String?
+  notes     String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  purchaseOrders PurchaseOrder[]
 }
 
 model SalesOrder {

@@ -14,6 +14,7 @@ import {
   Receipt,
   ShoppingBag,
   Truck,
+  UsersIcon,
 } from "lucide-react";
 
 import {
@@ -33,11 +34,12 @@ const navItems = [
 
   { href: "/quotes", label: "Quotes", icon: FileText },
   { href: "/purchase-orders", label: "Purchase Orders", icon: CreditCard },
-    { href: "/sales-orders", label: "Sales Orders", icon: ShoppingBag },
+  { href: "/sales-orders", label: "Sales Orders", icon: ShoppingBag },
   { href: "/shipments", label: "Shipments", icon: Truck },
   { href: "/time", label: "Time Tracking", icon: Clock },
   { href: "/invoices", label: "Invoices", icon: CreditCard },
-    { href: "/subscriptions", label: "Subscriptions", icon: Receipt },
+  { href: "/subscriptions", label: "Subscriptions", icon: Receipt },
+  { href: "/vendors", label: "Vendors", icon: UsersIcon },
   { href: "/reports", label: "Reports", icon: BarChart },
 ];
 
