@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 
 export type POWithDetails = Prisma.PurchaseOrderGetPayload<{
   include: {
+    vendor: true;
     lines: {
       include: {
         item: true;

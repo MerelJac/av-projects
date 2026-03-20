@@ -49,6 +49,7 @@ export default async function SalesOrderPage({
     prisma.purchaseOrder.findMany({
       where: { salesOrderId },
       include: {
+        vendor: true,  
         lines: { include: { item: true, salesOrderLine: true } },
         shipments: { include: { item: true } },
       },

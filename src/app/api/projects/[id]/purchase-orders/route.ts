@@ -6,15 +6,21 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const { vendor, quoteId, lines } = await req.json();
+  const { vendorId, quoteId, lines } = await req.json();
 
-  if (!vendor || !lines?.length) {
+  if (!vendorId || !lines?.length) {
     return NextResponse.json({ error: "Vendor and lines required" }, { status: 400 });
+  }
+
+  // Verify vendor exists
+  const vendor = await prisma.vendor.findUnique({ where: { id: vendorId } });
+  if (!vendor) {
+    return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
   }
 
   const po = await prisma.purchaseOrder.create({
     data: {
-      vendor,
+      vendorId,
       projectId: id,
       quoteId: quoteId ?? null,
       status: "DRAFT",

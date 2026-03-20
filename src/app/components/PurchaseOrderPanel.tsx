@@ -231,7 +231,7 @@ function PORow({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold text-[#111]">
-              {po.vendor}
+              {po.vendor?.name ?? "—"}
             </span>
             <span
               className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${cfg.color}`}
@@ -252,7 +252,7 @@ function PORow({
           className="text-sm font-semibold text-[#111] hover:underline"
           onClick={(e) => e.stopPropagation()}
         >
-          {po.vendor}
+          {po.vendor?.name ?? "—"}
         </Link>
         <div
           className="flex items-center gap-2"
