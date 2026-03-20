@@ -12,7 +12,24 @@ export default async function ItemEditPage({
 }) {
   const { id } = await params;
 
-  const item = await prisma.item.findUnique({ where: { id } });
+  const [item, vendors, categories, units] = await Promise.all([
+    prisma.item.findUnique({ where: { id } }),
+    prisma.vendor.findMany({
+      where: { active: true },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+    prisma.itemDropdownOption.findMany({
+      where: { field: "category" },
+      orderBy: { value: "asc" },
+      select: { value: true },
+    }),
+    prisma.itemDropdownOption.findMany({
+      where: { field: "unit" },
+      orderBy: { value: "asc" },
+      select: { value: true },
+    }),
+  ]);
   if (!item) return notFound();
 
   return (
@@ -31,21 +48,27 @@ export default async function ItemEditPage({
           <p className="text-sm text-[#999] mt-1 font-mono">{item.itemNumber}</p>
         </div>
 
-        <ItemEditForm item={{
-          id: item.id,
-          itemNumber: item.itemNumber,
-          manufacturer: item.manufacturer,
-          cost: item.cost,
-          price: item.price,
-          lastSoldPrice: item.lastSoldPrice,
-          category: item.category,
-          type: item.type,
-          active: item.active,
-          approved: item.approved,
-          eolDate: item.eolDate ? item.eolDate.toISOString().split("T")[0] : null,
-          description: item.description,
-          unit: item.unit,
-        }} />
+        <ItemEditForm
+          categories={categories.map((c) => c.value)}
+          units={units.map((u) => u.value)}
+          item={{
+            id: item.id,
+            itemNumber: item.itemNumber,
+            manufacturer: item.manufacturer,
+            cost: item.cost,
+            price: item.price,
+            lastSoldPrice: item.lastSoldPrice,
+            category: item.category,
+            type: item.type,
+            active: item.active,
+            approved: item.approved,
+            eolDate: item.eolDate ? item.eolDate.toISOString().split("T")[0] : null,
+            description: item.description,
+            unit: item.unit,
+            preferredVendorId: item.preferredVendorId,
+          }}
+          vendors={vendors}
+        />
       </div>
     </div>
   );

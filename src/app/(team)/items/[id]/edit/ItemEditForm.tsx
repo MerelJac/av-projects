@@ -20,9 +20,22 @@ type Item = {
   eolDate: string | null;
   description: string | null;
   unit: string | null;
+  preferredVendorId: string | null;
 };
 
-export default function ItemEditForm({ item }: { item: Item }) {
+type Vendor = { id: string; name: string };
+
+export default function ItemEditForm({
+  item,
+  vendors,
+  categories,
+  units,
+}: {
+  item: Item;
+  vendors: Vendor[];
+  categories: string[];
+  units: string[];
+}) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
@@ -40,6 +53,7 @@ export default function ItemEditForm({ item }: { item: Item }) {
     eolDate: item.eolDate ?? "",
     description: item.description ?? "",
     unit: item.unit ?? "",
+    preferredVendorId: item.preferredVendorId ?? "",
   });
 
   function set(key: keyof typeof form, value: string | boolean) {
@@ -69,7 +83,8 @@ export default function ItemEditForm({ item }: { item: Item }) {
           approved: form.approved,
           eolDate: form.eolDate || null,
           description: form.description || null,
-          unit: form.unit || null,  
+          unit: form.unit || null,
+          preferredVendorId: form.preferredVendorId || null,
         }),
       });
       if (!res.ok) throw new Error();
@@ -132,23 +147,31 @@ export default function ItemEditForm({ item }: { item: Item }) {
 
           <div className="space-y-1.5">
             <label className="text-xs font-semibold uppercase tracking-widest text-[#999]">Unit</label>
-            <input
+            <select
               value={form.unit}
               onChange={(e) => set("unit", e.target.value)}
-              placeholder="e.g. pcs, kg, m"
-              className="w-full text-sm text-[#111] border border-[#E5E3DE] rounded-xl px-3 py-2.5 placeholder:text-[#ccc] focus:outline-none focus:border-[#111] transition-colors"
-            />
+              className="w-full text-sm text-[#111] border border-[#E5E3DE] rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#111] transition-colors bg-white"
+            >
+              <option value="">— None —</option>
+              {units.map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="text-xs font-semibold uppercase tracking-widest text-[#999]">Category</label>
-              <input
+              <select
                 value={form.category}
                 onChange={(e) => set("category", e.target.value)}
-                placeholder="e.g. Display, Audio"
-                className="w-full text-sm text-[#111] border border-[#E5E3DE] rounded-xl px-3 py-2.5 placeholder:text-[#ccc] focus:outline-none focus:border-[#111] transition-colors"
-              />
+                className="w-full text-sm text-[#111] border border-[#E5E3DE] rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#111] transition-colors bg-white"
+              >
+                <option value="">— None —</option>
+                {categories.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-semibold uppercase tracking-widest text-[#999]">Type</label>
@@ -163,6 +186,20 @@ export default function ItemEditForm({ item }: { item: Item }) {
                 <option value="SERVICE">Service</option>
               </select>
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-widest text-[#999]">Default Vendor</label>
+            <select
+              value={form.preferredVendorId}
+              onChange={(e) => set("preferredVendorId", e.target.value)}
+              className="w-full text-sm text-[#111] border border-[#E5E3DE] rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#111] transition-colors bg-white"
+            >
+              <option value="">— None —</option>
+              {vendors.map((v) => (
+                <option key={v.id} value={v.id}>{v.name}</option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -195,12 +232,16 @@ export default function ItemEditForm({ item }: { item: Item }) {
           </div>
                     <div className="space-y-1.5">
             <label className="text-xs font-semibold uppercase tracking-widest text-[#999]">Unit</label>
-            <input
+            <select
               value={form.unit}
               onChange={(e) => set("unit", e.target.value)}
-              placeholder="e.g. pcs, kg, m"
-              className="w-full text-sm text-[#111] border border-[#E5E3DE] rounded-xl px-3 py-2.5 placeholder:text-[#ccc] focus:outline-none focus:border-[#111] transition-colors"
-            />
+              className="w-full text-sm text-[#111] border border-[#E5E3DE] rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#111] transition-colors bg-white"
+            >
+              <option value="">— None —</option>
+              {units.map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
           </div>
         </div>
 

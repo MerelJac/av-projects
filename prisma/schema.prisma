@@ -557,6 +557,15 @@ model VendorItemPrice {
   @@unique([vendorId, itemId])
 }
 
+model ItemDropdownOption {
+  id        String   @id @default(uuid())
+  field     String // "category" | "unit"
+  value     String
+  createdAt DateTime @default(now())
+
+  @@unique([field, value])
+}
+
 model SalesOrder {
   id             String           @id @default(cuid())
   createdAt      DateTime         @default(now())

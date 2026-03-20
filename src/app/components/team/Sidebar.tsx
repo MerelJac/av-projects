@@ -12,6 +12,7 @@ import {
   FolderKanban,
   LucideIcon,
   Receipt,
+  Settings,
   ShoppingBag,
   Truck,
   UsersIcon,
@@ -31,16 +32,16 @@ const navItems = [
   { href: "/projects", label: "Projects", icon: FolderKanban },
   { href: "/items", label: "Items", icon: Boxes },
   { href: "/customers", label: "Customers", icon: Users },
-
+  { href: "/vendors", label: "Vendors", icon: UsersIcon },
   { href: "/quotes", label: "Quotes", icon: FileText },
   { href: "/purchase-orders", label: "Purchase Orders", icon: CreditCard },
+  { href: "/invoices", label: "Invoices", icon: CreditCard },
   { href: "/sales-orders", label: "Sales Orders", icon: ShoppingBag },
   { href: "/shipments", label: "Shipments", icon: Truck },
   { href: "/time", label: "Time Tracking", icon: Clock },
-  { href: "/invoices", label: "Invoices", icon: CreditCard },
   { href: "/subscriptions", label: "Subscriptions", icon: Receipt },
-  { href: "/vendors", label: "Vendors", icon: UsersIcon },
   { href: "/reports", label: "Reports", icon: BarChart },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 const adminNavLinks = [
