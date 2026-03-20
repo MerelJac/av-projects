@@ -24,6 +24,8 @@ model User {
   passwordResetTokens PasswordResetToken[]
   timeEntries         TimeEntry[]
   notes               Note[]
+  defaultBuyerVendors Vendor[]             @relation("VendorDefaultBuyer")
+  purchaseOrdersBuyer PurchaseOrder[]      @relation("POBuyer")
 }
 
 model Profile {
@@ -414,25 +416,33 @@ enum SalesOrderStatus {
 }
 
 model PurchaseOrder {
-  id            String              @id @default(uuid())
-  poNumber      String?
-  revision      Int                 @default(1)
-  sentAt        DateTime?
-  vendorId      String?
-  vendor        Vendor?             @relation(fields: [vendorId], references: [id])
-  notes         String?
-  projectId     String?
-  project       Project?            @relation(fields: [projectId], references: [id])
-  quoteId       String?
-  quote         Quote?              @relation(fields: [quoteId], references: [id])
-  salesOrderId  String?
-  salesOrder    SalesOrder?         @relation(fields: [salesOrderId], references: [id])
-  status        POStatus            @default(DRAFT)
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
-  lines         PurchaseOrderLine[]
-  shipments     Shipment[]
-  shipmentLines ShipmentLine[]
+  id             String              @id @default(uuid())
+  poNumber       String?
+  revision       Int                 @default(1)
+  sentAt         DateTime?
+  vendorId       String?
+  vendor         Vendor?             @relation(fields: [vendorId], references: [id])
+  notes          String?
+  projectId      String?
+  project        Project?            @relation(fields: [projectId], references: [id])
+  quoteId        String?
+  quote          Quote?              @relation(fields: [quoteId], references: [id])
+  salesOrderId   String?
+  salesOrder     SalesOrder?         @relation(fields: [salesOrderId], references: [id])
+  status         POStatus            @default(DRAFT)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  // Snapshot fields — copied from vendor defaults at creation, editable per PO
+  shipToAddress  String?
+  billToAddress  String?
+  shippingMethod String?
+  paymentTerms   String?
+  creditLimit    Decimal?            @db.Decimal(10, 2)
+  buyerId        String?
+  buyer          User?               @relation("POBuyer", fields: [buyerId], references: [id])
+  lines          PurchaseOrderLine[]
+  shipments      Shipment[]
+  shipmentLines  ShipmentLine[]
 }
 
 model PurchaseOrderLine {
@@ -464,14 +474,22 @@ model SalesOrderLine {
 }
 
 model Vendor {
-  id        String   @id @default(uuid())
-  name      String
-  email     String?
-  phone     String?
-  notes     String?
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(uuid())
+  name           String
+  email          String?
+  phone          String?
+  notes          String?
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  // Default fields — copied to PO at creation, editable per PO
+  shipToAddress  String?
+  billToAddress  String?
+  shippingMethod String?
+  paymentTerms   String?
+  creditLimit    Decimal? @db.Decimal(10, 2)
+  defaultBuyerId String?
+  defaultBuyer   User?    @relation("VendorDefaultBuyer", fields: [defaultBuyerId], references: [id])
 
   purchaseOrders    PurchaseOrder[]
   itemPrices        VendorItemPrice[]

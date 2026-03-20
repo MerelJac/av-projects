@@ -12,7 +12,18 @@ export async function POST(
     return NextResponse.json({ error: "Vendor and lines required" }, { status: 400 });
   }
 
-  const vendor = await prisma.vendor.findUnique({ where: { id: vendorId } });
+  const vendor = await prisma.vendor.findUnique({
+    where: { id: vendorId },
+    select: {
+      id: true,
+      shipToAddress: true,
+      billToAddress: true,
+      shippingMethod: true,
+      paymentTerms: true,
+      creditLimit: true,
+      defaultBuyerId: true,
+    },
+  });
   if (!vendor) {
     return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
   }
@@ -37,6 +48,12 @@ export async function POST(
         projectId: id,
         quoteId: quoteId ?? null,
         status: "DRAFT",
+        shipToAddress: vendor.shipToAddress,
+        billToAddress: vendor.billToAddress,
+        shippingMethod: vendor.shippingMethod,
+        paymentTerms: vendor.paymentTerms,
+        creditLimit: vendor.creditLimit,
+        buyerId: vendor.defaultBuyerId,
         lines: {
           create: lines.map((l: {
             itemId: string | null;

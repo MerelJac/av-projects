@@ -6,7 +6,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string; poId: string }> }
 ) {
   const { poId } = await params;
-  const { itemId, description, quantity, cost } = await req.json();
+  const { itemId, quantity, cost } = await req.json();
 
   if (!quantity || quantity < 1) {
     return NextResponse.json({ error: "quantity must be >= 1" }, { status: 400 });
@@ -31,7 +31,6 @@ export async function POST(
     data: {
       poId,
       itemId: itemId ?? null,
-      description: description ?? null,
       quantity,
       cost: parseFloat(cost),
       costOverridden,

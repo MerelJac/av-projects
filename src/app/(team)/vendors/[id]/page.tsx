@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import VendorItemPricesClient from "./VendorItemPricesClient";
+import VendorDefaultsClient from "./VendorDefaultsClient";
 
 export default async function VendorDetailPage({
   params,
@@ -11,20 +12,27 @@ export default async function VendorDetailPage({
 }) {
   const { id } = await params;
 
-  const vendor = await prisma.vendor.findUnique({
-    where: { id },
-    include: {
-      itemPrices: {
-        include: {
-          item: {
-            select: { id: true, itemNumber: true, manufacturer: true, description: true },
+  const [vendor, users] = await Promise.all([
+    prisma.vendor.findUnique({
+      where: { id },
+      include: {
+        itemPrices: {
+          include: {
+            item: {
+              select: { id: true, itemNumber: true, manufacturer: true, description: true },
+            },
           },
+          orderBy: { updatedAt: "desc" },
         },
-        orderBy: { updatedAt: "desc" },
+        _count: { select: { purchaseOrders: true } },
       },
-      _count: { select: { purchaseOrders: true } },
-    },
-  });
+    }),
+    prisma.user.findMany({
+      where: { role: { in: ["TEAM", "ADMIN"] } },
+      select: { id: true, profile: { select: { firstName: true, lastName: true } } },
+      orderBy: { profile: { firstName: "asc" } },
+    }),
+  ]);
 
   if (!vendor) return notFound();
 
@@ -56,6 +64,18 @@ export default async function VendorDetailPage({
           )}
         </div>
 
+        <VendorDefaultsClient
+          vendorId={id}
+          defaults={{
+            shipToAddress: vendor.shipToAddress,
+            billToAddress: vendor.billToAddress,
+            shippingMethod: vendor.shippingMethod,
+            paymentTerms: vendor.paymentTerms,
+            creditLimit: vendor.creditLimit ? Number(vendor.creditLimit) : null,
+            defaultBuyerId: vendor.defaultBuyerId,
+          }}
+          users={users}
+        />
         <VendorItemPricesClient vendorId={id} initialPrices={vendor.itemPrices} />
       </div>
     </div>

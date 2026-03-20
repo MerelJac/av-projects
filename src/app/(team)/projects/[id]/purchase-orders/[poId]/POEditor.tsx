@@ -37,6 +37,8 @@ type Shipment = {
   lines: ShipmentLine[];
 };
 
+type User = { id: string; profile: { firstName: string; lastName: string } | null };
+
 type PO = {
   id: string;
   poNumber: string | null;
@@ -50,6 +52,13 @@ type PO = {
   lines: POLine[];
   shipments: Shipment[];
   quote: { id: string } | null;
+  shipToAddress: string | null;
+  billToAddress: string | null;
+  shippingMethod: string | null;
+  paymentTerms: string | null;
+  creditLimit: number | null;
+  buyerId: string | null;
+  buyer: { id: string; profile: { firstName: string; lastName: string } | null } | null;
 };
 
 const STATUS_OPTIONS = ["DRAFT", "SENT", "PARTIALLY_RECEIVED", "RECEIVED", "CANCELLED"] as const;
@@ -68,7 +77,7 @@ const STATUS_COLORS: Record<string, string> = {
   CANCELLED: "bg-red-100 text-red-600",
 };
 
-export default function POEditor({ po, projectId }: { po: PO; projectId: string }) {
+export default function POEditor({ po, projectId, users }: { po: PO; projectId: string; users: User[] }) {
   const router = useRouter();
   const [status, setStatus] = useState(po.status);
   const [lines, setLines] = useState<POLine[]>(po.lines);
@@ -90,6 +99,50 @@ export default function POEditor({ po, projectId }: { po: PO; projectId: string 
   // Resend state
   const [resending, setResending] = useState(false);
   const [revision, setRevision] = useState(po.revision);
+
+  // PO info state
+  const [editingInfo, setEditingInfo] = useState(false);
+  const [savingInfo, setSavingInfo] = useState(false);
+  const [infoForm, setInfoForm] = useState({
+    shipToAddress: po.shipToAddress ?? "",
+    billToAddress: po.billToAddress ?? "",
+    shippingMethod: po.shippingMethod ?? "",
+    paymentTerms: po.paymentTerms ?? "",
+    creditLimit: po.creditLimit != null ? String(po.creditLimit) : "",
+    buyerId: po.buyerId ?? "",
+  });
+
+  async function handleSaveInfo() {
+    setSavingInfo(true);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/purchase-orders/${po.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          shipToAddress: infoForm.shipToAddress || null,
+          billToAddress: infoForm.billToAddress || null,
+          shippingMethod: infoForm.shippingMethod || null,
+          paymentTerms: infoForm.paymentTerms || null,
+          creditLimit: infoForm.creditLimit ? parseFloat(infoForm.creditLimit) : null,
+          buyerId: infoForm.buyerId || null,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      setEditingInfo(false);
+      showToast("success", "PO details saved");
+    } catch {
+      showToast("error", "Failed to save PO details");
+    } finally {
+      setSavingInfo(false);
+    }
+  }
+
+  function buyerLabel(id: string | null) {
+    if (!id) return "—";
+    const u = users.find((u) => u.id === id);
+    if (!u?.profile) return "—";
+    return `${u.profile.firstName} ${u.profile.lastName}`;
+  }
 
   // Add line state
   const [showAddLine, setShowAddLine] = useState(false);
@@ -401,6 +454,151 @@ export default function POEditor({ po, projectId }: { po: PO; projectId: string 
                 <Send size={12} />
                 {resending ? "Sending…" : status === "DRAFT" ? "Send PO" : `Resend (Rev ${revision + 1})`}
               </button>
+            )}
+          </div>
+        </div>
+
+        {/* PO Info Card */}
+        <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden mb-6">
+          <div className="px-6 py-4 border-b border-[#F0EEE9] flex items-center justify-between">
+            <h3 className="font-semibold text-sm text-[#111]">Order Details</h3>
+            {!editingInfo ? (
+              <button
+                onClick={() => setEditingInfo(true)}
+                className="flex items-center gap-1.5 text-xs text-[#888] hover:text-[#111] transition-colors"
+              >
+                <Pencil size={12} /> Edit
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setEditingInfo(false)}
+                  className="text-xs text-[#888] hover:text-[#111] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveInfo}
+                  disabled={savingInfo}
+                  className="flex items-center gap-1 text-xs font-semibold bg-[#111] text-white px-3 py-1.5 rounded-lg hover:bg-[#333] disabled:opacity-40 transition-colors"
+                >
+                  {savingInfo ? "Saving…" : "Save"}
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="px-6 py-5 grid grid-cols-3 gap-x-8 gap-y-4">
+            {/* Vendor ID — always read-only */}
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">Vendor ID</p>
+              <p className="text-sm font-mono text-[#111]">{po.vendor?.id?.slice(0, 8).toUpperCase() ?? "—"}</p>
+            </div>
+
+            {editingInfo ? (
+              <>
+                <div>
+                  <label className="block text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1.5">Buyer</label>
+                  <select
+                    className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-[#111]"
+                    value={infoForm.buyerId}
+                    onChange={(e) => setInfoForm((f) => ({ ...f, buyerId: e.target.value }))}
+                  >
+                    <option value="">— None —</option>
+                    {users.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.profile ? `${u.profile.firstName} ${u.profile.lastName}` : u.id}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1.5">Shipping Method</label>
+                  <input
+                    className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#111]"
+                    value={infoForm.shippingMethod}
+                    onChange={(e) => setInfoForm((f) => ({ ...f, shippingMethod: e.target.value }))}
+                    placeholder="e.g. UPS Ground"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1.5">Payment Terms</label>
+                  <input
+                    className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#111]"
+                    value={infoForm.paymentTerms}
+                    onChange={(e) => setInfoForm((f) => ({ ...f, paymentTerms: e.target.value }))}
+                    placeholder="e.g. Net 30"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1.5">Credit Limit</label>
+                  <div className="relative">
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[#999]">$</span>
+                    <input
+                      type="number"
+                      className="w-full text-sm border border-[#E5E3DE] rounded-lg pl-6 pr-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#111]"
+                      value={infoForm.creditLimit}
+                      onChange={(e) => setInfoForm((f) => ({ ...f, creditLimit: e.target.value }))}
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+                <div className="col-span-3 grid grid-cols-2 gap-x-8 gap-y-4 mt-1 border-t border-[#F0EEE9] pt-4">
+                  <div>
+                    <label className="block text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1.5">Ship-To Address</label>
+                    <textarea
+                      rows={3}
+                      className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-[#111]"
+                      value={infoForm.shipToAddress}
+                      onChange={(e) => setInfoForm((f) => ({ ...f, shipToAddress: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1.5">Bill-To Address</label>
+                    <textarea
+                      rows={3}
+                      className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-[#111]"
+                      value={infoForm.billToAddress}
+                      onChange={(e) => setInfoForm((f) => ({ ...f, billToAddress: e.target.value }))}
+                    />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">Buyer</p>
+                  <p className="text-sm text-[#111]">{buyerLabel(infoForm.buyerId || null)}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">Shipping Method</p>
+                  <p className="text-sm text-[#111]">{infoForm.shippingMethod || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">Payment Terms</p>
+                  <p className="text-sm text-[#111]">{infoForm.paymentTerms || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">Credit Limit</p>
+                  <p className="text-sm text-[#111]">
+                    {infoForm.creditLimit
+                      ? `$${parseFloat(infoForm.creditLimit).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                      : "—"}
+                  </p>
+                </div>
+                {(infoForm.shipToAddress || infoForm.billToAddress) && (
+                  <div className="col-span-3 grid grid-cols-2 gap-x-8 mt-1 border-t border-[#F0EEE9] pt-4">
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">Ship-To Address</p>
+                      <p className="text-sm text-[#111] whitespace-pre-wrap">{infoForm.shipToAddress || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">Bill-To Address</p>
+                      <p className="text-sm text-[#111] whitespace-pre-wrap">{infoForm.billToAddress || "—"}</p>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

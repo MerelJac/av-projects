@@ -24,7 +24,7 @@ export async function PATCH(
 ) {
   const { poId } = await params;
   const body = await req.json();
-  const { status, notes, vendorId, lines, resend } = body;
+  const { status, notes, vendorId, lines, resend, shipToAddress, billToAddress, shippingMethod, paymentTerms, creditLimit, buyerId } = body;
 
   // resend=true: bump revision, set sentAt, force status=SENT
   if (resend) {
@@ -91,13 +91,19 @@ export async function PATCH(
     return NextResponse.json({ ok: true });
   }
 
-  // Simple field updates (status, notes, vendorId)
+  // Simple field updates
   await prisma.purchaseOrder.update({
     where: { id: poId },
     data: {
       ...(status !== undefined && { status }),
       ...(notes !== undefined && { notes: notes ?? null }),
       ...(vendorId !== undefined && { vendorId }),
+      ...(shipToAddress !== undefined && { shipToAddress: shipToAddress ?? null }),
+      ...(billToAddress !== undefined && { billToAddress: billToAddress ?? null }),
+      ...(shippingMethod !== undefined && { shippingMethod: shippingMethod ?? null }),
+      ...(paymentTerms !== undefined && { paymentTerms: paymentTerms ?? null }),
+      ...(creditLimit !== undefined && { creditLimit: creditLimit ?? null }),
+      ...(buyerId !== undefined && { buyerId: buyerId ?? null }),
     },
   });
 
