@@ -44,14 +44,48 @@ model Invoice {
   projectId String
   project   Project @relation(fields: [projectId], references: [id])
 
-  amount Float
+  quoteId String?
+  quote   Quote?  @relation("QuoteInvoices", fields: [quoteId], references: [id])
+
+  invoiceNumber String?
+  chargeType    InvoiceChargeType @default(LINE_ITEMS)
+  chargePercent Float? // e.g. 50.0 — used when chargeType = PERCENTAGE
+
+  amount Float?
   status InvoiceStatus @default(DRAFT)
 
+  // Contact info snapshot — copied from customer at creation, editable per invoice
+  customerName  String?
+  customerEmail String?
+  customerPhone String?
+  billToAddress String?
+  shipToAddress String?
+  paymentTerms  String?
+
+  notes    String?
   issuedAt DateTime?
+  dueDate  DateTime?
   paidAt   DateTime?
 
-  createdAt     DateTime @default(now())
-  depositQuotes Quote[]
+  createdAt DateTime @default(now())
+
+  lines         InvoiceLine[]
+  depositQuotes Quote[]       @relation("DepositInvoice")
+}
+
+model InvoiceLine {
+  id        String  @id @default(uuid())
+  invoiceId String
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  description String
+  quantity    Int
+  price       Float
+
+  // Source reference (optional)
+  quoteLineId   String?
+  quoteBundleId String?
+  isBundleTotal Boolean @default(false) // true = rolled-up hidden-bundle line
 }
 
 model QuoteBundle {
@@ -76,8 +110,16 @@ model QuoteBundle {
 enum InvoiceStatus {
   DRAFT
   SENT
+  PENDING
   PAID
+  REJECTED
+  REVISED
   VOID
+}
+
+enum InvoiceChargeType {
+  LINE_ITEMS
+  PERCENTAGE
 }
 
 model Invite {
@@ -193,7 +235,8 @@ model Quote {
   depositPaid      Boolean   @default(false)
   depositPaidAt    DateTime?
   depositInvoiceId String?
-  depositInvoice   Invoice?  @relation(fields: [depositInvoiceId], references: [id])
+  depositInvoice   Invoice?  @relation("DepositInvoice", fields: [depositInvoiceId], references: [id])
+  invoices         Invoice[] @relation("QuoteInvoices")
 }
 
 enum QuoteStatus {
@@ -395,6 +438,7 @@ enum NoteDocumentType {
   CHANGE_ORDER
   SALES_ORDER
   PURCHASE_ORDER
+  INVOICE
 }
 
 model Note {

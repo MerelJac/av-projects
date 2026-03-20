@@ -1,0 +1,469 @@
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { X, FileText, Percent, List } from "lucide-react";
+
+type QuoteLine = {
+  id: string;
+  description: string;
+  quantity: number;
+  price: number;
+  bundleId: string | null;
+};
+
+type Bundle = {
+  id: string;
+  name: string;
+  showToCustomer: boolean;
+  lines: QuoteLine[];
+};
+
+type Customer = {
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+};
+
+export default function CreateInvoiceModal({
+  projectId,
+  quoteId,
+  lines,
+  bundles,
+  customer,
+  quoteSubtotal,
+  onClose,
+}: {
+  projectId: string;
+  quoteId: string;
+  lines: QuoteLine[];
+  bundles: Bundle[];
+  customer: Customer;
+  quoteSubtotal: number;
+  onClose: () => void;
+}) {
+  const router = useRouter();
+  const [chargeType, setChargeType] = useState<"LINE_ITEMS" | "PERCENTAGE">("LINE_ITEMS");
+  const [chargePercent, setChargePercent] = useState<string>("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [customerName, setCustomerName] = useState(customer.name);
+  const [customerEmail, setCustomerEmail] = useState(customer.email ?? "");
+  const [customerPhone, setCustomerPhone] = useState(customer.phone ?? "");
+  const [billToAddress, setBillToAddress] = useState("");
+  const [paymentTerms, setPaymentTerms] = useState("");
+  const [notes, setNotes] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Unbundled lines
+  const unbundledLines = lines.filter((l) => !l.bundleId);
+
+  function toggleLine(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleBundle(bundleId: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(`bundle:${bundleId}`)) {
+        next.delete(`bundle:${bundleId}`);
+      } else {
+        next.add(`bundle:${bundleId}`);
+      }
+      return next;
+    });
+  }
+
+  function toggleBundleLine(lineId: string) {
+    toggleLine(lineId);
+  }
+
+  // Build invoice lines from selections
+  function buildLines() {
+    const result: {
+      description: string;
+      quantity: number;
+      price: number;
+      quoteLineId?: string;
+      quoteBundleId?: string;
+      isBundleTotal?: boolean;
+    }[] = [];
+
+    // Unbundled lines
+    for (const l of unbundledLines) {
+      if (selected.has(l.id)) {
+        result.push({ description: l.description, quantity: l.quantity, price: l.price, quoteLineId: l.id });
+      }
+    }
+
+    for (const bundle of bundles) {
+      if (bundle.showToCustomer) {
+        // Individual lines selectable
+        for (const l of bundle.lines) {
+          if (selected.has(l.id)) {
+            result.push({ description: l.description, quantity: l.quantity, price: l.price, quoteLineId: l.id, quoteBundleId: bundle.id });
+          }
+        }
+      } else {
+        // Bundle selected as a single total
+        if (selected.has(`bundle:${bundle.id}`)) {
+          const total = bundle.lines.reduce((s, l) => s + l.price * l.quantity, 0);
+          result.push({ description: bundle.name, quantity: 1, price: total, quoteBundleId: bundle.id, isBundleTotal: true });
+        }
+      }
+    }
+
+    return result;
+  }
+
+  const pctAmount =
+    chargeType === "PERCENTAGE" && chargePercent
+      ? (parseFloat(chargePercent) / 100) * quoteSubtotal
+      : null;
+
+  const lineItemsAmount =
+    chargeType === "LINE_ITEMS"
+      ? buildLines().reduce((s, l) => s + l.price * l.quantity, 0)
+      : null;
+
+  const previewAmount = chargeType === "PERCENTAGE" ? pctAmount : lineItemsAmount;
+
+  async function handleCreate() {
+    setError(null);
+    if (chargeType === "PERCENTAGE") {
+      const pct = parseFloat(chargePercent);
+      if (!chargePercent || isNaN(pct) || pct <= 0 || pct > 100) {
+        setError("Enter a valid percentage (1–100).");
+        return;
+      }
+    } else {
+      if (selected.size === 0) {
+        setError("Select at least one line item or bundle.");
+        return;
+      }
+    }
+
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/invoices`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quoteId,
+          chargeType,
+          chargePercent: chargeType === "PERCENTAGE" ? parseFloat(chargePercent) : undefined,
+          lines: chargeType === "LINE_ITEMS" ? buildLines() : undefined,
+          customerName,
+          customerEmail: customerEmail || null,
+          customerPhone: customerPhone || null,
+          billToAddress: billToAddress || null,
+          paymentTerms: paymentTerms || null,
+          notes: notes || null,
+          dueDate: dueDate || null,
+        }),
+      });
+      if (!res.ok) {
+        const { error: msg } = await res.json();
+        setError(msg ?? "Failed to create invoice.");
+        return;
+      }
+      router.refresh();
+      onClose();
+    } catch {
+      setError("Failed to create invoice.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const fmt = (n: number) =>
+    n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white rounded-2xl shadow-2xl border border-[#E5E3DE] w-[680px] max-h-[90vh] mx-4 flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#F0EEE9]">
+          <div className="flex items-center gap-2">
+            <FileText size={16} className="text-[#888]" />
+            <p className="text-sm font-semibold text-[#111]">Create Invoice</p>
+          </div>
+          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-[#F7F6F3] text-[#999] hover:text-[#111] transition-colors">
+            <X size={14} />
+          </button>
+        </div>
+
+        <div className="overflow-y-auto flex-1 px-6 py-5 space-y-6">
+          {/* Charge type */}
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-3">Charge Type</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setChargeType("LINE_ITEMS")}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-all ${
+                  chargeType === "LINE_ITEMS"
+                    ? "bg-[#111] text-white border-[#111]"
+                    : "text-[#666] border-[#E5E3DE] hover:bg-[#F7F6F3]"
+                }`}
+              >
+                <List size={14} />
+                Select Items
+              </button>
+              <button
+                onClick={() => setChargeType("PERCENTAGE")}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-all ${
+                  chargeType === "PERCENTAGE"
+                    ? "bg-[#111] text-white border-[#111]"
+                    : "text-[#666] border-[#E5E3DE] hover:bg-[#F7F6F3]"
+                }`}
+              >
+                <Percent size={14} />
+                Percentage
+              </button>
+            </div>
+          </div>
+
+          {/* Percentage input */}
+          {chargeType === "PERCENTAGE" && (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-3">Percentage of Quote</p>
+              <div className="flex items-center gap-3">
+                <div className="relative w-40">
+                  <input
+                    type="number"
+                    min={1}
+                    max={100}
+                    step={0.1}
+                    value={chargePercent}
+                    onChange={(e) => setChargePercent(e.target.value)}
+                    placeholder="50"
+                    className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 pr-7 focus:outline-none focus:border-[#111]"
+                  />
+                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[#999]">%</span>
+                </div>
+                {pctAmount != null && (
+                  <p className="text-sm text-[#666]">
+                    = <span className="font-semibold text-[#111]">${fmt(pctAmount)}</span>
+                    <span className="text-[#bbb] ml-1">of ${fmt(quoteSubtotal)}</span>
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Line item selection */}
+          {chargeType === "LINE_ITEMS" && (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-3">Select Items to Invoice</p>
+              <div className="space-y-3">
+                {/* Unbundled lines */}
+                {unbundledLines.length > 0 && (
+                  <div className="border border-[#E5E3DE] rounded-xl overflow-hidden">
+                    <div className="px-4 py-2.5 bg-[#FAFAF9] border-b border-[#F0EEE9]">
+                      <p className="text-xs font-semibold text-[#888]">Unbundled Items</p>
+                    </div>
+                    {unbundledLines.map((l) => {
+                      const checked = selected.has(l.id);
+                      return (
+                        <label
+                          key={l.id}
+                          className="flex items-center gap-3 px-4 py-2.5 hover:bg-[#FAFAF9] cursor-pointer border-b border-[#F7F6F3] last:border-0"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleLine(l.id)}
+                            className="rounded"
+                          />
+                          <span className="flex-1 text-sm text-[#111]">{l.description}</span>
+                          <span className="text-xs text-[#888]">×{l.quantity}</span>
+                          <span className="text-sm font-medium text-[#111] w-20 text-right">
+                            ${fmt(l.price * l.quantity)}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Bundles */}
+                {bundles.map((bundle) => {
+                  const bundleTotal = bundle.lines.reduce((s, l) => s + l.price * l.quantity, 0);
+
+                  if (!bundle.showToCustomer) {
+                    // Hidden bundle — selectable as a single total
+                    const checked = selected.has(`bundle:${bundle.id}`);
+                    return (
+                      <div key={bundle.id} className="border border-[#E5E3DE] rounded-xl overflow-hidden">
+                        <label className="flex items-center gap-3 px-4 py-3 hover:bg-[#FAFAF9] cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleBundle(bundle.id)}
+                            className="rounded"
+                          />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-[#111]">{bundle.name}</p>
+                            <p className="text-xs text-[#999] mt-0.5">
+                              Hidden bundle · billed as total
+                            </p>
+                          </div>
+                          <span className="text-sm font-medium text-[#111] w-20 text-right">
+                            ${fmt(bundleTotal)}
+                          </span>
+                        </label>
+                      </div>
+                    );
+                  }
+
+                  // Visible bundle — individual lines
+                  return (
+                    <div key={bundle.id} className="border border-[#E5E3DE] rounded-xl overflow-hidden">
+                      <div className="px-4 py-2.5 bg-[#FAFAF9] border-b border-[#F0EEE9] flex items-center justify-between">
+                        <p className="text-xs font-semibold text-[#888]">{bundle.name}</p>
+                        <span className="text-xs text-[#bbb]">${fmt(bundleTotal)}</span>
+                      </div>
+                      {bundle.lines.map((l) => {
+                        const checked = selected.has(l.id);
+                        return (
+                          <label
+                            key={l.id}
+                            className="flex items-center gap-3 px-4 py-2.5 hover:bg-[#FAFAF9] cursor-pointer border-b border-[#F7F6F3] last:border-0"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => toggleBundleLine(l.id)}
+                              className="rounded"
+                            />
+                            <span className="flex-1 text-sm text-[#111]">{l.description}</span>
+                            <span className="text-xs text-[#888]">×{l.quantity}</span>
+                            <span className="text-sm font-medium text-[#111] w-20 text-right">
+                              ${fmt(l.price * l.quantity)}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Contact info */}
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-3">Bill To</p>
+            <div className="space-y-2">
+              <input
+                type="text"
+                placeholder="Customer name"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111]"
+              />
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  className="flex-1 text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111]"
+                />
+                <input
+                  type="tel"
+                  placeholder="Phone"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  className="flex-1 text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111]"
+                />
+              </div>
+              <textarea
+                placeholder="Billing address"
+                value={billToAddress}
+                onChange={(e) => setBillToAddress(e.target.value)}
+                rows={2}
+                className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111] resize-none"
+              />
+            </div>
+          </div>
+
+          {/* Terms & due date */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-widest text-[#888] block mb-1.5">
+                Payment Terms
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Net 30"
+                value={paymentTerms}
+                onChange={(e) => setPaymentTerms(e.target.value)}
+                className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111]"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-widest text-[#888] block mb-1.5">
+                Due Date
+              </label>
+              <input
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111]"
+              />
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-widest text-[#888] block mb-1.5">
+              Notes
+            </label>
+            <textarea
+              placeholder="Any notes for the customer..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={2}
+              className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111] resize-none"
+            />
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-[#F0EEE9] flex items-center justify-between gap-4">
+          <div className="text-sm">
+            {previewAmount != null && previewAmount > 0 && (
+              <span className="text-[#666]">
+                Invoice total:{" "}
+                <span className="font-semibold text-[#111]">${fmt(previewAmount)}</span>
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {error && <p className="text-xs text-red-600">{error}</p>}
+            <button
+              onClick={onClose}
+              className="text-sm px-4 py-2 rounded-xl border border-[#E5E3DE] text-[#666] hover:bg-[#F7F6F3] transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleCreate}
+              disabled={saving}
+              className="text-sm font-semibold px-5 py-2 rounded-xl bg-[#111] text-white hover:bg-[#333] disabled:opacity-40 transition-colors"
+            >
+              {saving ? "Creating…" : "Create Invoice"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

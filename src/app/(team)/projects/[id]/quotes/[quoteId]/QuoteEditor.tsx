@@ -20,6 +20,7 @@ import { QuoteWithDetails } from "@/types/quote";
 import { QuoteStatus } from "@prisma/client";
 import ConvertToSalesOrderButton from "@/app/components/team/sales-orders/ConvertToSalesOrderButton";
 import CreatePOModal from "@/app/components/team/purchase-orders/CreatePOModal";
+import CreateInvoiceModal from "@/app/components/team/invoices/CreateInvoiceModal";
 
 // Derive types directly from the Prisma payload
 type QuoteLine = QuoteWithDetails["lines"][number];
@@ -72,6 +73,7 @@ export default function QuoteEditor({
   const [showBundleInput, setShowBundleInput] = useState(false);
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
   const [showPOModal, setShowPOModal] = useState(false);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [showPDFPreview, setShowPDFPreview] = useState(false);
   const pdfUrl = `/api/projects/${projectId}/quotes/${initialQuote.id}/pdf`;
 
@@ -708,12 +710,32 @@ export default function QuoteEditor({
               Create Purchase Order
             </button>
 
+                        <button
+              onClick={() => setShowInvoiceModal(true)}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-[#111] border border-[#E5E3DE] hover:bg-[#F7F6F3] transition-colors"
+            >
+              <Package size={14} />
+              Create Invoice
+            </button>
+
             {showPOModal && (
               <CreatePOModal
                 projectId={projectId}
                 quoteId={initialQuote.id}
                 lines={lines}
                 onClose={() => setShowPOModal(false)}
+              />
+            )}
+
+            {showInvoiceModal && (
+              <CreateInvoiceModal
+                projectId={projectId}
+                quoteId={initialQuote.id}
+                lines={lines}
+                bundles={bundles}
+                customer={initialQuote.customer}
+                quoteSubtotal={subtotal}
+                onClose={() => setShowInvoiceModal(false)}
               />
             )}
 

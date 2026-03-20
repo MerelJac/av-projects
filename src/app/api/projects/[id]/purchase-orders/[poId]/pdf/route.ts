@@ -20,7 +20,7 @@ export async function GET(
     },
   });
 
-  if (!po || !po.buyer) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!po) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const buyerName = po.buyer?.profile
     ? `${po.buyer.profile.firstName} ${po.buyer.profile.lastName}`
     : null;

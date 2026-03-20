@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import { StickyNote, Trash2, Send } from "lucide-react";
 
-type NoteDocumentType = "QUOTE" | "BILL_OF_MATERIALS" | "CHANGE_ORDER" | "SALES_ORDER"; 
+type NoteDocumentType = "QUOTE" | "BILL_OF_MATERIALS" | "CHANGE_ORDER" | "SALES_ORDER" | "PURCHASE_ORDER" | "INVOICE";
 
 type NoteUser = {
   id: string;
