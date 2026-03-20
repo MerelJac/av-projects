@@ -56,6 +56,11 @@ const PO_STATUS: Record<
     color: "bg-green-100 text-green-700",
     icon: <CheckCircle2 size={13} />,
   },
+    CANCELLED: {
+    label: "Cancelled",
+    color: "bg-red-100 text-red-700",
+    icon: <X size={13} />,
+  },
 };
 
 export default function PODetailClient({
@@ -159,7 +164,7 @@ export default function PODetailClient({
               </span>
             </div>
             <p className="text-sm text-[#666] mt-1 font-semibold">
-              {po.vendor}
+              {po.vendor?.name ?? "—"}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -417,7 +422,7 @@ export default function PODetailClient({
                     Vendor
                   </p>
                   <p className="text-[#111] font-semibold mt-0.5">
-                    {po.vendor}
+                    {po.vendor?.name ?? "—"}
                   </p>
                 </div>
                 <div>

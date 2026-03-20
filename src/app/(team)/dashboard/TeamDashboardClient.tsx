@@ -258,7 +258,7 @@ export default function TeamDashboardClient({ data }: { data: DashboardData }) {
                     <div key={po.id} className="px-5 py-3.5 hover:bg-[#FAFAF9] transition-colors">
                       <div className="flex items-center justify-between mb-1.5">
                         <div>
-                          <p className="text-sm font-semibold text-[#111]">{po.vendor}</p>
+                          <p className="text-sm font-semibold text-[#111]">{po.vendor?.name ?? "—"}</p>
                           <p className="text-[11px] text-[#aaa]">{po.project?.name ?? "No project"}</p>
                         </div>
                         <div className="flex items-center gap-3">
@@ -386,7 +386,7 @@ export default function TeamDashboardClient({ data }: { data: DashboardData }) {
                           <p className="text-[11px] text-[#aaa]">{inv.project.name}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-bold text-red-500">{fmt$(inv.amount)}</p>
+                          <p className="text-sm font-bold text-red-500">{fmt$(inv.amount ?? 0)}</p>
                           <p className="text-[10px] text-[#bbb]">{daysAgo(inv.issuedAt!)}d ago</p>
                         </div>
                       </div>

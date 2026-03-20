@@ -16,6 +16,7 @@ export default async function PODetailPage({
   const po = await prisma.purchaseOrder.findUnique({
     where: { id: poId },
     include: {
+      vendor: { select: { id: true, name: true } },
       lines: {
         include: { item: true, salesOrderLine: true },
         orderBy: { id: "asc" },

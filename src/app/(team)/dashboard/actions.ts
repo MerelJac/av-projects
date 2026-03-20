@@ -120,6 +120,7 @@ export async function getDashboardData() {
       where: { status: { in: ["DRAFT", "SENT", "PARTIALLY_RECEIVED"] } },
       include: {
         project: { select: { name: true } },
+        vendor: { select: { name: true } },
         lines: { select: { quantity: true, receivedQuantity: true, cost: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -144,15 +145,15 @@ export async function getDashboardData() {
   // Revenue (paid invoices last 30d)
   const revenue30d = invoices30d
     .filter(i => i.status === "PAID")
-    .reduce((s, i) => s + i.amount, 0);
+    .reduce((s, i) => s + (i.amount ?? 0), 0);
 
   // Invoiced but unpaid last 30d
   const invoiced30d = invoices30d
     .filter(i => i.status === "SENT")
-    .reduce((s, i) => s + i.amount, 0);
+    .reduce((s, i) => s + (i.amount ?? 0), 0);
 
   // Overdue total
-  const overdueTotal = overdueInvoices.reduce((s, i) => s + i.amount, 0);
+  const overdueTotal = overdueInvoices.reduce((s, i) => s + (i.amount ?? 0), 0);
 
   // Hours this week
   const hoursThisWeek = recentTimeEntries.reduce((s, e) => s + e.hours, 0);

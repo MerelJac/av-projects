@@ -35,5 +35,10 @@ export default async function POPage({
 
   if (!po || po.projectId !== id) return notFound();
 
-  return <POEditor po={po} projectId={id} users={users} />;
+  const poSerialized = {
+    ...po,
+    creditLimit: po.creditLimit != null ? Number(po.creditLimit) : null,
+  };
+
+  return <POEditor po={poSerialized} projectId={id} users={users} />;
 }

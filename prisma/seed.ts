@@ -245,9 +245,15 @@ const laborItem = await prisma.item.upsert({
   PURCHASE ORDER
   */
 
+  const seedVendor = await prisma.vendor.upsert({
+    where: { id: "seed-vendor-cisco" },
+    update: {},
+    create: { id: "seed-vendor-cisco", name: "Cisco Distributor" },
+  });
+
   const po = await prisma.purchaseOrder.create({
     data: {
-      vendor: "Cisco Distributor",
+      vendorId: seedVendor.id,
       projectId: project.id,
       status: "SENT",
     },

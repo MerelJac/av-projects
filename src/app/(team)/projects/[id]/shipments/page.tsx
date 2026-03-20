@@ -179,6 +179,7 @@ export default async function ProjectShipmentsPage({
                         ) : (
                           (s.purchaseOrder?.vendor ?? "—")
                         )}
+                        
                       </td>
                       <td className="px-3 py-3.5 text-sm text-[#666]">
                         {s.carrier ?? "—"}
