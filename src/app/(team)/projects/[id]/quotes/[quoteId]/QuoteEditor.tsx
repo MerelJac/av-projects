@@ -278,7 +278,7 @@ export default function QuoteEditor({
       <div className="max-w-5xl mx-auto px-6 py-10">
         {/* Back */}
         <button
-          onClick={() => router.push(`/projects/${projectId}`)}
+          onClick={() => router.back()}
           className="flex items-center gap-2 text-sm text-[#666] hover:text-[#111] mb-6 transition-colors"
         >
           <ArrowLeft size={15} />

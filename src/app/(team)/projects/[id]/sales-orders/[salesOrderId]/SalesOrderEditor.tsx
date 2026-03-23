@@ -132,7 +132,7 @@ export default function SalesOrderEditor({
       <div className="max-w-5xl mx-auto px-6 py-10">
         {/* Back */}
         <button
-          onClick={() => router.push(`/projects/${projectId}`)}
+          onClick={() => router.back()}
           className="flex items-center gap-2 text-sm text-[#666] hover:text-[#111] mb-6 transition-colors"
         >
           <ArrowLeft size={15} />
@@ -397,7 +397,7 @@ function SOLineRow({
             step={0.01}
             value={Number(line.price)}
             onChange={(e) =>
-              onUpdate({ price: parseFloat(e.target.value) || 0 } as any)
+              onUpdate({ price: parseFloat(e.target.value) || 0 } as Partial<SOLine>)
             }
             className="w-30 text-right text-sm border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111]"
           />

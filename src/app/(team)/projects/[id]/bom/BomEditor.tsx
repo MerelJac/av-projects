@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, Fragment } from "react";
+import { useState, useRef, Fragment, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -21,7 +21,6 @@ import CreatePOModal from "@/app/components/team/purchase-orders/CreatePOModal";
 import { BOM, BOMLine } from "@/types/bom";
 import { Item } from "@/types/item";
 import { calcBOMTotals } from "./actions";
-
 
 const quoteStatusColors: Record<string, string> = {
   DRAFT: "bg-gray-100 text-gray-600",
@@ -65,6 +64,9 @@ export default function BOMEditor({
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(
     new Set(),
   );
+  const [claimedPOs, setClaimedPOs] = useState<
+    { itemId: string; quantity: number; po: string; poNumber: string }[]
+  >([]);
 
   const [editingSectionName, setEditingSectionName] = useState<string | null>(
     null,
@@ -96,6 +98,13 @@ export default function BOMEditor({
   const [newSectionName, setNewSectionName] = useState("");
 
   const allSections = sections;
+
+  useEffect(() => {
+    fetch(`/api/projects/${projectId}/purchase-orders/claimed-lines`)
+      .then((r) => r.json())
+      .then(setClaimedPOs);
+      console.log("claimed lines", claimedPOs);
+  }, [projectId]);
 
   function effectivePrice(
     itemId: string,
@@ -215,7 +224,7 @@ export default function BOMEditor({
 
   // Totals
   const { totalHardwareSell, totalServiceSell, totalCostAll, grandTotal, gm } =
-  calcBOMTotals(lines, customerPrices, tariff);
+    calcBOMTotals(lines, customerPrices, tariff);
 
   async function handleSave() {
     setSaving(true);
@@ -336,12 +345,16 @@ export default function BOMEditor({
             quantity: l.quantity,
             price: l.sellEach ?? 0,
             cost: l.costEach ?? l.item.cost ?? null,
-            item: { id: l.item.id, itemNumber: l.item.itemNumber, manufacturer: l.item.manufacturer ?? null },
+            item: {
+              id: l.item.id,
+              itemNumber: l.item.itemNumber,
+              manufacturer: l.item.manufacturer ?? null,
+            },
           }))}
           onClose={() => setShowCreatePO(false)}
         />
       )}
-  
+
       {/* Delete Confirm */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -389,7 +402,7 @@ export default function BOMEditor({
       <div className="max-w-7xl mx-auto px-6 py-10">
         {/* Back */}
         <button
-          onClick={() => router.push(`/projects/${projectId}`)}
+          onClick={() => router.back()}
           className="flex items-center gap-2 text-sm text-[#666] hover:text-[#111] mb-6 transition-colors"
         >
           <ArrowLeft size={15} />
@@ -443,7 +456,7 @@ export default function BOMEditor({
               className="flex items-center gap-2 bg-[#111] text-white text-sm font-semibold px-5 py-2 rounded-xl hover:bg-[#333] disabled:opacity-40 transition-colors"
             >
               <Zap size={14} />
-              {generating ? "Generating…" : "Generate Quote"}
+              {generating ? "Generating…" : "Generate Proposal or Sales Order"}
             </button>
           </div>
         </div>
@@ -916,7 +929,7 @@ export default function BOMEditor({
                 </div>
 
                 {/* Tariff line */}
-                <div className="flex justify-between text-sm items-center">
+                {/* <div className="flex justify-between text-sm items-center">
                   <span className="text-[#666]">Tariff</span>
                   <div className="relative">
                     <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[#bbb] text-xs">
@@ -935,7 +948,7 @@ export default function BOMEditor({
                       className="w-24 text-right text-xs border border-[#E5E3DE] rounded-lg pl-5 pr-2 py-1 focus:outline-none focus:border-[#111] transition-colors"
                     />
                   </div>
-                </div>
+                </div> */}
 
                 <div className="flex justify-between text-sm">
                   <span className="text-[#666]">Total Services</span>
@@ -1038,6 +1051,43 @@ export default function BOMEditor({
                       </div>
                     </a>
                   ))}
+                </div>
+              )}
+            </div>
+
+            {/* Purchase Orders */}
+            <div className="bg-white border border-[#E5E3DE] rounded-2xl p-5">
+              <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-4">
+                Purchase Orders
+              </p>
+              {claimedPOs.length === 0 ? (
+                <p className="text-sm text-[#bbb]">No POs created yet</p>
+              ) : (
+                <div className="space-y-2">
+                  {/* deduplicate by PO */}
+                  {Array.from(
+                    new Map(claimedPOs.map((p) => [p.po, p])).values(),
+                  ).map((po) => {
+                    const poItems = claimedPOs.filter((p) => p.po === po.po);
+                    return (
+                      <a
+                        key={po.po}
+                        href={`/projects/${projectId}/purchase-orders/${po.po}`}
+                        className="flex items-center justify-between p-3 border border-[#F0EEE9] rounded-xl hover:border-[#E5E3DE] hover:bg-[#F7F6F3] transition-all"
+                      >
+                        <div>
+                          <p className="text-xs font-mono font-semibold text-[#111]">
+                            {po.poNumber}
+                          </p>
+                          <p className="text-[10px] text-[#999] mt-0.5">
+                            {poItems.length} line
+                            {poItems.length !== 1 ? "s" : ""}
+                          </p>
+                        </div>
+                        <ShoppingCart size={13} className="text-[#bbb]" />
+                      </a>
+                    );
+                  })}
                 </div>
               )}
             </div>

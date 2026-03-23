@@ -63,6 +63,7 @@ export default async function NewProjectPage() {
               <label className="text-xs font-semibold uppercase tracking-widest text-[#999]">
                 Billing Terms
               </label>
+              <p className="text-xs text-[#999]">Can be changed later</p>
               <select
                 name="billingTerms"
                 className="w-full text-sm text-[#111] border border-[#E5E3DE] rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#111] transition-colors bg-white"

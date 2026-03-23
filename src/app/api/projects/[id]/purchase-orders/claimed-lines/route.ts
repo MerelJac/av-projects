@@ -1,30 +1,26 @@
+// src/app/api/projects/[id]/purchase-orders/claimed-lines/route.ts
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
- 
-// Returns the set of salesOrderLineIds already linked to a PO line
-// so the modal can disable those checkboxes.
+
+// Returns itemIds already on a PO line for this project (with quantity)
+// so the modal can disable those checkboxes when qty matches.
 export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const quoteId = req.nextUrl.searchParams.get("quoteId");
- 
+
   const poLines = await prisma.purchaseOrderLine.findMany({
-    where: {
-      purchaseOrder: { projectId: id },
-      salesOrderLineId: { not: null },
-      ...(quoteId
-        ? { purchaseOrder: { projectId: id, quoteId } }
-        : {}),
-    },
-    select: { salesOrderLineId: true },
+    where: { purchaseOrder: { projectId: id } },
+    include: { purchaseOrder: { select: { poNumber: true } } },
   });
- 
-  const claimedIds = poLines
-    .map((l) => l.salesOrderLineId)
-    .filter(Boolean) as string[];
- 
-  return NextResponse.json(claimedIds);
+
+  const claimed = poLines.map((l) => ({
+    itemId: l.itemId,
+    quantity: l.quantity,
+    po: l.poId,
+    poNumber: l.purchaseOrder.poNumber,
+  }));
+  console.log("claimed lines", claimed);
+  return NextResponse.json(claimed);
 }
- 

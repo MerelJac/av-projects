@@ -138,8 +138,7 @@ export default function PODetailClient({
         {/* Back */}
         <button
           onClick={() =>
-            router.push(`/projects/${projectId}/sales-orders/${salesOrderId}`)
-          }
+            router.back()}
           className="flex items-center gap-2 text-sm text-[#666] hover:text-[#111] mb-6 transition-colors"
         >
           <ArrowLeft size={15} />
