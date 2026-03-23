@@ -24,6 +24,7 @@ export async function GET(
     buildQuotePDF({
       quoteNumber: quote.id.slice(0, 8).toUpperCase(),
       customerName: quote.customer.name,
+      isDirect: quote.isDirect,
       lines: quote.lines.map((l) => ({
         id: l.id,
         description: l.description,
@@ -37,6 +38,9 @@ export async function GET(
         showToCustomer: b.showToCustomer,
       })),
       createdAt: quote.createdAt,
+      scopeOfWork: quote.scopeOfWork ?? undefined,
+      termsAndConditions: quote.termsAndConditions ?? undefined,
+      clientResponsibilities: quote.clientResponsibilities ?? undefined,
     }),
   );
 

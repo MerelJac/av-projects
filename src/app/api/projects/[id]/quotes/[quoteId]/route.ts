@@ -7,7 +7,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string; quoteId: string }> },
 ) {
   const { id, quoteId } = await params;
-  const { lines, bundles, status } = await req.json();
+  const { lines, bundles, status, isDirect, scopeOfWork, termsAndConditions, clientResponsibilities } = await req.json();
 
   console.log("=== QUOTE SAVE START ===");
   console.log("quoteId:", quoteId, "projectId:", id);
@@ -154,7 +154,14 @@ export async function PUT(
     console.log("--- Step 5: updating quote status:", status, "total:", total);
     await tx.quote.update({
       where: { id: quoteId },
-      data: { status, total },
+      data: {
+        status,
+        total,
+        isDirect: isDirect ?? false,
+        scopeOfWork: scopeOfWork ?? null,
+        termsAndConditions: termsAndConditions ?? null,
+        clientResponsibilities: clientResponsibilities ?? null,
+      },
     });
   });
 

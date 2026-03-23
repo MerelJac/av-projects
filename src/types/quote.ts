@@ -23,6 +23,11 @@ export type QuoteWithDetails = Prisma.QuoteGetPayload<{
     boms: { include: { bom: { select: { id: true; name: true } } } };
     lines: { include: { item: true; bundle: true } };
     quoteBundles: { include: { lines: { include: { item: true } } } };
-    salesOrder: { select: { id: true } }; // ← add this
+    salesOrder: { select: { id: true } };
   };
-}>;
+}> & {
+  isDirect: boolean;
+  scopeOfWork: string | null;
+  termsAndConditions: string | null;
+  clientResponsibilities: string | null;
+};

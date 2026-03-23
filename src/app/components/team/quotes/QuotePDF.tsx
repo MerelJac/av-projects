@@ -86,6 +86,20 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   bundleTitle: { fontSize: 9, fontFamily: "Helvetica-Bold", color: "#444" },
+  textSection: { marginTop: 28 },
+  textSectionLabel: {
+    fontSize: 8,
+    fontFamily: "Helvetica-Bold",
+    color: "#888",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginBottom: 6,
+    borderBottomWidth: 0.5,
+    borderBottomColor: "#E5E3DE",
+    paddingBottom: 4,
+  },
+  textSectionBody: { fontSize: 9, lineHeight: 1.6, color: "#333" },
+  quoteTypeLabel: { fontSize: 8, color: "#888", textAlign: "right" as const, marginTop: 2 },
 });
 
 type Line = {
@@ -100,17 +114,25 @@ type Bundle = { id: string; name: string; showToCustomer: boolean };
 export function buildQuotePDF({
   quoteNumber,
   customerName,
+  isDirect,
   lines,
   bundles,
   createdAt,
   terms,
+  scopeOfWork,
+  termsAndConditions,
+  clientResponsibilities,
 }: {
   quoteNumber: string;
   customerName: string;
+  isDirect?: boolean;
   lines: Line[];
   bundles: Bundle[];
   createdAt: Date;
   terms?: string;
+  scopeOfWork?: string;
+  termsAndConditions?: string;
+  clientResponsibilities?: string;
 }) {
   const visibleBundles = bundles.filter((b) => b.showToCustomer);
   const unbundledLines = lines.filter((l) => !l.bundleId);
@@ -131,7 +153,7 @@ export function buildQuotePDF({
             <Text style={styles.companyTagline}>Audio Visual Solutions</Text>
           </View>
           <View>
-            <Text style={styles.quoteLabel}>QUOTE</Text>
+            <Text style={styles.quoteLabel}>{isDirect ? "DIRECT SALE" : "PROPOSAL"}</Text>
             <Text style={styles.quoteNumber}>#{quoteNumber}</Text>
             <Text style={[styles.quoteLabel, { marginTop: 4 }]}>
               {new Date(createdAt).toLocaleDateString("en-US", {
@@ -193,10 +215,21 @@ export function buildQuotePDF({
           </View>
         </View>
 
+        {[
+          { label: "Scope of Work", text: scopeOfWork },
+          { label: "Terms & Conditions", text: termsAndConditions },
+          { label: "Client Responsibilities", text: clientResponsibilities },
+        ].filter(({ text }) => !!text).map(({ label, text }) => (
+          <View key={label} style={styles.textSection}>
+            <Text style={styles.textSectionLabel}>{label}</Text>
+            <Text style={styles.textSectionBody}>{text}</Text>
+          </View>
+        ))}
+
         <View style={styles.footer} fixed>
           <Text>
             {terms ??
-              "Thank you for your business. This quote is valid for 30 days."}
+              "Thank you for your business. Shipping is not included in this quote. This quote is valid for 30 days."}
           </Text>
           <Text
             render={({ pageNumber, totalPages }) =>

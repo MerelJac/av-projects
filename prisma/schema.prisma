@@ -237,6 +237,11 @@ model Quote {
   depositInvoiceId String?
   depositInvoice   Invoice?  @relation("DepositInvoice", fields: [depositInvoiceId], references: [id])
   invoices         Invoice[] @relation("QuoteInvoices")
+
+  isDirect               Boolean @default(false)
+  scopeOfWork            String?
+  termsAndConditions     String?
+  clientResponsibilities String?
 }
 
 enum QuoteStatus {

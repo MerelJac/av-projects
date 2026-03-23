@@ -92,6 +92,16 @@ export default function QuoteEditor({
       : "",
   );
   const [savingDeposit, setSavingDeposit] = useState(false);
+  const [isDirect, setIsDirect] = useState(initialQuote.isDirect ?? false);
+  const [scopeOfWork, setScopeOfWork] = useState(
+    initialQuote.scopeOfWork ?? "",
+  );
+  const [termsAndConditions, setTermsAndConditions] = useState(
+    initialQuote.termsAndConditions ?? "",
+  );
+  const [clientResponsibilities, setClientResponsibilities] = useState(
+    initialQuote.clientResponsibilities ?? "",
+  );
   const showToast = (type: "success" | "error", msg: string) => {
     setToast({ type, msg });
     setTimeout(() => setToast(null), 3500);
@@ -202,7 +212,15 @@ export default function QuoteEditor({
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ lines, bundles, status }),
+          body: JSON.stringify({
+            lines,
+            bundles,
+            status,
+            isDirect,
+            scopeOfWork: scopeOfWork || null,
+            termsAndConditions: termsAndConditions || null,
+            clientResponsibilities: clientResponsibilities || null,
+          }),
         },
       );
       if (!res.ok) throw new Error();
@@ -320,7 +338,7 @@ export default function QuoteEditor({
                   {unbundledLines.length} unbundled
                 </p>
               </div>
-              <p className="text-xs text-[#bbb] px-5 py-2 italic">
+              <p className="text-xs text-red-600  px-5 py-2 italic">
                 Add items to bundles & click &apos;Save Changes&apos; before
                 previewing quote.
               </p>
@@ -498,6 +516,46 @@ export default function QuoteEditor({
                 Add Bundle
               </button>
             )}
+
+            {/* Proposal text sections */}
+            {[
+              {
+                label: "Scope of Work",
+                value: scopeOfWork,
+                setter: setScopeOfWork,
+              },
+              {
+                label: "Terms & Conditions",
+                value: termsAndConditions,
+                setter: setTermsAndConditions,
+              },
+              {
+                label: "Client Responsibilities",
+                value: clientResponsibilities,
+                setter: setClientResponsibilities,
+              },
+            ].map(({ label, value, setter }) => (
+              <div
+                key={label}
+                className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden"
+              >
+                <div className="px-5 py-3.5 border-b border-[#F0EEE9]">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[#888]">
+                    {label}
+                  </p>
+                </div>
+                <textarea
+                  value={value}
+                  onChange={(e) => {
+                    setter(e.target.value);
+                    setSaved(false);
+                  }}
+                  placeholder={`Enter ${label.toLowerCase()}…`}
+                  rows={5}
+                  className="w-full px-5 py-4 text-sm text-[#111] placeholder:text-[#bbb] resize-y focus:outline-none"
+                />
+              </div>
+            ))}
           </div>
 
           {/* Sidebar */}
@@ -565,17 +623,50 @@ export default function QuoteEditor({
                 ))}
               </div>
             </div>
-
-            {initialQuote.status === "ACCEPTED" ? (
-              <ConvertToSalesOrderButton
-                projectId={projectId}
-                quoteId={initialQuote.id}
-                existingSalesOrderId={initialQuote.salesOrder?.id}
-              />
-            ) : (
-              <p className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-[#111] border border-[#E5E3DE] hover:bg-[#F7F6F3] transition-colors">
-                You can create a sales order once the quote is approved.
+            {/* Quote Type */}
+            <div className="bg-white border border-[#E5E3DE] rounded-2xl p-5">
+              <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-3">
+                Quote Type
               </p>
+              <div className="flex rounded-xl border border-[#E5E3DE] overflow-hidden text-sm font-medium">
+                <button
+                  onClick={() => {
+                    setIsDirect(false);
+                    setSaved(false);
+                  }}
+                  className={`flex-1 py-2 transition-colors ${!isDirect ? "bg-[#111] text-white" : "text-[#666] hover:bg-[#F7F6F3]"}`}
+                >
+                  Proposal
+                </button>
+                <button
+                  onClick={() => {
+                    setIsDirect(true);
+                    setSaved(false);
+                  }}
+                  className={`flex-1 py-2 transition-colors ${isDirect ? "bg-[#111] text-white" : "text-[#666] hover:bg-[#F7F6F3]"}`}
+                >
+                  Direct Sale
+                </button>
+              </div>
+            </div>
+
+            {isDirect && (
+              <div className="bg-white border border-[#E5E3DE] rounded-2xl p-5">
+                <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-3">
+                  Direct Sale Details
+                </p>
+                {initialQuote.status === "ACCEPTED" ? (
+                  <ConvertToSalesOrderButton
+                    projectId={projectId}
+                    quoteId={initialQuote.id}
+                    existingSalesOrderId={initialQuote.salesOrder?.id}
+                  />
+                ) : (
+                  <p className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-[#111] border border-[#E5E3DE] hover:bg-[#F7F6F3] transition-colors">
+                    You can create a sales order once the quote is approved.
+                  </p>
+                )}{" "}
+              </div>
             )}
 
             <button
