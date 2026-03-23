@@ -456,7 +456,7 @@ export default function BOMEditor({
               className="flex items-center gap-2 bg-[#111] text-white text-sm font-semibold px-5 py-2 rounded-xl hover:bg-[#333] disabled:opacity-40 transition-colors"
             >
               <Zap size={14} />
-              {generating ? "Generating…" : "Generate Proposal or Sales Order"}
+              {generating ? "Generating…" : "Generate Proposal, Change Order, or Sales Order"}
             </button>
           </div>
         </div>

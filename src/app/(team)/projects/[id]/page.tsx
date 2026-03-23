@@ -46,12 +46,14 @@ export default async function ProjectPage({
           include: { lines: true, vendor: { select: { name: true } } },
           orderBy: { createdAt: "desc" },
         },
+        invoices: {
+          select: { amount: true, status: true },
+        },
         milestones: { orderBy: { dueDate: "asc" } },
         quotes: {
           include: { lines: { include: { item: true, bundle: true } } },
           orderBy: { createdAt: "desc" },
         },
-        changeOrders: { orderBy: { createdAt: "desc" } },
         boms: {
           include: { lines: { include: { item: true } }, quotes: true },
           orderBy: { createdAt: "desc" },
@@ -81,11 +83,42 @@ export default async function ProjectPage({
   ]);
 
   if (!project) return notFound();
-
-  const changeOrderTotal = project.changeOrders.reduce(
-    (sum, co) => sum + co.amount,
+  const changeOrders = project.quotes.filter((q) => q.isChangeOrder);
+  const changeOrderTotal = changeOrders.reduce(
+    (sum, co) => sum + (co.total ?? 0),
     0,
   );
+
+  const contractBase = project.quotes
+    .filter((q) => q.status === "ACCEPTED" && !q.isChangeOrder)
+    .reduce((sum, q) => sum + (q.total ?? 0), 0);
+  const coTotal = project.quotes
+    .filter((q) => q.status === "ACCEPTED" && q.isChangeOrder)
+    .reduce((sum, q) => sum + (q.total ?? 0), 0);
+  const totalContract = contractBase + coTotal;
+
+  const poCost = project.purchaseOrders
+    .filter((po) => po.status !== "CANCELLED")
+    .flatMap((po) => po.lines)
+    .reduce((sum, l) => sum + l.cost * l.quantity, 0);
+
+  const shippingCost = project.shipments.reduce(
+    (sum, s) => sum + Number(s.cost ?? 0),
+    0,
+  );
+
+  const cogs = poCost + shippingCost;
+
+  const grossProfit = totalContract - cogs;
+  const marginPct =
+    totalContract > 0 ? (grossProfit / totalContract) * 100 : null;
+
+  const invoiced = project.invoices
+    .filter((i) => i.status !== "VOID")
+    .reduce((sum, i) => sum + (i.amount ?? 0), 0);
+  const collected = project.invoices
+    .filter((i) => i.status === "PAID")
+    .reduce((sum, i) => sum + (i.amount ?? 0), 0);
 
   const shipments = await prisma.shipment.findMany({
     include: {
@@ -126,6 +159,128 @@ export default async function ProjectPage({
             </div>
           )}
         </div>
+
+        {/* Financial Summary */}
+        {totalContract > 0 && (
+          <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
+            <div className="px-6 py-4 border-b border-[#F0EEE9]">
+              <h3 className="font-semibold text-sm text-[#111]">
+                Financial Summary
+              </h3>
+            </div>
+            <div className="grid grid-cols-4 divide-x divide-[#F0EEE9]">
+              {/* Contract */}
+              <div className="px-5 py-4">
+                <p className="text-xs text-[#999] uppercase tracking-widest mb-1">
+                  Contract
+                </p>
+                <p className="text-lg font-bold text-[#111]">
+                  $
+                  {contractBase.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </p>
+                {coTotal !== 0 && (
+                  <p
+                    className={`text-xs mt-0.5 font-medium ${coTotal >= 0 ? "text-green-600" : "text-red-500"}`}
+                  >
+                    {coTotal >= 0 ? "+" : ""}$
+                    {coTotal.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}{" "}
+                    COs
+                    <span className="text-[#999] font-normal ml-1">
+                      = $
+                      {totalContract.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </span>
+                  </p>
+                )}
+              </div>
+
+              {/* Cost */}
+              <div className="px-5 py-4">
+                <p className="text-xs text-[#999] uppercase tracking-widest mb-1">
+                  Cost
+                </p>
+                <p className="text-lg font-bold text-[#111]">
+                  $
+                  {cogs.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </p>
+                {shippingCost > 0 && (
+                  <p className="text-xs text-[#999] mt-0.5">
+                    incl. $
+                    {shippingCost.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}{" "}
+                    shipping
+                  </p>
+                )}
+              </div>
+
+              {/* Profit */}
+              <div className="px-5 py-4">
+                <p className="text-xs text-[#999] uppercase tracking-widest mb-1">
+                  Gross Profit
+                </p>
+                <p
+                  className={`text-lg font-bold ${grossProfit >= 0 ? "text-green-600" : "text-red-500"}`}
+                >
+                  $
+                  {grossProfit.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </p>
+                {marginPct !== null && (
+                  <p className="text-xs text-[#999] mt-0.5">
+                    {marginPct.toFixed(1)}% margin
+                  </p>
+                )}
+              </div>
+
+              {/* Invoicing */}
+              <div className="px-5 py-4">
+                <p className="text-xs text-[#999] uppercase tracking-widest mb-1">
+                  Invoiced / Collected
+                </p>
+                <p className="text-lg font-bold text-[#111]">
+                  $
+                  {invoiced.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </p>
+                <p className="text-xs text-green-600 font-medium mt-0.5">
+                  $
+                  {collected.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}{" "}
+                  collected
+                </p>
+                {invoiced > collected && (
+                  <p className="text-xs text-amber-600 font-medium">
+                    $
+                    {(invoiced - collected).toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}{" "}
+                    outstanding
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Stats Row */}
         <div className="grid grid-cols-3 gap-4">
@@ -224,7 +379,7 @@ export default async function ProjectPage({
         <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
           <div className="px-6 py-4 border-b border-[#F0EEE9] flex items-center gap-2.5">
             <FileText size={15} className="text-[#999]" />
-            <h3 className="font-semibold text-sm text-[#111]">Quotes</h3>
+            <h3 className="font-semibold text-sm text-[#111]">Proposals</h3>
             <span className="text-xs text-[#bbb]">{project.quotes.length}</span>
           </div>
           {project.quotes.length === 0 ? (
@@ -350,7 +505,8 @@ export default async function ProjectPage({
                     <div>
                       <div className="flex items-center gap-2.5">
                         <p className="text-sm font-medium text-[#111]">
-                          {po.poNumber ?? "PO"}{po.vendor ? ` · ${po.vendor.name}` : ""}
+                          {po.poNumber ?? "PO"}
+                          {po.vendor ? ` · ${po.vendor.name}` : ""}
                         </p>
                         <span
                           className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusColor}`}
@@ -383,44 +539,50 @@ export default async function ProjectPage({
               <h3 className="font-semibold text-sm text-[#111]">
                 Change Orders
               </h3>
-              <span className="text-xs text-[#bbb]">
-                {project.changeOrders.length}
-              </span>
+              <span className="text-xs text-[#bbb]">{changeOrders.length}</span>
             </div>
-            {project.changeOrders.length > 0 && (
-              <span
-                className={`text-sm font-semibold ${changeOrderTotal >= 0 ? "text-green-600" : "text-red-600"}`}
-              >
-                {changeOrderTotal >= 0 ? "+" : ""}$
-                {changeOrderTotal.toLocaleString()}
-              </span>
-            )}
           </div>
-          {project.changeOrders.length === 0 ? (
+          {changeOrders.length === 0 ? (
             <div className="px-6 py-10 text-center">
               <p className="text-sm text-[#bbb]">No change orders yet</p>
             </div>
           ) : (
             <div className="divide-y divide-[#F7F6F3]">
-              {project.changeOrders.map((co) => (
+              {changeOrders.map((co) => (
                 <div key={co.id} className="px-6 py-3.5">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-[#111]">{co.description}</p>
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-xs font-mono font-semibold text-[#111]">
+                        #{co.id.slice(0, 8).toUpperCase()}
+                      </span>
+                      <span
+                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${quoteStatusStyles[co.status]}`}
+                      >
+                        {co.status}
+                      </span>
                       <p className="text-xs text-[#999] mt-0.5">
                         {new Date(co.createdAt).toLocaleDateString()}
                       </p>
                     </div>
                     <span
-                      className={`text-sm font-semibold ${co.amount >= 0 ? "text-green-600" : "text-red-600"}`}
+                      className={`text-sm font-semibold ${co.total != null && co.total >= 0 ? "text-green-600" : "text-red-600"}`}
                     >
-                      {co.amount >= 0 ? "+" : ""}${co.amount.toLocaleString()}
+                      {co.total != null && (
+                        <span className="text-sm font-semibold text-[#111]">
+                          $
+                          {co.total.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                          })}
+                        </span>
+                      )}
                     </span>
+                    <Link
+                      href={`/projects/${project.id}/quotes/${co.id}`}
+                      className="flex items-center gap-1 text-xs font-semibold text-[#666] hover:underline"
+                    >
+                      View <ArrowRight size={11} />
+                    </Link>
                   </div>
-                  <ChangeOrderNotes
-                    changeOrderId={co.id}
-                    currentUserId={currentUserId}
-                  />
                 </div>
               ))}
             </div>
