@@ -379,7 +379,7 @@ export default async function ProjectPage({
         <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
           <div className="px-6 py-4 border-b border-[#F0EEE9] flex items-center gap-2.5">
             <FileText size={15} className="text-[#999]" />
-            <h3 className="font-semibold text-sm text-[#111]">Proposals</h3>
+            <h3 className="font-semibold text-sm text-[#111]">Documents</h3>
             <span className="text-xs text-[#bbb]">{project.quotes.length}</span>
           </div>
           {project.quotes.length === 0 ? (
@@ -390,7 +390,8 @@ export default async function ProjectPage({
             </div>
           ) : (
             <div className="divide-y divide-[#F7F6F3]">
-              {project.quotes.map((quote) => (
+              {/* filter out change orders for this section since they are surfaced separately below */}
+              {project.quotes.filter((q) => !q.isChangeOrder).map((quote) => (
                 <div key={quote.id} className="px-6 py-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -400,7 +401,7 @@ export default async function ProjectPage({
                       <span
                         className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${quoteStatusStyles[quote.status]}`}
                       >
-                        {quote.status}
+                        {quote.status} {quote.isDirect && "· Direct"} {quote.isChangeOrder && "· Change Order"} {!quote.isChangeOrder && !quote.isDirect && "· Proposal"}
                       </span>
                     </div>
                     <div className="flex items-center gap-4">

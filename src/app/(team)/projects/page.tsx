@@ -6,7 +6,9 @@ export default async function ProjectsPage() {
   const projects = await prisma.project.findMany({
     include: {
       customer: true,
-      quotes: { select: { id: true, status: true } },
+      quotes: {
+        select: { id: true, status: true, isDirect: true, isChangeOrder: true },
+      },
       boms: { select: { id: true } },
     },
     orderBy: { createdAt: "desc" },
@@ -65,9 +67,44 @@ export default async function ProjectsPage() {
                 </tr>
               ) : (
                 projects.map((project) => {
-                  const acceptedQuotes = project.quotes.filter(
-                    (q) => q.status === "ACCEPTED",
+                  const purchaseOrders = project.quotes.filter(
+                    (q) => !q.isDirect && !q.isChangeOrder,
                   ).length;
+
+                  const salesOrders = project.quotes.filter(
+                    (q) => q.isDirect && !q.isChangeOrder,
+                  ).length;
+
+                  const changeOrders = project.quotes.filter(
+                    (q) => !q.isDirect && q.isChangeOrder,
+                  ).length;
+
+                  const acceptedPurchaseOrders = purchaseOrders
+                    ? project.quotes.filter(
+                        (q) =>
+                          !q.isDirect &&
+                          !q.isChangeOrder &&
+                          q.status === "ACCEPTED",
+                      ).length
+                    : 0;
+
+                  const acceptedSalesOrders = salesOrders
+                    ? project.quotes.filter(
+                        (q) =>
+                          q.isDirect &&
+                          !q.isChangeOrder &&
+                          q.status === "ACCEPTED",
+                      ).length
+                    : 0;
+
+                    const acceptedChangeOrders = changeOrders
+                    ? project.quotes.filter(
+                        (q) =>
+                          !q.isDirect &&
+                          q.isChangeOrder &&
+                          q.status === "ACCEPTED",
+                      ).length
+                    : 0;
 
                   return (
                     <tr
@@ -110,11 +147,22 @@ export default async function ProjectsPage() {
                             <span className="text-sm text-[#666]">
                               {project.quotes.length}
                             </span>
-                            {acceptedQuotes > 0 && (
+                            {acceptedSalesOrders > 0 && (
                               <span className="text-[10px] text-green-600 font-semibold">
-                                {acceptedQuotes} accepted
+                                {acceptedSalesOrders} accepted
                               </span>
                             )}
+                            {acceptedChangeOrders > 0 && (
+                              <span className="text-[10px] text-green-600 font-semibold">
+                                {acceptedChangeOrders} accepted
+                              </span>
+                            )}  
+                               {acceptedPurchaseOrders > 0 && (
+                              <span className="text-[10px] text-green-600 font-semibold">
+                                {acceptedPurchaseOrders} accepted
+                              </span>
+                            )}  
+                            
                           </div>
                         ) : (
                           <span className="text-[#ccc] text-sm">—</span>
