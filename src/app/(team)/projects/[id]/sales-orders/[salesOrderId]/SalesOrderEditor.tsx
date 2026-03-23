@@ -399,7 +399,7 @@ function SOLineRow({
             onChange={(e) =>
               onUpdate({ price: parseFloat(e.target.value) || 0 } as any)
             }
-            className="w-20 text-right text-sm border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111]"
+            className="w-30 text-right text-sm border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111]"
           />
         </div>
       </td>

@@ -197,7 +197,7 @@ export default function VendorItemPricesClient({
                 />
               </div>
             </div>
-            <div>
+            {/* <div>
               <label className="text-xs font-semibold text-[#888] uppercase tracking-widest block mb-1">Lead Time (days)</label>
               <input
                 type="number"
@@ -207,7 +207,7 @@ export default function VendorItemPricesClient({
                 placeholder="—"
                 className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111]"
               />
-            </div>
+            </div> */}
             <div>
               <label className="text-xs font-semibold text-[#888] uppercase tracking-widest block mb-1">Notes</label>
               <input
@@ -248,7 +248,7 @@ export default function VendorItemPricesClient({
             <tr className="border-b border-[#F0EEE9] bg-[#FAFAF8]">
               <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-6 py-3">Item</th>
               <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-4 py-3 w-28">Cost</th>
-              <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-4 py-3 w-28">Lead Time</th>
+              {/* <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-4 py-3 w-28">Lead Time</th> */}
               <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-4 py-3">Notes</th>
               <th className="w-20" />
             </tr>
@@ -280,7 +280,7 @@ export default function VendorItemPricesClient({
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  {/* <td className="px-4 py-3 text-right">
                     {isEditing ? (
                       <input
                         type="number"
@@ -288,12 +288,12 @@ export default function VendorItemPricesClient({
                         value={editLeadTime}
                         onChange={(e) => setEditLeadTime(e.target.value)}
                         placeholder="—"
-                        className="w-20 text-right text-sm border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111]"
+                        className="w-30 text-right text-sm border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111]"
                       />
                     ) : (
                       <span className="text-[#666]">{p.leadTimeDays != null ? `${p.leadTimeDays}d` : "—"}</span>
                     )}
-                  </td>
+                  </td> */}
                   <td className="px-4 py-3">
                     {isEditing ? (
                       <input

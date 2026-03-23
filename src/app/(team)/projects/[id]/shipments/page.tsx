@@ -110,6 +110,9 @@ export default async function ProjectShipmentsPage({
                   <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">
                     Qty
                   </th>
+                  <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">
+                    Cost
+                  </th>
                   <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-5 py-3">
                     Status
                   </th>
@@ -195,6 +198,9 @@ export default async function ProjectShipmentsPage({
                       </td>
                       <td className="px-3 py-3.5 text-right text-sm font-semibold text-[#111]">
                         {s.quantity}
+                      </td>
+                      <td className="px-3 py-3.5 text-right text-sm text-[#111]">
+                        {s.cost != null ? `$${Number(s.cost).toFixed(2)}` : <span className="text-[#bbb]">—</span>}
                       </td>
                       <td className="px-5 py-3.5">
                         {s.receivedAt ? (

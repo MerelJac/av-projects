@@ -38,6 +38,10 @@ export default async function POPage({
   const poSerialized = {
     ...po,
     creditLimit: po.creditLimit != null ? Number(po.creditLimit) : null,
+    shipments: po.shipments.map((s) => ({
+      ...s,
+      cost: s.cost != null ? Number(s.cost) : null,
+    })),
   };
 
   return <POEditor po={poSerialized} projectId={id} users={users} />;

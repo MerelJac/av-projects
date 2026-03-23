@@ -5,7 +5,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string; poId: string }> }
 ) {
   const { id, poId } = await params;
-  const { tracking, carrier, quantity, lineIds } = await req.json();
+  const { tracking, carrier, quantity, lineIds, cost } = await req.json();
 
   const po = await prisma.purchaseOrder.findUnique({
     where: { id: poId },
@@ -22,6 +22,7 @@ export async function POST(
       tracking,
       carrier: carrier ?? null,
       quantity,
+      cost: cost != null ? cost : null,
       receivedQuantity: 0,
       lines: {
         create: selectedLines.map((l) => ({

@@ -30,6 +30,7 @@ type Shipment = {
   tracking: string | null;
   carrier: string | null;
   quantity: number;
+  cost: number | null;
   receivedQuantity: number;
   receivedAt: Date | null;
   createdAt: Date;
@@ -89,6 +90,7 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
   const [tracking, setTracking] = useState("");
   const [carrier, setCarrier] = useState("");
   const [shipmentLineIds, setShipmentLineIds] = useState<Set<string>>(new Set());
+  const [shipmentCost, setShipmentCost] = useState("");
   const [addingShipment, setAddingShipment] = useState(false);
 
   // Inline line editing
@@ -297,6 +299,7 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
             carrier: carrier.trim() || null,
             quantity: totalQty,
             lineIds: [...shipmentLineIds],
+            cost: shipmentCost.trim() !== "" ? parseFloat(shipmentCost) : null,
           }),
         },
       );
@@ -306,6 +309,7 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
       setTracking("");
       setCarrier("");
       setShipmentLineIds(new Set());
+      setShipmentCost("");
       setShowShipmentForm(false);
       showToast("success", "Shipment added");
       router.refresh();
@@ -870,7 +874,7 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
 
             {showShipmentForm && (
               <div className="px-6 py-5 border-b border-[#F0EEE9] bg-[#FAFAF8] space-y-4">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   <div>
                     <label className="text-xs font-semibold text-[#888] uppercase tracking-widest block mb-1.5">Tracking #</label>
                     <input
@@ -891,6 +895,21 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
                       className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111]"
                     />
                   </div>
+                  <div>
+                    <label className="text-xs font-semibold text-[#888] uppercase tracking-widest block mb-1.5">Shipping Cost</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#999]">$</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={shipmentCost}
+                        onChange={(e) => setShipmentCost(e.target.value)}
+                        placeholder="0.00"
+                        className="w-full text-sm border border-[#E5E3DE] rounded-xl pl-6 pr-3 py-2 focus:outline-none focus:border-[#111]"
+                      />
+                    </div>
+                  </div>
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-[#888] uppercase tracking-widest block mb-2">
@@ -898,29 +917,30 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
                   </label>
                   <div className="space-y-1">
                     {lines.map((line) => (
-                      <button
-                        key={line.id}
-                        onClick={() =>
-                          setShipmentLineIds((prev) => {
-                            const next = new Set(prev);
-                            next.has(line.id) ? next.delete(line.id) : next.add(line.id);
-                            return next;
-                          })
-                        }
-                        className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white transition-colors text-left"
-                      >
-                        <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border transition-colors ${
-                          shipmentLineIds.has(line.id) ? "bg-[#111] border-[#111]" : "border-[#D0CEC8] bg-white"
-                        }`}>
-                          {shipmentLineIds.has(line.id) && (
-                            <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
-                              <polyline points="1,3.5 3.5,6 8,1" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          )}
-                        </div>
-                        <span className="text-sm text-[#111]">{line.item?.itemNumber ?? "—"}</span>
-                        <span className="text-xs text-[#999]">qty {line.quantity}</span>
-                      </button>
+                      <div key={line.id} className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-white transition-colors">
+                        <button
+                          onClick={() =>
+                            setShipmentLineIds((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(line.id)) { next.delete(line.id); } else { next.add(line.id); }
+                              return next;
+                            })
+                          }
+                          className="flex items-center gap-3 flex-1 text-left"
+                        >
+                          <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border transition-colors ${
+                            shipmentLineIds.has(line.id) ? "bg-[#111] border-[#111]" : "border-[#D0CEC8] bg-white"
+                          }`}>
+                            {shipmentLineIds.has(line.id) && (
+                              <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
+                                <polyline points="1,3.5 3.5,6 8,1" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            )}
+                          </div>
+                          <span className="text-sm text-[#111]">{line.item?.itemNumber ?? "—"}</span>
+                          <span className="text-xs text-[#999]">qty {line.quantity}</span>
+                        </button>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -934,7 +954,7 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
                     {addingShipment ? "Adding…" : "Add Shipment"}
                   </button>
                   <button
-                    onClick={() => { setShowShipmentForm(false); setTracking(""); setCarrier(""); setShipmentLineIds(new Set()); }}
+                    onClick={() => { setShowShipmentForm(false); setTracking(""); setCarrier(""); setShipmentLineIds(new Set()); setShipmentCost(""); }}
                     className="text-sm text-[#999] hover:text-[#111] transition-colors"
                   >
                     Cancel

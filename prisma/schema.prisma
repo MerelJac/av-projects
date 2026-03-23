@@ -599,6 +599,7 @@ model Shipment {
   tracking         String?
   shippedBy        String?
   notes            String?
+  cost             Decimal?       @db.Decimal(10, 2)
   receivedAt       DateTime?
   createdAt        DateTime       @default(now())
   lines            ShipmentLine[]

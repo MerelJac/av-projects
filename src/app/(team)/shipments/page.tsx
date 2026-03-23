@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import Link from "next/link";
 import { Truck, CheckCircle2, Clock } from "lucide-react";
 import AllShipments from "@/app/components/shipments/AllShipments";
 
