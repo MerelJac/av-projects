@@ -47,7 +47,7 @@ export default async function ProjectsPage() {
                   BOMs
                 </th>
                 <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">
-                  Quotes
+                  Documents
                 </th>
                 <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-5 py-3">
                   Budget
@@ -67,7 +67,7 @@ export default async function ProjectsPage() {
                 </tr>
               ) : (
                 projects.map((project) => {
-                  const purchaseOrders = project.quotes.filter(
+                  const proposals = project.quotes.filter(
                     (q) => !q.isDirect && !q.isChangeOrder,
                   ).length;
 
@@ -79,7 +79,7 @@ export default async function ProjectsPage() {
                     (q) => !q.isDirect && q.isChangeOrder,
                   ).length;
 
-                  const acceptedPurchaseOrders = purchaseOrders
+                  const acceptedProposals = proposals
                     ? project.quotes.filter(
                         (q) =>
                           !q.isDirect &&
@@ -97,7 +97,7 @@ export default async function ProjectsPage() {
                       ).length
                     : 0;
 
-                    const acceptedChangeOrders = changeOrders
+                  const acceptedChangeOrders = changeOrders
                     ? project.quotes.filter(
                         (q) =>
                           !q.isDirect &&
@@ -143,26 +143,41 @@ export default async function ProjectsPage() {
                       </td>
                       <td className="px-3 py-3.5 text-right">
                         {project.quotes.length > 0 ? (
-                          <div className="flex flex-col items-end gap-0.5">
-                            <span className="text-sm text-[#666]">
-                              {project.quotes.length}
-                            </span>
-                            {acceptedSalesOrders > 0 && (
-                              <span className="text-[10px] text-green-600 font-semibold">
-                                {acceptedSalesOrders} accepted
-                              </span>
-                            )}
-                            {acceptedChangeOrders > 0 && (
-                              <span className="text-[10px] text-green-600 font-semibold">
-                                {acceptedChangeOrders} accepted
-                              </span>
-                            )}  
-                               {acceptedPurchaseOrders > 0 && (
-                              <span className="text-[10px] text-green-600 font-semibold">
-                                {acceptedPurchaseOrders} accepted
-                              </span>
-                            )}  
-                            
+                          <div className="flex flex-col items-end gap-1.5">
+                            <div className="flex flex-col items-center gap-1.5">
+                              {[
+                                {
+                                  count: proposals,
+                                  accepted: acceptedProposals,
+                                  label: "Proposal",
+                                },
+                                {
+                                  count: salesOrders,
+                                  accepted: acceptedSalesOrders,
+                                  label: "Sales Order",
+                                },
+                                {
+                                  count: changeOrders,
+                                  accepted: acceptedChangeOrders,
+                                  label: "Change Order",
+                                },
+                              ].map(({ count, accepted, label }) => (
+                                <span
+                                  key={label}
+                                  className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                                    accepted > 0
+                                      ? "bg-green-50 text-green-700"
+                                      : "bg-[#F0EEE9] text-[#666]"
+                                  }`}
+                                >
+                                  {count} {label}
+                                  {count !== 1 && "s"}
+                                  {accepted > 0 && (
+                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
+                                  )}
+                                </span>
+                              ))}
+                            </div>
                           </div>
                         ) : (
                           <span className="text-[#ccc] text-sm">—</span>

@@ -319,6 +319,19 @@ export default async function ProjectPage({
               <p className="text-xs text-[#999]">Purchase Orders</p>
             </Link>
           </div>
+          <div className="bg-white border border-[#E5E3DE] rounded-2xl p-5 flex items-center gap-4 hover:border-[#111] hover:shadow-sm hover:bg-[#FAFAF9] transition-all duration-150">
+            <div className="w-10 h-10 rounded-xl bg-[#F0EEE9] flex items-center justify-center flex-shrink-0">
+              <ShoppingCart size={16} className="text-[#666]" />
+            </div>
+            <Link href={`/projects/${project.id}/purchase-orders`}>
+              <p className="text-2xl font-bold text-[#111]">
+               {project.total.length}
+              </p>
+              <p className="text-xs text-[#999]">Project Budget</p>
+              <p className="text-xs text-[#999]">Sum of approved Proposals</p>
+            </Link>
+          </div>
+
         </div>
 
         {/* BOMs */}
