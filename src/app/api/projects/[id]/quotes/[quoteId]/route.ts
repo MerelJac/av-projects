@@ -7,7 +7,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string; quoteId: string }> },
 ) {
   const { id, quoteId } = await params;
-  const { lines, bundles, status, isDirect, scopeOfWork, termsAndConditions, clientResponsibilities } = await req.json();
+  const { lines, bundles, status, isDirect, isChangeOrder, scopeOfWork, termsAndConditions, clientResponsibilities } = await req.json();
 
   console.log("=== QUOTE SAVE START ===");
   console.log("quoteId:", quoteId, "projectId:", id);
@@ -158,6 +158,7 @@ export async function PUT(
         status,
         total,
         isDirect: isDirect ?? false,
+        isChangeOrder: isChangeOrder ?? false,
         scopeOfWork: scopeOfWork ?? null,
         termsAndConditions: termsAndConditions ?? null,
         clientResponsibilities: clientResponsibilities ?? null,

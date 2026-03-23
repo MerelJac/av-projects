@@ -27,6 +27,7 @@ export type QuoteWithDetails = Prisma.QuoteGetPayload<{
   };
 }> & {
   isDirect: boolean;
+  isChangeOrder: boolean;
   scopeOfWork: string | null;
   termsAndConditions: string | null;
   clientResponsibilities: string | null;

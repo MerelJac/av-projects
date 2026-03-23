@@ -115,6 +115,7 @@ export function buildQuotePDF({
   quoteNumber,
   customerName,
   isDirect,
+  isChangeOrder,
   lines,
   bundles,
   createdAt,
@@ -126,6 +127,7 @@ export function buildQuotePDF({
   quoteNumber: string;
   customerName: string;
   isDirect?: boolean;
+  isChangeOrder?: boolean;
   lines: Line[];
   bundles: Bundle[];
   createdAt: Date;
@@ -153,7 +155,7 @@ export function buildQuotePDF({
             <Text style={styles.companyTagline}>Audio Visual Solutions</Text>
           </View>
           <View>
-            <Text style={styles.quoteLabel}>{isDirect ? "DIRECT SALE" : "PROPOSAL"}</Text>
+            <Text style={styles.quoteLabel}>{isChangeOrder ? "CHANGE ORDER" : isDirect ? "DIRECT SALE" : "PROPOSAL"}</Text>
             <Text style={styles.quoteNumber}>#{quoteNumber}</Text>
             <Text style={[styles.quoteLabel, { marginTop: 4 }]}>
               {new Date(createdAt).toLocaleDateString("en-US", {

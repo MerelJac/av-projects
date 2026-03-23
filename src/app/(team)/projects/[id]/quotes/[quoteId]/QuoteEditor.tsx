@@ -93,6 +93,7 @@ export default function QuoteEditor({
   );
   const [savingDeposit, setSavingDeposit] = useState(false);
   const [isDirect, setIsDirect] = useState(initialQuote.isDirect ?? false);
+  const [isChangeOrder, setIsChangeOrder] = useState(initialQuote.isChangeOrder ?? false);
   const [scopeOfWork, setScopeOfWork] = useState(
     initialQuote.scopeOfWork ?? "",
   );
@@ -217,6 +218,7 @@ export default function QuoteEditor({
             bundles,
             status,
             isDirect,
+            isChangeOrder,
             scopeOfWork: scopeOfWork || null,
             termsAndConditions: termsAndConditions || null,
             clientResponsibilities: clientResponsibilities || null,
@@ -628,25 +630,20 @@ export default function QuoteEditor({
               <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-3">
                 Quote Type
               </p>
-              <div className="flex rounded-xl border border-[#E5E3DE] overflow-hidden text-sm font-medium">
-                <button
-                  onClick={() => {
-                    setIsDirect(false);
-                    setSaved(false);
-                  }}
-                  className={`flex-1 py-2 transition-colors ${!isDirect ? "bg-[#111] text-white" : "text-[#666] hover:bg-[#F7F6F3]"}`}
-                >
-                  Proposal
-                </button>
-                <button
-                  onClick={() => {
-                    setIsDirect(true);
-                    setSaved(false);
-                  }}
-                  className={`flex-1 py-2 transition-colors ${isDirect ? "bg-[#111] text-white" : "text-[#666] hover:bg-[#F7F6F3]"}`}
-                >
-                  Direct Sale
-                </button>
+              <div className="flex flex-col gap-1.5">
+                {[
+                  { label: "Proposal", active: !isDirect && !isChangeOrder, onClick: () => { setIsDirect(false); setIsChangeOrder(false); setSaved(false); } },
+                  { label: "Direct Sale", active: isDirect && !isChangeOrder, onClick: () => { setIsDirect(true); setIsChangeOrder(false); setSaved(false); } },
+                  { label: "Change Order", active: isChangeOrder, onClick: () => { setIsChangeOrder(true); setIsDirect(false); setSaved(false); } },
+                ].map(({ label, active, onClick }) => (
+                  <button
+                    key={label}
+                    onClick={onClick}
+                    className={`w-full py-2 px-3 rounded-xl text-sm font-medium text-left transition-colors border ${active ? "bg-[#111] text-white border-[#111]" : "text-[#666] border-[#E5E3DE] hover:bg-[#F7F6F3]"}`}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -828,10 +825,9 @@ function LineRow({
         <td className="px-3 py-3 text-right">
           <input
             type="number"
-            min={1}
             value={line.quantity}
             onChange={(e) =>
-              onUpdate({ quantity: parseInt(e.target.value) || 1 })
+              onUpdate({ quantity: parseInt(e.target.value) || 0 })
             }
             className="w-14 text-right text-sm border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111]"
           />

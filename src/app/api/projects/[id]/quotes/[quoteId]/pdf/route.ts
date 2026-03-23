@@ -25,6 +25,7 @@ export async function GET(
       quoteNumber: quote.id.slice(0, 8).toUpperCase(),
       customerName: quote.customer.name,
       isDirect: quote.isDirect,
+      isChangeOrder: quote.isChangeOrder,
       lines: quote.lines.map((l) => ({
         id: l.id,
         description: l.description,
