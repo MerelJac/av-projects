@@ -96,7 +96,7 @@ export function buildPOPDF({
   shipToAddress,
   billToAddress,
   shippingMethod,
-  paymentTerms,
+  billingTerms,
   buyerName,
   vendorId,
   lines,
@@ -108,7 +108,7 @@ export function buildPOPDF({
   shipToAddress: string | null;
   billToAddress: string | null;
   shippingMethod: string | null;
-  paymentTerms: string | null;
+  billingTerms: string | null;
   buyerName: string | null;
   vendorId: string;
   lines: POLine[];
@@ -178,10 +178,10 @@ export function buildPOPDF({
               <Text style={styles.infoValue}>{buyerName}</Text>
             </View>
           ) : null}
-          {paymentTerms ? (
+          {billingTerms ? (
             <View style={styles.infoCell}>
-              <Text style={styles.infoLabel}>Terms</Text>
-              <Text style={styles.infoValue}>{paymentTerms}</Text>
+              <Text style={styles.infoLabel}>Billing Terms</Text>
+              <Text style={styles.infoValue}>{billingTerms}</Text>
             </View>
           ) : null}
           <View style={styles.infoCell}>

@@ -8,7 +8,7 @@ type VendorDefaults = {
   shipToAddress: string | null;
   billToAddress: string | null;
   shippingMethod: string | null;
-  paymentTerms: string | null;
+  billingTerms: "NET30" | "PROGRESS" | "PREPAID" | null;
   creditLimit: number | null;
   defaultBuyerId: string | null;
 };
@@ -30,7 +30,7 @@ export default function VendorDefaultsClient({
     shipToAddress: defaults.shipToAddress ?? "",
     billToAddress: defaults.billToAddress ?? "",
     shippingMethod: defaults.shippingMethod ?? "",
-    paymentTerms: defaults.paymentTerms ?? "",
+    billingTerms: defaults.billingTerms ?? "",
     creditLimit: defaults.creditLimit != null ? String(defaults.creditLimit) : "",
     defaultBuyerId: defaults.defaultBuyerId ?? "",
   });
@@ -50,7 +50,7 @@ export default function VendorDefaultsClient({
           shipToAddress: form.shipToAddress || null,
           billToAddress: form.billToAddress || null,
           shippingMethod: form.shippingMethod || null,
-          paymentTerms: form.paymentTerms || null,
+          billingTerms: form.billingTerms || null,
           creditLimit: form.creditLimit ? parseFloat(form.creditLimit) : null,
           defaultBuyerId: form.defaultBuyerId || null,
         }),
@@ -138,13 +138,17 @@ export default function VendorDefaultsClient({
                 placeholder="e.g. UPS Ground"
               />
             </Field>
-            <Field label="Payment Terms">
-              <input
-                className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#111]"
-                value={form.paymentTerms}
-                onChange={(e) => setForm((f) => ({ ...f, paymentTerms: e.target.value }))}
-                placeholder="e.g. Net 30"
-              />
+            <Field label="Billing Terms">
+              <select
+                className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#111] bg-white"
+                value={form.billingTerms}
+                onChange={(e) => setForm((f) => ({ ...f, billingTerms: e.target.value }))}
+              >
+                <option value="">— None —</option>
+                <option value="NET30">Net 30</option>
+                <option value="PROGRESS">Progress Billing</option>
+                <option value="PREPAID">Prepaid</option>
+              </select>
             </Field>
             <Field label="Credit Limit">
               <input
@@ -175,7 +179,7 @@ export default function VendorDefaultsClient({
             <ReadField label="Ship-To Address" value={form.shipToAddress || null} multiline />
             <ReadField label="Bill-To Address" value={form.billToAddress || null} multiline />
             <ReadField label="Shipping Method" value={form.shippingMethod || null} />
-            <ReadField label="Payment Terms" value={form.paymentTerms || null} />
+            <ReadField label="Billing Terms" value={{ NET30: "Net 30", PROGRESS: "Progress Billing", PREPAID: "Prepaid" }[form.billingTerms] ?? null} />
             <ReadField
               label="Credit Limit"
               value={form.creditLimit ? `$${parseFloat(form.creditLimit).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : null}

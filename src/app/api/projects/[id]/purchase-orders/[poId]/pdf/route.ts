@@ -34,7 +34,7 @@ export async function GET(
       shipToAddress: po.shipToAddress,
       billToAddress: po.billToAddress,
       shippingMethod: po.shippingMethod,
-      paymentTerms: po.paymentTerms,
+      billingTerms: po.billingTerms,
       buyerName,
       vendorId: po.vendor?.id?.slice(0, 8).toUpperCase() ?? "—",
       lines: po.lines.map((l) => ({

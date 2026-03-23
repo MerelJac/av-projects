@@ -28,7 +28,7 @@ export async function POST(
     customerPhone,
     billToAddress,
     shipToAddress,
-    paymentTerms,
+    billingTerms,
     notes,
     dueDate,
   } = body;
@@ -85,7 +85,7 @@ export async function POST(
         customerPhone: customerPhone ?? null,
         billToAddress: billToAddress ?? null,
         shipToAddress: shipToAddress ?? null,
-        paymentTerms: paymentTerms ?? null,
+        billingTerms: billingTerms ?? null,
         notes: notes ?? null,
         dueDate: dueDate ? new Date(dueDate) : null,
         lines:

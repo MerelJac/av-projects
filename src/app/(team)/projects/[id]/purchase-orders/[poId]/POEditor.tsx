@@ -56,7 +56,7 @@ type PO = {
   shipToAddress: string | null;
   billToAddress: string | null;
   shippingMethod: string | null;
-  paymentTerms: string | null;
+  billingTerms: "NET30" | "PROGRESS" | "PREPAID" | null;
   creditLimit: number | null;
   buyerId: string | null;
   buyer: { id: string; profile: { firstName: string; lastName: string } | null } | null;
@@ -109,7 +109,7 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
     shipToAddress: po.shipToAddress ?? "",
     billToAddress: po.billToAddress ?? "",
     shippingMethod: po.shippingMethod ?? "",
-    paymentTerms: po.paymentTerms ?? "",
+    billingTerms: po.billingTerms ?? "",
     creditLimit: po.creditLimit != null ? String(po.creditLimit) : "",
     buyerId: po.buyerId ?? "",
   });
@@ -124,7 +124,7 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
           shipToAddress: infoForm.shipToAddress || null,
           billToAddress: infoForm.billToAddress || null,
           shippingMethod: infoForm.shippingMethod || null,
-          paymentTerms: infoForm.paymentTerms || null,
+          billingTerms: infoForm.billingTerms || null,
           creditLimit: infoForm.creditLimit ? parseFloat(infoForm.creditLimit) : null,
           buyerId: infoForm.buyerId || null,
         }),
@@ -536,13 +536,17 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1.5">Payment Terms</label>
-                  <input
-                    className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#111]"
-                    value={infoForm.paymentTerms}
-                    onChange={(e) => setInfoForm((f) => ({ ...f, paymentTerms: e.target.value }))}
-                    placeholder="e.g. Net 30"
-                  />
+                  <label className="block text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1.5">Billing Terms</label>
+                  <select
+                    className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#111] bg-white"
+                    value={infoForm.billingTerms}
+                    onChange={(e) => setInfoForm((f) => ({ ...f, billingTerms: e.target.value }))}
+                  >
+                    <option value="">— None —</option>
+                    <option value="NET30">Net 30</option>
+                    <option value="PROGRESS">Progress Billing</option>
+                    <option value="PREPAID">Prepaid</option>
+                  </select>
                 </div>
                 <div>
                   <label className="block text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1.5">Credit Limit</label>
@@ -589,8 +593,8 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
                   <p className="text-sm text-[#111]">{infoForm.shippingMethod || "—"}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">Payment Terms</p>
-                  <p className="text-sm text-[#111]">{infoForm.paymentTerms || "—"}</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">Billing Terms</p>
+                  <p className="text-sm text-[#111]">{{ NET30: "Net 30", PROGRESS: "Progress Billing", PREPAID: "Prepaid" }[infoForm.billingTerms] ?? "—"}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">Credit Limit</p>

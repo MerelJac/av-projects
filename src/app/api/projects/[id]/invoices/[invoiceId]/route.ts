@@ -38,7 +38,7 @@ export async function PATCH(
   if (body.customerPhone !== undefined) data.customerPhone = body.customerPhone;
   if (body.billToAddress !== undefined) data.billToAddress = body.billToAddress;
   if (body.shipToAddress !== undefined) data.shipToAddress = body.shipToAddress;
-  if (body.paymentTerms !== undefined) data.paymentTerms = body.paymentTerms;
+  if (body.billingTerms !== undefined) data.billingTerms = body.billingTerms;
   if (body.notes !== undefined) data.notes = body.notes;
   if (body.dueDate !== undefined) data.dueDate = body.dueDate ? new Date(body.dueDate) : null;
   if (body.issuedAt !== undefined) data.issuedAt = body.issuedAt ? new Date(body.issuedAt) : null;

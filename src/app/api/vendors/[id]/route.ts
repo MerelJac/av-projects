@@ -25,7 +25,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const { name, email, phone, notes, active, shipToAddress, billToAddress, shippingMethod, paymentTerms, creditLimit, defaultBuyerId } = await req.json();
+  const { name, email, phone, notes, active, shipToAddress, billToAddress, shippingMethod, billingTerms, creditLimit, defaultBuyerId } = await req.json();
   const vendor = await prisma.vendor.update({
     where: { id },
     data: {
@@ -37,7 +37,7 @@ export async function PATCH(
       ...(shipToAddress !== undefined && { shipToAddress: shipToAddress?.trim() || null }),
       ...(billToAddress !== undefined && { billToAddress: billToAddress?.trim() || null }),
       ...(shippingMethod !== undefined && { shippingMethod: shippingMethod?.trim() || null }),
-      ...(paymentTerms !== undefined && { paymentTerms: paymentTerms?.trim() || null }),
+      ...(billingTerms !== undefined && { billingTerms: billingTerms?.trim() || null }),
       ...(creditLimit !== undefined && { creditLimit: creditLimit !== null ? creditLimit : null }),
       ...(defaultBuyerId !== undefined && { defaultBuyerId: defaultBuyerId || null }),
     },

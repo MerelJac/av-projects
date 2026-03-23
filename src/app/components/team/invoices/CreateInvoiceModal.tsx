@@ -49,7 +49,7 @@ export default function CreateInvoiceModal({
   const [customerEmail, setCustomerEmail] = useState(customer.email ?? "");
   const [customerPhone, setCustomerPhone] = useState(customer.phone ?? "");
   const [billToAddress, setBillToAddress] = useState("");
-  const [paymentTerms, setPaymentTerms] = useState("");
+  const [billingTerms, setBillingTerms] = useState<"NET30" | "PROGRESS" | "PREPAID" | "">("");
   const [notes, setNotes] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [saving, setSaving] = useState(false);
@@ -162,7 +162,7 @@ export default function CreateInvoiceModal({
           customerEmail: customerEmail || null,
           customerPhone: customerPhone || null,
           billToAddress: billToAddress || null,
-          paymentTerms: paymentTerms || null,
+          billingTerms: billingTerms || null,
           notes: notes || null,
           dueDate: dueDate || null,
         }),
@@ -398,15 +398,18 @@ export default function CreateInvoiceModal({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-semibold uppercase tracking-widest text-[#888] block mb-1.5">
-                Payment Terms
+                Billing Terms
               </label>
-              <input
-                type="text"
-                placeholder="e.g. Net 30"
-                value={paymentTerms}
-                onChange={(e) => setPaymentTerms(e.target.value)}
-                className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111]"
-              />
+              <select
+                value={billingTerms}
+                onChange={(e) => setBillingTerms(e.target.value as "NET30" | "PROGRESS" | "PREPAID" | "")}
+                className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111] bg-white"
+              >
+                <option value="">— None —</option>
+                <option value="NET30">Net 30</option>
+                <option value="PROGRESS">Progress Billing</option>
+                <option value="PREPAID">Prepaid</option>
+              </select>
             </div>
             <div>
               <label className="text-xs font-semibold uppercase tracking-widest text-[#888] block mb-1.5">

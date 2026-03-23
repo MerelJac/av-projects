@@ -60,7 +60,7 @@ model Invoice {
   customerPhone String?
   billToAddress String?
   shipToAddress String?
-  paymentTerms  String?
+  billingTerms  BillingTerms?
 
   notes    String?
   issuedAt DateTime?
@@ -294,7 +294,7 @@ model Project {
   customerId String
   customer   Customer @relation(fields: [customerId], references: [id])
 
-  billingTerms BillingTerms? // ← ADD THIS
+  billingTerms BillingTerms?
 
   totalBudget Float?
   invoiced    Float?
@@ -486,7 +486,7 @@ model PurchaseOrder {
   shipToAddress  String?
   billToAddress  String?
   shippingMethod String?
-  paymentTerms   String?
+  billingTerms   BillingTerms?
   creditLimit    Decimal?            @db.Decimal(10, 2)
   buyerId        String?
   buyer          User?               @relation("POBuyer", fields: [buyerId], references: [id])
@@ -524,22 +524,22 @@ model SalesOrderLine {
 }
 
 model Vendor {
-  id             String   @id @default(uuid())
+  id             String        @id @default(uuid())
   name           String
   email          String?
   phone          String?
   notes          String?
-  active         Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  active         Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
   // Default fields — copied to PO at creation, editable per PO
   shipToAddress  String?
   billToAddress  String?
   shippingMethod String?
-  paymentTerms   String?
-  creditLimit    Decimal? @db.Decimal(10, 2)
+  billingTerms   BillingTerms?
+  creditLimit    Decimal?      @db.Decimal(10, 2)
   defaultBuyerId String?
-  defaultBuyer   User?    @relation("VendorDefaultBuyer", fields: [defaultBuyerId], references: [id])
+  defaultBuyer   User?         @relation("VendorDefaultBuyer", fields: [defaultBuyerId], references: [id])
 
   purchaseOrders    PurchaseOrder[]
   itemPrices        VendorItemPrice[]

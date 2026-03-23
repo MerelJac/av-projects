@@ -19,7 +19,7 @@ export async function POST(
       shipToAddress: true,
       billToAddress: true,
       shippingMethod: true,
-      paymentTerms: true,
+      billingTerms: true,
       creditLimit: true,
       defaultBuyerId: true,
     },
@@ -51,7 +51,7 @@ export async function POST(
         shipToAddress: vendor.shipToAddress,
         billToAddress: vendor.billToAddress,
         shippingMethod: vendor.shippingMethod,
-        paymentTerms: vendor.paymentTerms,
+        billingTerms: vendor.billingTerms,
         creditLimit: vendor.creditLimit,
         buyerId: vendor.defaultBuyerId,
         lines: {

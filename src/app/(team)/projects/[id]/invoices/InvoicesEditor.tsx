@@ -36,7 +36,7 @@ type Invoice = {
   customerEmail: string | null;
   customerPhone: string | null;
   billToAddress: string | null;
-  paymentTerms: string | null;
+  billingTerms: "NET30" | "PROGRESS" | "PREPAID" | null;
   notes: string | null;
   issuedAt: Date | null;
   dueDate: Date | null;
@@ -305,10 +305,10 @@ export default function InvoicesEditor({
                       <p className="text-xs text-[#999] mb-0.5">Paid</p>
                       <p className="font-medium text-[#111]">{formatDate(selected.paidAt)}</p>
                     </div>
-                    {selected.paymentTerms && (
+                    {selected.billingTerms && (
                       <div>
                         <p className="text-xs text-[#999] mb-0.5">Terms</p>
-                        <p className="font-medium text-[#111]">{selected.paymentTerms}</p>
+                        <p className="font-medium text-[#111]">{{ NET30: "Net 30", PROGRESS: "Progress Billing", PREPAID: "Prepaid" }[selected.billingTerms]}</p>
                       </div>
                     )}
                     {selected.chargeType === "PERCENTAGE" && selected.chargePercent && (

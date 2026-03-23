@@ -24,7 +24,7 @@ export async function PATCH(
 ) {
   const { poId } = await params;
   const body = await req.json();
-  const { status, notes, vendorId, lines, resend, shipToAddress, billToAddress, shippingMethod, paymentTerms, creditLimit, buyerId } = body;
+  const { status, notes, vendorId, lines, resend, shipToAddress, billToAddress, shippingMethod, billingTerms, creditLimit, buyerId } = body;
 
   // resend=true: bump revision, set sentAt, force status=SENT
   if (resend) {
@@ -101,7 +101,7 @@ export async function PATCH(
       ...(shipToAddress !== undefined && { shipToAddress: shipToAddress ?? null }),
       ...(billToAddress !== undefined && { billToAddress: billToAddress ?? null }),
       ...(shippingMethod !== undefined && { shippingMethod: shippingMethod ?? null }),
-      ...(paymentTerms !== undefined && { paymentTerms: paymentTerms ?? null }),
+      ...(billingTerms !== undefined && { billingTerms: billingTerms ?? null }),
       ...(creditLimit !== undefined && { creditLimit: creditLimit ?? null }),
       ...(buyerId !== undefined && { buyerId: buyerId ?? null }),
     },

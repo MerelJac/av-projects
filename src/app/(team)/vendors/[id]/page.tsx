@@ -70,7 +70,7 @@ export default async function VendorDetailPage({
             shipToAddress: vendor.shipToAddress,
             billToAddress: vendor.billToAddress,
             shippingMethod: vendor.shippingMethod,
-            paymentTerms: vendor.paymentTerms,
+            billingTerms: vendor.billingTerms,
             creditLimit: vendor.creditLimit ? Number(vendor.creditLimit) : null,
             defaultBuyerId: vendor.defaultBuyerId,
           }}
