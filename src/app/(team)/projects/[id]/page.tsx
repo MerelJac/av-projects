@@ -12,6 +12,7 @@ import {
   ShoppingCart,
   Plus,
   ArrowRight,
+  Receipt,
 } from "lucide-react";
 import ChangeOrderNotes from "@/app/components/ChangeOrderNotes";
 import AllShipments from "@/app/components/shipments/AllShipments";
@@ -47,7 +48,8 @@ export default async function ProjectPage({
           orderBy: { createdAt: "desc" },
         },
         invoices: {
-          select: { amount: true, status: true },
+          select: { id: true, invoiceNumber: true, amount: true, status: true, createdAt: true },
+          orderBy: { createdAt: "desc" },
         },
         milestones: { orderBy: { dueDate: "asc" } },
         quotes: {
@@ -319,18 +321,17 @@ export default async function ProjectPage({
               <p className="text-xs text-[#999]">Purchase Orders</p>
             </Link>
           </div>
-          <div className="bg-white border border-[#E5E3DE] rounded-2xl p-5 flex items-center gap-4 hover:border-[#111] hover:shadow-sm hover:bg-[#FAFAF9] transition-all duration-150">
+          {/* <div className="bg-white border border-[#E5E3DE] rounded-2xl p-5 flex items-center gap-4 hover:border-[#111] hover:shadow-sm hover:bg-[#FAFAF9] transition-all duration-150">
             <div className="w-10 h-10 rounded-xl bg-[#F0EEE9] flex items-center justify-center flex-shrink-0">
-              <ShoppingCart size={16} className="text-[#666]" />
+              <FileText size={16} className="text-[#666]" />
             </div>
-            <Link href={`/projects/${project.id}/purchase-orders`}>
+            <div>
               <p className="text-2xl font-bold text-[#111]">
-               {project.total.length}
+                ${totalContract.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
               </p>
               <p className="text-xs text-[#999]">Project Budget</p>
-              <p className="text-xs text-[#999]">Sum of approved Proposals</p>
-            </Link>
-          </div>
+            </div>
+          </div> */}
 
         </div>
 
@@ -537,6 +538,70 @@ export default async function ProjectPage({
                       size={14}
                       className="text-[#ccc] group-hover:text-[#111] transition-colors"
                     />
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Invoices */}
+        <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-[#F0EEE9] flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <Receipt size={15} className="text-[#999]" />
+              <h3 className="font-semibold text-sm text-[#111]">Invoices</h3>
+              <span className="text-xs text-[#bbb]">{project.invoices.length}</span>
+            </div>
+            <Link
+              href={`/projects/${project.id}/invoices`}
+              className="flex items-center gap-1 text-xs font-semibold text-[#666] hover:text-[#111] transition-colors"
+            >
+              View all <ArrowRight size={11} />
+            </Link>
+          </div>
+          {project.invoices.length === 0 ? (
+            <div className="px-6 py-10 text-center">
+              <p className="text-sm text-[#bbb]">No invoices yet</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-[#F7F6F3]">
+              {project.invoices.map((inv) => {
+                const statusColor =
+                  inv.status === "PAID"
+                    ? "bg-green-100 text-green-700"
+                    : inv.status === "SENT" || inv.status === "PENDING"
+                      ? "bg-blue-100 text-blue-700"
+                      : inv.status === "VOID"
+                        ? "bg-gray-100 text-gray-400"
+                        : inv.status === "REJECTED"
+                          ? "bg-red-100 text-red-600"
+                          : "bg-gray-100 text-gray-600";
+                return (
+                  <Link
+                    key={inv.id}
+                    href={`/projects/${project.id}/invoices`}
+                    className="flex items-center justify-between px-6 py-4 hover:bg-[#FAFAF9] transition-colors group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-medium text-[#111]">
+                        {inv.invoiceNumber ?? `#${inv.id.slice(0, 8).toUpperCase()}`}
+                      </span>
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusColor}`}>
+                        {inv.status}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      {inv.amount != null && (
+                        <span className="text-sm font-semibold text-[#111]">
+                          ${inv.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      )}
+                      <span className="text-xs text-[#999]">
+                        {new Date(inv.createdAt).toLocaleDateString()}
+                      </span>
+                      <ArrowRight size={14} className="text-[#ccc] group-hover:text-[#111] transition-colors" />
+                    </div>
                   </Link>
                 );
               })}
