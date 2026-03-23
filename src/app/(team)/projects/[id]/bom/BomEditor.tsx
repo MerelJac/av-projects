@@ -778,15 +778,11 @@ export default function BOMEditor({
                                   <td className="px-3 py-2 text-right">
                                     <input
                                       type="number"
-                                      min={1}
                                       value={line.quantity}
-                                      onChange={(e) =>
-                                        updateField(
-                                          line.id,
-                                          "quantity",
-                                          parseInt(e.target.value) || 1,
-                                        )
-                                      }
+                                      onChange={(e) => {
+                                        const v = parseInt(e.target.value, 10);
+                                        updateField(line.id, "quantity", Number.isNaN(v) ? 0 : v);
+                                      }}
                                       className="w-14 text-right text-xs border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111] transition-colors"
                                     />
                                   </td>
