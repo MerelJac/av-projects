@@ -93,7 +93,9 @@ export default function QuoteEditor({
   );
   const [savingDeposit, setSavingDeposit] = useState(false);
   const [isDirect, setIsDirect] = useState(initialQuote.isDirect ?? false);
-  const [isChangeOrder, setIsChangeOrder] = useState(initialQuote.isChangeOrder ?? false);
+  const [isChangeOrder, setIsChangeOrder] = useState(
+    initialQuote.isChangeOrder ?? false,
+  );
   const [scopeOfWork, setScopeOfWork] = useState(
     initialQuote.scopeOfWork ?? "",
   );
@@ -632,9 +634,33 @@ export default function QuoteEditor({
               </p>
               <div className="flex flex-col gap-1.5">
                 {[
-                  { label: "Proposal", active: !isDirect && !isChangeOrder, onClick: () => { setIsDirect(false); setIsChangeOrder(false); setSaved(false); } },
-                  { label: "Direct Sale", active: isDirect && !isChangeOrder, onClick: () => { setIsDirect(true); setIsChangeOrder(false); setSaved(false); } },
-                  { label: "Change Order", active: isChangeOrder, onClick: () => { setIsChangeOrder(true); setIsDirect(false); setSaved(false); } },
+                  {
+                    label: "Proposal",
+                    active: !isDirect && !isChangeOrder,
+                    onClick: () => {
+                      setIsDirect(false);
+                      setIsChangeOrder(false);
+                      setSaved(false);
+                    },
+                  },
+                  {
+                    label: "Direct Sale",
+                    active: isDirect && !isChangeOrder,
+                    onClick: () => {
+                      setIsDirect(true);
+                      setIsChangeOrder(false);
+                      setSaved(false);
+                    },
+                  },
+                  {
+                    label: "Change Order",
+                    active: isChangeOrder,
+                    onClick: () => {
+                      setIsChangeOrder(true);
+                      setIsDirect(false);
+                      setSaved(false);
+                    },
+                  },
                 ].map(({ label, active, onClick }) => (
                   <button
                     key={label}
@@ -831,6 +857,7 @@ function LineRow({
             }
             className="w-14 text-right text-sm border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111]"
           />
+            <p className="text-xs italic text-[#666] mt-0.5">{line.item?.unit ?? "no unit defined on item"}</p>
         </td>
         <td className="px-3 py-3 text-right">
           <div className="flex items-center justify-end gap-0.5">

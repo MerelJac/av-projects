@@ -477,9 +477,7 @@ export default async function ProjectPage({
           initialScopes={project.scopes}
           teamUsers={teamUsers}
           currentUserId={currentUserId}
-          acceptedQuotes={project.quotes
-            .filter((q) => q.status === "ACCEPTED")
-            .map((q) => ({ id: q.id, createdAt: q.createdAt.toISOString() }))}
+          projectBoms={project.boms.map((b) => ({ id: b.id, name: b.name }))}
         />
 
         {/* Purchase Orders */}

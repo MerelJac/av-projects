@@ -40,6 +40,7 @@ export type BOMLine = {
   itemId: string;
   item: Item;
   quantity: number;
+  unit?: string | null; // e.g. "each", "ft", "sqft"
   notes: string | null; // used as description/note per row
   costEach?: number | null; // override cost
   sellEach?: number | null; // override sell/price

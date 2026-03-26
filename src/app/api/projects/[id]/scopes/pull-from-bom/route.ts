@@ -1,0 +1,46 @@
+import { prisma } from "@/lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
+
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET! });
+  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { id: projectId } = await params;
+  const { bomId } = await req.json();
+
+  const bom = await prisma.billOfMaterials.findUnique({
+    where: { id: bomId, projectId },
+    include: { lines: { include: { item: true } } },
+  });
+
+  if (!bom) return NextResponse.json({ error: "BOM not found" }, { status: 404 });
+
+  const serviceLines = bom.lines.filter((l) => l.item.type === "SERVICE");
+
+  let created = 0;
+  let skipped = 0;
+
+  for (const line of serviceLines) {
+    const existing = await prisma.projectScope.findFirst({
+      where: { projectId, itemId: line.itemId },
+    });
+
+    if (existing) { skipped++; continue; }
+
+    await prisma.projectScope.create({
+      data: {
+        projectId,
+        itemId: line.itemId,
+        name: line.item.description ?? line.item.itemNumber,
+        estimatedHours: line.quantity,
+      },
+    });
+    created++;
+  }
+
+  return NextResponse.json({ created, skipped });
+}

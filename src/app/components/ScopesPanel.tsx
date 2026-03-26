@@ -49,7 +49,7 @@ type TeamUser = {
   profile: { firstName: string; lastName: string } | null;
 };
 
-type AcceptedQuote = { id: string; createdAt: string };
+type ProjectBOM = { id: string; name: string };
 
 function userName(u: TeamUser): string {
   if (u.profile) return `${u.profile.firstName} ${u.profile.lastName}`.trim();
@@ -61,13 +61,13 @@ export default function ScopesPanel({
   initialScopes,
   teamUsers,
   currentUserId,
-  acceptedQuotes,
+  projectBoms,
 }: {
   projectId: string;
   initialScopes: Scope[];
   teamUsers: TeamUser[];
   currentUserId?: string;
-  acceptedQuotes: AcceptedQuote[];
+  projectBoms: ProjectBOM[];
 }) {
   const [scopes, setScopes] = useState<Scope[]>(initialScopes);
   const [showAdd, setShowAdd] = useState(false);
@@ -88,15 +88,15 @@ export default function ScopesPanel({
     if (res.ok) setScopes(await res.json());
   }
 
-  async function pullFromQuote(quoteId: string) {
+  async function pullFromBom(bomId: string) {
     setPulling(true);
     setPullMsg(null);
     const res = await fetch(
-      `/api/projects/${projectId}/scopes/pull-from-quote`,
+      `/api/projects/${projectId}/scopes/pull-from-bom`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quoteId }),
+        body: JSON.stringify({ bomId }),
       },
     );
     if (res.ok) {
@@ -154,8 +154,8 @@ export default function ScopesPanel({
               {totalActual.toFixed(1)} / {totalEstimated}h
             </span>
           )}
-          {/* Pull from quote dropdown */}
-          {acceptedQuotes.length > 0 && (
+          {/* Pull from BOM dropdown */}
+          {projectBoms.length > 0 && (
             <div className="relative">
               <button
                 disabled={pulling}
@@ -163,31 +163,25 @@ export default function ScopesPanel({
                 className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-[#E5E3DE] text-[#666] hover:border-[#111] hover:text-[#111] transition-colors disabled:opacity-40"
               >
                 <Download size={11} />
-                Pull from Quote
+                Pull from BOM
               </button>
               {showPullMenu && (
                 <>
-                  {/* backdrop to close on outside click */}
                   <div
                     className="fixed inset-0 z-10"
                     onClick={() => setShowPullMenu(false)}
                   />
                   <div className="absolute right-0 top-full mt-1 bg-white border border-[#E5E3DE] rounded-xl shadow-lg z-20 min-w-48">
-                    {acceptedQuotes.map((q) => (
+                    {projectBoms.map((b) => (
                       <button
-                        key={q.id}
+                        key={b.id}
                         onClick={() => {
-                          pullFromQuote(q.id);
+                          pullFromBom(b.id);
                           setShowPullMenu(false);
                         }}
                         className="w-full text-left px-4 py-2.5 text-xs text-[#111] hover:bg-[#F7F6F3] first:rounded-t-xl last:rounded-b-xl"
                       >
-                        <span className="font-mono font-semibold">
-                          #{q.id.slice(0, 8).toUpperCase()}
-                        </span>
-                        <span className="text-[#999] ml-2">
-                          {new Date(q.createdAt).toLocaleDateString()}
-                        </span>
+                        {b.name}
                       </button>
                     ))}
                   </div>
@@ -236,7 +230,7 @@ export default function ScopesPanel({
       {scopes.length === 0 && !showAdd ? (
         <div className="px-6 py-10 text-center">
           <p className="text-sm text-[#bbb]">
-            No scopes yet — add one manually or pull from an accepted quote
+            No scopes yet — pull SERVICE items from a BOM to get started
           </p>
         </div>
       ) : (

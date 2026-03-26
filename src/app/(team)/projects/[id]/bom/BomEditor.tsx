@@ -103,7 +103,7 @@ export default function BOMEditor({
     fetch(`/api/projects/${projectId}/purchase-orders/claimed-lines`)
       .then((r) => r.json())
       .then(setClaimedPOs);
-      console.log("claimed lines", claimedPOs);
+    console.log("claimed lines", claimedPOs);
   }, [projectId]);
 
   function effectivePrice(
@@ -238,6 +238,7 @@ export default function BOMEditor({
             lines: lines.map((l, i) => ({
               itemId: l.itemId,
               quantity: l.quantity,
+              unit: l.unit,
               notes: l.notes,
               section: l.section ?? "Other",
               costEach: l.costEach,
@@ -456,7 +457,9 @@ export default function BOMEditor({
               className="flex items-center gap-2 bg-[#111] text-white text-sm font-semibold px-5 py-2 rounded-xl hover:bg-[#333] disabled:opacity-40 transition-colors"
             >
               <Zap size={14} />
-              {generating ? "Generating…" : "Generate Proposal, Change Order, or Sales Order"}
+              {generating
+                ? "Generating…"
+                : "Generate Proposal, Change Order, or Sales Order"}
             </button>
           </div>
         </div>
@@ -781,10 +784,15 @@ export default function BOMEditor({
                                       value={line.quantity}
                                       onChange={(e) => {
                                         const v = parseInt(e.target.value, 10);
-                                        updateField(line.id, "quantity", Number.isNaN(v) ? 0 : v);
+                                        updateField(
+                                          line.id,
+                                          "quantity",
+                                          Number.isNaN(v) ? 0 : v,
+                                        );
                                       }}
                                       className="w-14 text-right text-xs border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111] transition-colors"
                                     />
+                                    <p className="text-xs italic text-[#666] mt-0.5">{line.unit ?? "no unit defined on item"}</p>
                                   </td>
 
                                   {/* Margin % */}
@@ -1016,7 +1024,9 @@ export default function BOMEditor({
                 Proposals from this BOM
               </p>
               {bom.quotes.length === 0 ? (
-                <p className="text-sm text-[#bbb]">No proposals generated yet</p>
+                <p className="text-sm text-[#bbb]">
+                  No proposals generated yet
+                </p>
               ) : (
                 <div className="space-y-2">
                   {bom.quotes.map((q) => (
