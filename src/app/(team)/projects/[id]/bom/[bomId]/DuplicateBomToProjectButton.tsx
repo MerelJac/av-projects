@@ -47,9 +47,9 @@ export default function DuplicateBomToProjectButton({
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 bg-[#1a1a1a] text-white text-sm px-4 py-2 rounded-lg shadow-lg hover:bg-[#333] transition-colors"
+        className="max-w-5xl mx-auto px-6 pb-10 bg-[#1a1a1a] text-white text-sm px-4 py-2 rounded-lg shadow-lg hover:bg-[#333] transition-colors"
       >
-        Duplicate to Project
+        Duplicate to another Project
       </button>
 
       {open && (

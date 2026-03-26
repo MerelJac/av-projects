@@ -35,7 +35,7 @@ export default function DeleteProjectButton({ id }: { id: string }) {
   }
 
   return (
-    <div className="border border-danger/20 bg-danger/5 rounded-2xl p-5 space-y-3">
+    <div className="max-w-5xl mx-auto px-6 pb-10 border border-danger/20 bg-danger/5 rounded-2xl p-5 space-y-3">
       <h2 className="text-[10px] font-semibold tracking-widest uppercase text-danger">
         Danger Zone
       </h2>

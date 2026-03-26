@@ -630,7 +630,7 @@ export default function QuoteEditor({
             {/* Quote Type */}
             <div className="bg-white border border-[#E5E3DE] rounded-2xl p-5">
               <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-3">
-                Quote Type
+                Document Type
               </p>
               <div className="flex flex-col gap-1.5">
                 {[
