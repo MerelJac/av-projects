@@ -15,7 +15,6 @@ export async function POST(
     );
   }
 
-  console.log("Generating quote from BOMs:", bomIds);
   const boms = await prisma.billOfMaterials.findMany({
     where: { id: { in: bomIds }, projectId: id },
     include: {
@@ -28,10 +27,7 @@ export async function POST(
     return NextResponse.json({ error: "No BOMs found" }, { status: 404 });
   }
 
-  const project = boms[0].project;
   const allLines = boms.flatMap((b) => b.lines);
-
-  console.log("Total lines across selected BOMs:", allLines.length);
   if (allLines.length === 0) {
     return NextResponse.json(
       { error: "Selected BOMs have no lines" },
@@ -39,7 +35,8 @@ export async function POST(
     );
   }
 
-  // same customer price lookup as before
+  const project = boms[0].project;
+
   const customerPrices = await prisma.customerItemPrice.findMany({
     where: {
       customerId: project.customerId,
@@ -50,41 +47,54 @@ export async function POST(
     customerPrices.map((cp) => [cp.itemId, cp.price]),
   );
 
-  const lineData = allLines.map((line) => ({
-    itemId: line.itemId,
-    description: [line.item.manufacturer, line.item.itemNumber]
-      .filter(Boolean)
-      .join(" — "),
-    quantity: line.quantity,
-    price: line.sellEach ?? priceMap[line.itemId] ?? line.item.price ?? 0,
-    cost: line.costEach ?? line.item.cost ?? null,
-  }));
+  // Group lines by section name — same section across different BOMs merges into one bundle
+  const sectionMap = new Map<string, typeof allLines>();
+  for (const line of allLines) {
+    const section = line.section?.trim() || "General";
+    if (!sectionMap.has(section)) sectionMap.set(section, []);
+    sectionMap.get(section)!.push(line);
+  }
 
-  const total = lineData.reduce((sum, l) => sum + l.price * l.quantity, 0);
+  const total = allLines.reduce((sum, l) => {
+    const price = l.sellEach ?? priceMap[l.itemId] ?? l.item.price ?? 0;
+    return sum + price * l.quantity;
+  }, 0);
 
-  console.log(
-    "Creating quote with total:",
-    total,
-    "and lines:",
-    lineData.length,
-  );
   const quote = await prisma.quote.create({
     data: {
       customerId: project.customerId,
       projectId: id,
       status: "DRAFT",
       total,
-      lines: { create: lineData },
     },
   });
 
-  console.log("linking quotes to BOMs:", bomIds, "with quote ID:", quote.id);
-  // associate each BOM with the new quote
+  // One QuoteBundle per unique section name
+  for (const [section, lines] of sectionMap) {
+    await prisma.quoteBundle.create({
+      data: {
+        quoteId: quote.id,
+        name: section,
+        lines: {
+          create: lines.map((line) => ({
+            quoteId: quote.id,
+            itemId: line.itemId,
+            description: [line.item.manufacturer, line.item.itemNumber]
+              .filter(Boolean)
+              .join(" — "),
+            quantity: line.quantity,
+            price: line.sellEach ?? priceMap[line.itemId] ?? line.item.price ?? 0,
+            cost: line.costEach ?? line.item.cost ?? null,
+          })),
+        },
+      },
+    });
+  }
+
+  // Link each BOM to the quote in the join table
   await prisma.quoteBOM.createMany({
     data: bomIds.map((bomId: string) => ({ quoteId: quote.id, bomId })),
   });
-
-  console.log("Quote created with ID:", quote.id);
 
   return NextResponse.json({ quoteId: quote.id });
 }

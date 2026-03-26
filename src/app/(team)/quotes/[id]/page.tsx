@@ -4,6 +4,8 @@ import Link from "next/link";
 import NotesPanel from "@/app/components/NotesPanel";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { Delete } from "lucide-react";
+import DeleteQuoteButton from "@/app/components/projects/DeleteQuoteButton";
 
 export default async function QuoteViewPage({
   params,
@@ -154,6 +156,7 @@ export default async function QuoteViewPage({
       <div className="mt-6">
         <NotesPanel documentType="QUOTE" documentId={quote.id} currentUserId={currentUserId} />
       </div>
+      <DeleteQuoteButton id={quote.id}/>
     </div>
   );
 }

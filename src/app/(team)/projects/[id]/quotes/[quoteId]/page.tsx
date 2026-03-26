@@ -5,6 +5,8 @@ import QuoteEditor from "./QuoteEditor";
 import NotesPanel from "@/app/components/NotesPanel";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth";
+import { Delete } from "lucide-react";
+import DeleteQuoteButton from "@/app/components/projects/DeleteQuoteButton";
 
 
 export default async function QuotePage({
@@ -52,6 +54,7 @@ export default async function QuotePage({
           currentUserId={currentUserId}
         />
       </div>
+      <DeleteQuoteButton id={quoteId} />
     </div>
   );
 }
