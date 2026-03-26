@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
-      const type = normalizeType(row.type ?? "");
+      const type = normalizeType(row.type) ?? ItemType.HARDWARE; // default to HARDWARE if type is missing or invalid
       if (!type) {
         results.errors.push({
           row: i + 2,

@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { Plus, ArrowRight, Upload } from "lucide-react";
+import { Plus, ArrowRight, Upload, ChevronLeft, ChevronRight } from "lucide-react";
 
 const typeStyles: Record<string, string> = {
   HARDWARE: "bg-blue-50 text-blue-700",
@@ -9,10 +9,27 @@ const typeStyles: Record<string, string> = {
   SERVICE: "bg-green-50 text-green-700",
 };
 
-export default async function ItemsPage() {
-  const items = await prisma.item.findMany({
-    orderBy: { itemNumber: "asc" },
-  });
+const PAGE_SIZE = 50;
+
+export default async function ItemsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const { page: pageParam } = await searchParams;
+  const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
+  const skip = (page - 1) * PAGE_SIZE;
+
+  const [items, total] = await Promise.all([
+    prisma.item.findMany({
+      orderBy: { itemNumber: "asc" },
+      skip,
+      take: PAGE_SIZE,
+    }),
+    prisma.item.count(),
+  ]);
+
+  const totalPages = Math.ceil(total / PAGE_SIZE);
 
   return (
     <div className="bg-[#F7F6F3]">
@@ -133,6 +150,41 @@ export default async function ItemsPage() {
             </tbody>
           </table>
         </div>
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-4">
+            <p className="text-xs text-[#999]">
+              {skip + 1}–{Math.min(skip + PAGE_SIZE, total)} of {total} items
+            </p>
+            <div className="flex items-center gap-1">
+              <Link
+                href={`/items?page=${page - 1}`}
+                aria-disabled={page <= 1}
+                className={`p-1.5 rounded-lg border border-[#E5E3DE] transition-colors ${
+                  page <= 1
+                    ? "pointer-events-none text-[#ccc] bg-[#fafaf9]"
+                    : "text-[#666] hover:bg-white hover:text-[#111]"
+                }`}
+              >
+                <ChevronLeft size={14} />
+              </Link>
+              <span className="text-xs text-[#666] px-2">
+                {page} / {totalPages}
+              </span>
+              <Link
+                href={`/items?page=${page + 1}`}
+                aria-disabled={page >= totalPages}
+                className={`p-1.5 rounded-lg border border-[#E5E3DE] transition-colors ${
+                  page >= totalPages
+                    ? "pointer-events-none text-[#ccc] bg-[#fafaf9]"
+                    : "text-[#666] hover:bg-white hover:text-[#111]"
+                }`}
+              >
+                <ChevronRight size={14} />
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

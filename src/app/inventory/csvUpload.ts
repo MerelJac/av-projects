@@ -25,19 +25,28 @@ export async function uploadCSV(file: File) {
   const results = { created: 0, updated: 0, skipped: 0, errors: [] as string[] };
 
   for (const row of data) {
-    const itemNumber = row.item_no?.trim();
+    const itemNumber = row.itemNumber?.trim();
     if (!itemNumber) {
-      results.errors.push(`Row missing item_no: ${JSON.stringify(row)}`);
+      results.errors.push(`Row missing itemNumber: ${JSON.stringify(row)}`);
       results.skipped++;
       continue;
     }
 
+    const preferredVendor = row.preferred_vendor?.trim();
+    const findPreferredVendor = preferredVendor      ? await prisma.vendor.findFirst({ where: { name: preferredVendor } })
+      : null;
+
+    const createdVendor = preferredVendor && !findPreferredVendor
+      ? await prisma.vendor.create({ data: { name: preferredVendor } })
+      : findPreferredVendor;
     const type = parseType(row.type) ?? ItemType.HARDWARE; // fallback default
     const data_ = {
       manufacturer: row.manufacturer?.trim() || null,
       price: parseFloat_(row.price),
       cost: parseFloat_(row.cost),
       type,
+      description: row.description?.trim() || null,
+      preferredVendorId: createdVendor?.id || null,
     };
 
     try {
