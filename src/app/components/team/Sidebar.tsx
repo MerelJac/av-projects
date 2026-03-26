@@ -33,7 +33,7 @@ const navItems = [
   { href: "/items", label: "Items", icon: Boxes },
   { href: "/customers", label: "Customers", icon: Users },
   { href: "/vendors", label: "Vendors", icon: UsersIcon },
-  { href: "/quotes", label: "Quotes", icon: FileText },
+  { href: "/quotes", label: "Proposals", icon: FileText },
   { href: "/purchase-orders", label: "Purchase Orders", icon: CreditCard },
   { href: "/invoices", label: "Invoices", icon: CreditCard },
   { href: "/sales-orders", label: "Sales Orders", icon: ShoppingBag },

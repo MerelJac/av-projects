@@ -37,6 +37,8 @@ export async function POST(
         itemId: line.itemId,
         name: line.item.description ?? line.item.itemNumber,
         estimatedHours: line.quantity,
+        ratePerHour: line.sellEach ?? line.item.price ?? null,
+        costPerHour: line.costEach ?? line.item.cost ?? null,
       },
     });
     created++;

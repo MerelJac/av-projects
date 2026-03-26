@@ -12,7 +12,9 @@ import {
   Clock,
   User,
   Download,
+  ArrowRight,
 } from "lucide-react";
+import Link from "next/link";
 
 type Item = { id: string; itemNumber: string; manufacturer: string | null };
 
@@ -91,14 +93,11 @@ export default function ScopesPanel({
   async function pullFromBom(bomId: string) {
     setPulling(true);
     setPullMsg(null);
-    const res = await fetch(
-      `/api/projects/${projectId}/scopes/pull-from-bom`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bomId }),
-      },
-    );
+    const res = await fetch(`/api/projects/${projectId}/scopes/pull-from-bom`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bomId }),
+    });
     if (res.ok) {
       const { created, skipped } = await res.json();
       setPullMsg(
@@ -109,7 +108,38 @@ export default function ScopesPanel({
     setPulling(false);
   }
 
+  async function pullFromAllBoms() {
+    setPulling(true);
+    setPullMsg(null);
+    let totalCreated = 0;
+    let totalSkipped = 0;
+    for (const b of projectBoms) {
+      const res = await fetch(`/api/projects/${projectId}/scopes/pull-from-bom`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bomId: b.id }),
+      });
+      if (res.ok) {
+        const { created, skipped } = await res.json();
+        totalCreated += created;
+        totalSkipped += skipped;
+      }
+    }
+    setPullMsg(
+      `Added ${totalCreated} scope${totalCreated !== 1 ? "s" : ""}${totalSkipped > 0 ? `, ${totalSkipped} already existed` : ""}`,
+    );
+    await refresh();
+    setPulling(false);
+  }
+
   async function deleteScope(id: string) {
+    if (
+      !confirm(
+        `Are you sure you want to delete this scope? This cannot be undone.`,
+      )
+    )
+      return;
+
     await fetch(`/api/projects/${projectId}/scopes/${id}`, {
       method: "DELETE",
     });
@@ -117,6 +147,12 @@ export default function ScopesPanel({
   }
 
   async function deleteEntry(scopeId: string, entryId: string) {
+        if (
+      !confirm(
+        `Are you sure you want to delete this time log? This cannot be undone.`,
+      )
+    )
+      return;
     await fetch(
       `/api/projects/${projectId}/scopes/${scopeId}/time-entries/${entryId}`,
       { method: "DELETE" },
@@ -165,6 +201,7 @@ export default function ScopesPanel({
                 <Download size={11} />
                 Pull from BOMs
               </button>
+              
               {showPullMenu && (
                 <>
                   <div
@@ -172,6 +209,16 @@ export default function ScopesPanel({
                     onClick={() => setShowPullMenu(false)}
                   />
                   <div className="absolute right-0 top-full mt-1 bg-white border border-[#E5E3DE] rounded-xl shadow-lg z-20 min-w-48">
+                    {projectBoms.length > 1 && (
+                      <>
+                        <button
+                          onClick={() => { setShowPullMenu(false); pullFromAllBoms(); }}
+                          className="w-full text-left px-4 py-2.5 text-xs font-semibold text-[#111] hover:bg-[#F7F6F3] first:rounded-t-xl border-b border-[#F0EEE9]"
+                        >
+                          All BOMs
+                        </button>
+                      </>
+                    )}
                     {projectBoms.map((b) => (
                       <button
                         key={b.id}
@@ -179,7 +226,7 @@ export default function ScopesPanel({
                           pullFromBom(b.id);
                           setShowPullMenu(false);
                         }}
-                        className="w-full text-left px-4 py-2.5 text-xs text-[#111] hover:bg-[#F7F6F3] first:rounded-t-xl last:rounded-b-xl"
+                        className="w-full text-left px-4 py-2.5 text-xs text-[#111] hover:bg-[#F7F6F3] last:rounded-b-xl"
                       >
                         {b.name}
                       </button>
@@ -189,6 +236,12 @@ export default function ScopesPanel({
               )}
             </div>
           )}
+                    <Link
+            href={`/projects/${projectId}/time`}
+            className="flex items-center gap-1 text-xs font-semibold text-[#666] hover:text-[#111] transition-colors"
+          >
+            Time Card <ArrowRight size={11} />
+          </Link>
           {/* <button
             onClick={() => {
               setShowAdd(true);

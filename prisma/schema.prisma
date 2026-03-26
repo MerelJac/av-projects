@@ -79,13 +79,15 @@ model InvoiceLine {
   invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   description String
-  quantity    Int
+  quantity    Float
   price       Float
 
   // Source reference (optional)
   quoteLineId   String?
   quoteBundleId String?
-  isBundleTotal Boolean @default(false) // true = rolled-up hidden-bundle line
+  isBundleTotal Boolean       @default(false) // true = rolled-up hidden-bundle line
+  scopeId       String?
+  scope         ProjectScope? @relation(fields: [scopeId], references: [id])
 }
 
 model QuoteBundle {
@@ -333,15 +335,18 @@ model Subscription {
 }
 
 model ProjectScope {
-  id             String      @id @default(uuid())
+  id             String        @id @default(uuid())
   projectId      String
-  project        Project     @relation(fields: [projectId], references: [id])
+  project        Project       @relation(fields: [projectId], references: [id])
   itemId         String?
-  item           Item?       @relation(fields: [itemId], references: [id])
+  item           Item?         @relation(fields: [itemId], references: [id])
   name           String
-  estimatedHours Float       @default(0)
+  estimatedHours Float         @default(0)
+  ratePerHour    Float?
+  costPerHour    Float?
   timeEntries    TimeEntry[]
-  createdAt      DateTime    @default(now())
+  invoiceLines   InvoiceLine[]
+  createdAt      DateTime      @default(now())
 }
 
 model TimeEntry {

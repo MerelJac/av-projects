@@ -14,6 +14,7 @@ export async function GET(
         include: { user: { select: { id: true, email: true, profile: true } } },
         orderBy: { date: "desc" },
       },
+      invoiceLines: { select: { id: true, quantity: true, price: true } },
     },
     orderBy: { createdAt: "asc" },
   });

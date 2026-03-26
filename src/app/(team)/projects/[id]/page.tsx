@@ -73,6 +73,8 @@ export default async function ProjectPage({
             id: true,
             name: true,
             estimatedHours: true,
+            ratePerHour: true,
+            costPerHour: true,
             itemId: true,
             item: true,
             timeEntries: {
@@ -81,6 +83,7 @@ export default async function ProjectPage({
               },
               orderBy: { date: "desc" },
             },
+            invoiceLines: { select: { id: true, quantity: true, price: true } },
           },
           orderBy: { createdAt: "asc" },
         },
