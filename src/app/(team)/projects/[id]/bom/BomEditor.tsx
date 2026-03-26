@@ -202,7 +202,11 @@ export default function BOMEditor({
         if (cost <= 0) return l;
         const m = margin >= 100 ? 99.99 : margin;
         const sell = cost / (1 - m / 100);
-        return { ...l, marginPct: margin, sellEach: parseFloat(sell.toFixed(2)) };
+        return {
+          ...l,
+          marginPct: margin,
+          sellEach: parseFloat(sell.toFixed(2)),
+        };
       }),
     );
     setSaved(false);
@@ -468,12 +472,10 @@ export default function BOMEditor({
             <button
               onClick={() => setShowGenerateModal(true)}
               disabled={lines.length === 0}
-              className="flex items-center gap-2 bg-[#111] text-white text-sm font-semibold px-5 py-2 rounded-xl hover:bg-[#333] disabled:opacity-40 transition-colors"
+              className="flex items-center gap-2 bg-[#111] text-white text-sm font-semibold px-5 py-2 rounded-xl hover:bg-[#333] disabled:opacity-40 transition-colors max-w-sm"
             >
               <Zap size={14} />
-              {generating
-                ? "Generating…"
-                : "Generate Proposal, Change Order, or Sales Order"}
+              {generating ? "Generating…" : "Generate Proposal, Sales Order, or Change Order"}
             </button>
           </div>
         </div>
@@ -793,20 +795,36 @@ export default function BOMEditor({
                                   </td>
                                   {/* Qty */}
                                   <td className="px-3 py-2 text-right">
-                                    <input
-                                      type="number"
-                                      value={line.quantity}
-                                      onChange={(e) => {
-                                        const v = parseInt(e.target.value, 10);
-                                        updateField(
-                                          line.id,
-                                          "quantity",
-                                          Number.isNaN(v) ? 0 : v,
-                                        );
-                                      }}
-                                      className="w-14 text-right text-xs border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111] transition-colors"
-                                    />
-                                    <p className="text-xs italic text-[#666] mt-0.5">{line.unit ?? "no unit defined on item"}</p>
+                                    <div className="inline-flex flex-col items-end gap-0.5">
+                                      <div className="flex items-center gap-1.5 bg-[#F7F6F3] border border-[#E5E3DE] rounded-lg px-2 py-1 focus-within:border-[#111] focus-within:bg-white transition-colors">
+                                        <input
+                                          type="number"
+                                          value={line.quantity}
+                                          onChange={(e) => {
+                                            const v = parseInt(
+                                              e.target.value,
+                                              10,
+                                            );
+                                            updateField(
+                                              line.id,
+                                              "quantity",
+                                              Number.isNaN(v) ? 0 : v,
+                                            );
+                                          }}
+                                          className="w-12 text-right text-xs bg-transparent focus:outline-none tabular-nums"
+                                        />
+                                        {line.unit && (
+                                          <span className="text-xs text-[#999] font-medium shrink-0">
+                                            {line.unit}
+                                          </span>
+                                        )}
+                                      </div>
+                                      {!line.unit && (
+                                        <p className="text-[10px] italic text-[#BBB]">
+                                          no unit
+                                        </p>
+                                      )}
+                                    </div>
                                   </td>
 
                                   {/* Margin % */}
@@ -943,10 +961,14 @@ export default function BOMEditor({
                     min={0}
                     max={99}
                     value={globalMargin}
-                    onChange={(e) => setGlobalMargin(parseFloat(e.target.value) || 0)}
+                    onChange={(e) =>
+                      setGlobalMargin(parseFloat(e.target.value) || 0)
+                    }
                     className="w-full text-right text-sm border border-[#E5E3DE] rounded-lg pr-6 pl-3 py-1.5 focus:outline-none focus:border-[#111] transition-colors"
                   />
-                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[#bbb] text-xs">%</span>
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[#bbb] text-xs">
+                    %
+                  </span>
                 </div>
                 <button
                   onClick={() => applyMarginToAll(globalMargin)}

@@ -6,7 +6,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const { bomIds } = await req.json();
+  const { bomIds, type } = await req.json();
 
   if (!Array.isArray(bomIds) || bomIds.length === 0) {
     return NextResponse.json(
@@ -66,6 +66,8 @@ export async function POST(
       projectId: id,
       status: "DRAFT",
       total,
+      isChangeOrder: type === "CHANGE_ORDER",
+      isDirect: type === "DIRECT",
     },
   });
 
@@ -83,7 +85,8 @@ export async function POST(
               .filter(Boolean)
               .join(" — "),
             quantity: line.quantity,
-            price: line.sellEach ?? priceMap[line.itemId] ?? line.item.price ?? 0,
+            price:
+              line.sellEach ?? priceMap[line.itemId] ?? line.item.price ?? 0,
             cost: line.costEach ?? line.item.cost ?? null,
           })),
         },

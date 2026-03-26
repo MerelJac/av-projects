@@ -849,15 +849,26 @@ function LineRow({
           )}
         </td>
         <td className="px-3 py-3 text-right">
-          <input
-            type="number"
-            value={line.quantity}
-            onChange={(e) =>
-              onUpdate({ quantity: parseInt(e.target.value) || 0 })
-            }
-            className="w-14 text-right text-sm border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111]"
-          />
-            <p className="text-xs italic text-[#666] mt-0.5">{line.item?.unit ?? "no unit defined on item"}</p>
+          <div className="inline-flex flex-col items-end gap-0.5">
+            <div className="flex items-center gap-1.5 bg-[#F7F6F3] border border-[#E5E3DE] rounded-lg px-2 py-1 focus-within:border-[#111] focus-within:bg-white transition-colors">
+              <input
+                type="number"
+                value={line.quantity}
+                onChange={(e) =>
+                  onUpdate({ quantity: parseInt(e.target.value) || 0 })
+                }
+                className="w-12 text-right text-sm bg-transparent focus:outline-none tabular-nums"
+              />
+              {line.item?.unit && (
+                <span className="text-xs text-[#999] font-medium shrink-0">
+                  {line.item.unit}
+                </span>
+              )}
+            </div>
+            {!line.item?.unit && (
+              <p className="text-[10px] italic text-[#BBB]">no unit</p>
+            )}
+          </div>
         </td>
         <td className="px-3 py-3 text-right">
           <div className="flex items-center justify-end gap-0.5">
