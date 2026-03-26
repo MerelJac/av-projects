@@ -12,7 +12,6 @@ import {
   User,
   TrendingUp,
   TrendingDown,
-  FileText,
   X,
   AlertCircle,
   Download,
@@ -133,23 +132,22 @@ export default function TimeCardEditor({
     (s, sc) => s + sc.timeEntries.reduce((a, t) => a + t.hours, 0),
     0,
   );
-  const totalBilled = scopes.reduce(
-    (s, sc) => s + sc.invoiceLines.reduce((a, l) => a + l.quantity, 0),
+  // budgeted cost = what we planned to spend on labor (est hrs × cost rate)
+  const totalBudgetedCost = scopes.reduce(
+    (s, sc) => s + (sc.costPerHour ? sc.estimatedHours * sc.costPerHour : 0),
     0,
   );
-  const totalEstRevenue = scopes.reduce(
-    (s, sc) => s + (sc.ratePerHour ? sc.estimatedHours * sc.ratePerHour : 0),
-    0,
-  );
+  // actual cost = what we've spent so far (logged hrs × cost rate)
   const totalLaborCost = scopes.reduce(
     (s, sc) => s + (sc.costPerHour ? sc.timeEntries.reduce((a, t) => a + t.hours, 0) * sc.costPerHour : 0),
     0,
   );
-  const totalBilledRevenue = scopes.reduce(
-    (s, sc) => s + (sc.ratePerHour ? sc.invoiceLines.reduce((a, l) => a + l.quantity, 0) * sc.ratePerHour : 0),
+  // quoted price = what was sold to customer (est hrs × sell rate) — fixed at quote time
+  const totalQuotedPrice = scopes.reduce(
+    (s, sc) => s + (sc.ratePerHour ? sc.estimatedHours * sc.ratePerHour : 0),
     0,
   );
-  const hasRates = scopes.some((sc) => sc.ratePerHour);
+  const hasCosts = scopes.some((sc) => sc.costPerHour || sc.ratePerHour);
 
   return (
     <div className="min-h-screen bg-[#F7F6F3]">
@@ -172,10 +170,11 @@ export default function TimeCardEditor({
         {/* Summary */}
         <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
           <div className="grid grid-cols-3 divide-x divide-[#F0EEE9]">
+            {/* Hours */}
             <div className="px-6 py-5">
               <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">Hours</p>
               <p className="text-2xl font-bold text-[#111]">{totalActual.toFixed(1)}</p>
-              <p className="text-xs text-[#999] mt-0.5">of {totalEstimated.toFixed(1)} estimated</p>
+              <p className="text-xs text-[#999] mt-0.5">of {totalEstimated.toFixed(1)} budgeted</p>
               <div className="mt-2 h-1.5 bg-[#F0EEE9] rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full ${totalActual > totalEstimated ? "bg-red-400" : "bg-green-500"}`}
@@ -183,36 +182,45 @@ export default function TimeCardEditor({
                 />
               </div>
             </div>
+            {/* Labor cost */}
             <div className="px-6 py-5">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">Billed</p>
-              <p className="text-2xl font-bold text-[#111]">{totalBilled.toFixed(1)}h</p>
-              {hasRates && (
-                <p className="text-xs text-[#999] mt-0.5">${fmt(totalBilledRevenue)} invoiced</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">Labor Cost</p>
+              {hasCosts ? (
+                <>
+                  <p className="text-2xl font-bold text-[#111]">${fmt(totalLaborCost)}</p>
+                  <p className="text-xs text-[#999] mt-0.5">of ${fmt(totalBudgetedCost)} budgeted</p>
+                  <div className="mt-2 h-1.5 bg-[#F0EEE9] rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${totalLaborCost > totalBudgetedCost ? "bg-red-400" : "bg-green-500"}`}
+                      style={{ width: `${Math.min((totalLaborCost / Math.max(totalBudgetedCost, 0.01)) * 100, 100)}%` }}
+                    />
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-[#bbb] mt-2">Pull from BOM to see costs</p>
               )}
-              <p className="text-xs text-green-600 mt-0.5 font-medium">
-                {(totalActual - totalBilled).toFixed(1)}h unbilled
-              </p>
             </div>
-            {hasRates && (
-              <div className="px-6 py-5">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">Service P&L</p>
-                <p className="text-2xl font-bold text-[#111]">${fmt(totalEstRevenue - totalLaborCost)}</p>
-                <p className="text-xs text-[#999] mt-0.5">
-                  ${fmt(totalEstRevenue)} rev — ${fmt(totalLaborCost)} cost
-                </p>
-                {totalEstRevenue > 0 && (
-                  <p className={`text-xs font-medium mt-0.5 ${((totalEstRevenue - totalLaborCost) / totalEstRevenue) > 0.3 ? "text-green-600" : "text-amber-600"}`}>
-                    {(((totalEstRevenue - totalLaborCost) / totalEstRevenue) * 100).toFixed(1)}% GM
+            {/* Service margin */}
+            <div className="px-6 py-5">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">Service Margin</p>
+              {hasCosts ? (
+                <>
+                  <p className={`text-2xl font-bold ${(totalQuotedPrice - totalLaborCost) >= 0 ? "text-[#111]" : "text-red-600"}`}>
+                    ${fmt(totalQuotedPrice - totalLaborCost)}
                   </p>
-                )}
-              </div>
-            )}
-            {!hasRates && (
-              <div className="px-6 py-5">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">Service P&L</p>
-                <p className="text-sm text-[#bbb] mt-2">Pull from BOM to see rates</p>
-              </div>
-            )}
+                  <p className="text-xs text-[#999] mt-0.5">
+                    ${fmt(totalQuotedPrice)} quoted — ${fmt(totalLaborCost)} cost
+                  </p>
+                  {totalQuotedPrice > 0 && (
+                    <p className={`text-xs font-medium mt-0.5 ${((totalQuotedPrice - totalLaborCost) / totalQuotedPrice) > 0.3 ? "text-green-600" : "text-amber-600"}`}>
+                      {(((totalQuotedPrice - totalLaborCost) / totalQuotedPrice) * 100).toFixed(1)}% GM
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="text-sm text-[#bbb] mt-2">Pull from BOM to see margin</p>
+              )}
+            </div>
           </div>
         </div>
 
@@ -263,15 +271,7 @@ export default function TimeCardEditor({
                 )}
               </div>
             )}
-            {scopes.length > 0 && (
-              <button
-                onClick={() => setShowInvoiceModal(true)}
-                className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-xl bg-[#111] text-white hover:bg-[#333] transition-colors"
-              >
-                <FileText size={14} />
-                Invoice Hours
-              </button>
-            )}
+            {/* Invoice Hours hidden — service hours are internally costed, not separately invoiced */}
           </div>
         )}
 
@@ -285,14 +285,14 @@ export default function TimeCardEditor({
           <div className="space-y-3">
             {scopes.map((sc) => {
               const actual = sc.timeEntries.reduce((s, t) => s + t.hours, 0);
-              const billed = sc.invoiceLines.reduce((s, l) => s + l.quantity, 0);
               const pct = sc.estimatedHours > 0 ? Math.min((actual / sc.estimatedHours) * 100, 100) : 0;
               const over = actual > sc.estimatedHours && sc.estimatedHours > 0;
               const variance = actual - sc.estimatedHours;
-              const estRevenue = sc.ratePerHour ? sc.estimatedHours * sc.ratePerHour : null;
-              const laborCost = sc.costPerHour ? actual * sc.costPerHour : null;
-              const billedRevenue = sc.ratePerHour ? billed * sc.ratePerHour : null;
-              const varDollar = sc.costPerHour ? variance * sc.costPerHour : null;
+              const budgetedCost = sc.costPerHour ? sc.estimatedHours * sc.costPerHour : null;
+              const actualCost = sc.costPerHour ? actual * sc.costPerHour : null;
+              const quotedPrice = sc.ratePerHour ? sc.estimatedHours * sc.ratePerHour : null;
+              const margin = quotedPrice !== null && actualCost !== null ? quotedPrice - actualCost : null;
+              const costVariance = sc.costPerHour ? variance * sc.costPerHour : null;
               const isExpanded = !!expanded[sc.id];
 
               return (
@@ -351,36 +351,38 @@ export default function TimeCardEditor({
                       </div>
                     </div>
 
-                    {/* P&L row */}
-                    {(estRevenue !== null || laborCost !== null) && (
+                    {/* Cost / margin row */}
+                    {(budgetedCost !== null || actualCost !== null) && (
                       <div className="mt-3 ml-6 grid grid-cols-4 gap-3">
-                        {estRevenue !== null && (
+                        {budgetedCost !== null && (
                           <div>
-                            <p className="text-[10px] text-[#999]">Est. Revenue</p>
-                            <p className="text-xs font-semibold text-[#111]">${fmt(estRevenue)}</p>
-                            <p className="text-[10px] text-[#bbb]">${sc.ratePerHour}/hr</p>
-                          </div>
-                        )}
-                        {billedRevenue !== null && (
-                          <div>
-                            <p className="text-[10px] text-[#999]">Billed</p>
-                            <p className="text-xs font-semibold text-[#111]">${fmt(billedRevenue)}</p>
-                            <p className="text-[10px] text-[#bbb]">{billed.toFixed(1)}h</p>
-                          </div>
-                        )}
-                        {laborCost !== null && (
-                          <div>
-                            <p className="text-[10px] text-[#999]">Labor Cost</p>
-                            <p className="text-xs font-semibold text-[#111]">${fmt(laborCost)}</p>
+                            <p className="text-[10px] text-[#999]">Budgeted Cost</p>
+                            <p className="text-xs font-semibold text-[#111]">${fmt(budgetedCost)}</p>
                             <p className="text-[10px] text-[#bbb]">${sc.costPerHour}/hr</p>
                           </div>
                         )}
-                        {varDollar !== null && variance !== 0 && (
+                        {actualCost !== null && (
                           <div>
-                            <p className="text-[10px] text-[#999]">Cost Variance</p>
-                            <p className={`text-xs font-semibold ${varDollar > 0 ? "text-red-600" : "text-green-600"}`}>
-                              {varDollar > 0 ? "+" : ""}${fmt(Math.abs(varDollar))}
-                              <span className="text-[#bbb] font-normal ml-1">{variance > 0 ? "overrun" : "saved"}</span>
+                            <p className="text-[10px] text-[#999]">Actual Cost</p>
+                            <p className="text-xs font-semibold text-[#111]">${fmt(actualCost)}</p>
+                            <p className="text-[10px] text-[#bbb]">{actual.toFixed(1)}h logged</p>
+                          </div>
+                        )}
+                        {quotedPrice !== null && (
+                          <div>
+                            <p className="text-[10px] text-[#999]">Quoted Price</p>
+                            <p className="text-xs font-semibold text-[#111]">${fmt(quotedPrice)}</p>
+                            <p className="text-[10px] text-[#bbb]">${sc.ratePerHour}/hr</p>
+                          </div>
+                        )}
+                        {margin !== null && (
+                          <div>
+                            <p className="text-[10px] text-[#999]">Margin</p>
+                            <p className={`text-xs font-semibold ${margin >= 0 ? "text-green-600" : "text-red-600"}`}>
+                              ${fmt(Math.abs(margin))}
+                              {costVariance !== null && costVariance !== 0 && (
+                                <span className="text-[#bbb] font-normal ml-1">{costVariance > 0 ? "overrun" : "saved"}</span>
+                              )}
                             </p>
                           </div>
                         )}

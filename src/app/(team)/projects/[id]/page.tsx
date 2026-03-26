@@ -120,7 +120,16 @@ export default async function ProjectPage({
     0,
   );
 
-  const cogs = poCost + shippingCost;
+  const materialCost = poCost + shippingCost;
+
+  // Labor cost: actual logged hours × cost rate per scope
+  const laborCost = project.scopes.reduce((sum, sc) => {
+    if (!sc.costPerHour) return sum;
+    const actualHours = sc.timeEntries.reduce((h, t) => h + t.hours, 0);
+    return sum + actualHours * sc.costPerHour;
+  }, 0);
+
+  const cogs = materialCost + laborCost;
 
   const grossProfit = totalContract - cogs;
   const marginPct =
@@ -227,14 +236,24 @@ export default async function ProjectPage({
                     maximumFractionDigits: 2,
                   })}
                 </p>
-                {shippingCost > 0 && (
+                {materialCost > 0 && (
                   <p className="text-xs text-[#999] mt-0.5">
-                    incl. $
-                    {shippingCost.toLocaleString(undefined, {
+                    $
+                    {materialCost.toLocaleString(undefined, {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })}{" "}
-                    shipping
+                    materials
+                  </p>
+                )}
+                {laborCost > 0 && (
+                  <p className="text-xs text-[#999] mt-0.5">
+                    $
+                    {laborCost.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}{" "}
+                    labor
                   </p>
                 )}
               </div>
@@ -314,7 +333,8 @@ export default async function ProjectPage({
             </div>
             <Link href={`/projects/${project.id}/milestones`}>
               <p className="text-2xl font-bold text-[#111]">
-                {project.timeEntries
+                {project.scopes
+                  .flatMap((sc) => sc.timeEntries)
                   .reduce((sum, t) => sum + t.hours, 0)
                   .toFixed(1)}
               </p>
