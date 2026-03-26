@@ -13,12 +13,14 @@ import {
   Plus,
   ArrowRight,
   Receipt,
+  Delete,
 } from "lucide-react";
 import ChangeOrderNotes from "@/app/components/ChangeOrderNotes";
 import AllShipments from "@/app/components/shipments/AllShipments";
 import MilestonesPanel from "@/app/components/MilestonesPanel";
 import ScopesPanel from "@/app/components/ScopesPanel";
 import BillingTermsEditor from "@/app/components/BillingTermsEditor";
+import DeleteProjectButton from "@/app/components/projects/DeleteProjectButton";
 
 const quoteStatusStyles: Record<string, string> = {
   ACCEPTED: "bg-green-100 text-green-700",
@@ -48,7 +50,13 @@ export default async function ProjectPage({
           orderBy: { createdAt: "desc" },
         },
         invoices: {
-          select: { id: true, invoiceNumber: true, amount: true, status: true, createdAt: true },
+          select: {
+            id: true,
+            invoiceNumber: true,
+            amount: true,
+            status: true,
+            createdAt: true,
+          },
           orderBy: { createdAt: "desc" },
         },
         milestones: { orderBy: { dueDate: "asc" } },
@@ -332,7 +340,6 @@ export default async function ProjectPage({
               <p className="text-xs text-[#999]">Project Budget</p>
             </div>
           </div> */}
-
         </div>
 
         {/* BOMs */}
@@ -405,47 +412,53 @@ export default async function ProjectPage({
           ) : (
             <div className="divide-y divide-[#F7F6F3]">
               {/* filter out change orders for this section since they are surfaced separately below */}
-              {project.quotes.filter((q) => !q.isChangeOrder).map((quote) => (
-                <div key={quote.id} className="px-6 py-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs font-mono font-semibold text-[#111]">
-                        #{quote.id.slice(0, 8).toUpperCase()}
-                      </span>
-                      <span
-                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${quoteStatusStyles[quote.status]}`}
-                      >
-                        {quote.status} {quote.isDirect && "· Direct"} {quote.isChangeOrder && "· Change Order"} {!quote.isChangeOrder && !quote.isDirect && "· Proposal"}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      {quote.total != null && (
-                        <span className="text-sm font-semibold text-[#111]">
-                          $
-                          {quote.total.toLocaleString(undefined, {
-                            minimumFractionDigits: 2,
-                          })}
+              {project.quotes
+                .filter((q) => !q.isChangeOrder)
+                .map((quote) => (
+                  <div key={quote.id} className="px-6 py-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-mono font-semibold text-[#111]">
+                          #{quote.id.slice(0, 8).toUpperCase()}
                         </span>
-                      )}
-                      <span className="text-xs text-[#999]">
-                        {new Date(quote.createdAt).toLocaleDateString()}
-                      </span>
-                      <Link
-                        href={`/projects/${project.id}/quotes/${quote.id}`}
-                        className="flex items-center gap-1 text-xs font-semibold text-[#111] hover:underline"
-                      >
-                        Edit <ArrowRight size={11} />
-                      </Link>
-                      <Link
-                        href={`/projects/${project.id}/quotes/${quote.id}`}
-                        className="flex items-center gap-1 text-xs font-semibold text-[#666] hover:underline"
-                      >
-                        View <ArrowRight size={11} />
-                      </Link>
+                        <span
+                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${quoteStatusStyles[quote.status]}`}
+                        >
+                          {quote.status} {quote.isDirect && "· Direct"}{" "}
+                          {quote.isChangeOrder && "· Change Order"}{" "}
+                          {!quote.isChangeOrder &&
+                            !quote.isDirect &&
+                            "· Proposal"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        {quote.total != null && (
+                          <span className="text-sm font-semibold text-[#111]">
+                            $
+                            {quote.total.toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                            })}
+                          </span>
+                        )}
+                        <span className="text-xs text-[#999]">
+                          {new Date(quote.createdAt).toLocaleDateString()}
+                        </span>
+                        <Link
+                          href={`/projects/${project.id}/quotes/${quote.id}`}
+                          className="flex items-center gap-1 text-xs font-semibold text-[#111] hover:underline"
+                        >
+                          Edit <ArrowRight size={11} />
+                        </Link>
+                        <Link
+                          href={`/projects/${project.id}/quotes/${quote.id}`}
+                          className="flex items-center gap-1 text-xs font-semibold text-[#666] hover:underline"
+                        >
+                          View <ArrowRight size={11} />
+                        </Link>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           )}
         </div>
@@ -551,7 +564,9 @@ export default async function ProjectPage({
             <div className="flex items-center gap-2.5">
               <Receipt size={15} className="text-[#999]" />
               <h3 className="font-semibold text-sm text-[#111]">Invoices</h3>
-              <span className="text-xs text-[#bbb]">{project.invoices.length}</span>
+              <span className="text-xs text-[#bbb]">
+                {project.invoices.length}
+              </span>
             </div>
             <Link
               href={`/projects/${project.id}/invoices`}
@@ -585,22 +600,32 @@ export default async function ProjectPage({
                   >
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-medium text-[#111]">
-                        {inv.invoiceNumber ?? `#${inv.id.slice(0, 8).toUpperCase()}`}
+                        {inv.invoiceNumber ??
+                          `#${inv.id.slice(0, 8).toUpperCase()}`}
                       </span>
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusColor}`}>
+                      <span
+                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusColor}`}
+                      >
                         {inv.status}
                       </span>
                     </div>
                     <div className="flex items-center gap-4">
                       {inv.amount != null && (
                         <span className="text-sm font-semibold text-[#111]">
-                          ${inv.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          $
+                          {inv.amount.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
                         </span>
                       )}
                       <span className="text-xs text-[#999]">
                         {new Date(inv.createdAt).toLocaleDateString()}
                       </span>
-                      <ArrowRight size={14} className="text-[#ccc] group-hover:text-[#111] transition-colors" />
+                      <ArrowRight
+                        size={14}
+                        className="text-[#ccc] group-hover:text-[#111] transition-colors"
+                      />
                     </div>
                   </Link>
                 );
@@ -668,6 +693,7 @@ export default async function ProjectPage({
           )}
         </div>
       </div>
+      <DeleteProjectButton id={project.id} />
     </div>
   );
 }

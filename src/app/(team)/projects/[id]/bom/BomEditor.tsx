@@ -288,7 +288,7 @@ export default function BOMEditor({
       const data = await res.json();
       router.push(`/projects/${projectId}/quotes/${data.quoteId}`);
     } catch {
-      showToast("error", "Failed to generate quote");
+      showToast("error", "Failed to generate proposal");
       setGenerating(false);
     }
   }
@@ -1013,10 +1013,10 @@ export default function BOMEditor({
             {/* Quotes */}
             <div className="bg-white border border-[#E5E3DE] rounded-2xl p-5">
               <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-4">
-                Quotes from this BOM
+                Proposals from this BOM
               </p>
               {bom.quotes.length === 0 ? (
-                <p className="text-sm text-[#bbb]">No quotes generated yet</p>
+                <p className="text-sm text-[#bbb]">No proposals generated yet</p>
               ) : (
                 <div className="space-y-2">
                   {bom.quotes.map((q) => (

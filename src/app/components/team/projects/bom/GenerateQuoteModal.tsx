@@ -49,7 +49,7 @@ export default function GenerateQuoteModal({
       const data = await res.json();
       router.push(`/projects/${projectId}/quotes/${data.quoteId}`);
     } catch {
-      setError("Failed to generate quote. Please try again.");
+      setError("Failed to Generate proposal. Please try again.");
       setGenerating(false);
     }
   }
@@ -61,7 +61,7 @@ export default function GenerateQuoteModal({
         {/* Header */}
         <div className="px-6 pt-5 pb-4 border-b border-[#F0EEE9] flex items-start justify-between">
           <div>
-            <h2 className="text-base font-bold text-[#111]">Generate quote from BOMs</h2>
+            <h2 className="text-base font-bold text-[#111]">Generate proposal from BOMs</h2>
             <p className="text-sm text-[#888] mt-0.5">
               Select one or more BOMs to combine into a single quote.
             </p>
@@ -123,7 +123,7 @@ export default function GenerateQuoteModal({
             className="flex items-center gap-2 bg-[#111] text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-[#333] disabled:opacity-40 transition-colors"
           >
             <Zap size={13} />
-            {generating ? "Generating…" : "Generate quote"}
+            {generating ? "Generating…" : "Generate proposal"}
           </button>
         </div>
 

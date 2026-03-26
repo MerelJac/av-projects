@@ -74,7 +74,7 @@ export default async function NewProjectPage() {
               </select>
             </div>
 
-            {quotes.length > 0 && (
+            {/* {quotes.length > 0 && (
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold uppercase tracking-widest text-[#999]">
                   Link Quote{" "}
@@ -94,7 +94,7 @@ export default async function NewProjectPage() {
                   ))}
                 </select>
               </div>
-            )}
+            )} */}
 
           </div>
 
