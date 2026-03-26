@@ -82,6 +82,7 @@ export default function BOMEditor({
   });
   const searchRef = useRef<HTMLInputElement>(null);
   const [tariff, setTariff] = useState<number>(0);
+  const [globalMargin, setGlobalMargin] = useState<number>(20);
   const [sections, setSections] = useState<string[]>(() => {
     // derive existing sections from loaded lines, preserving order
     const seen = new Set<string>();
@@ -189,6 +190,19 @@ export default function BOMEditor({
           marginPct: margin,
           sellEach: parseFloat(sell.toFixed(2)),
         };
+      }),
+    );
+    setSaved(false);
+  }
+
+  function applyMarginToAll(margin: number) {
+    setLines((prev) =>
+      prev.map((l) => {
+        const cost = l.costEach ?? l.item?.cost ?? 0;
+        if (cost <= 0) return l;
+        const m = margin >= 100 ? 99.99 : margin;
+        const sell = cost / (1 - m / 100);
+        return { ...l, marginPct: margin, sellEach: parseFloat(sell.toFixed(2)) };
       }),
     );
     setSaved(false);
@@ -916,6 +930,33 @@ export default function BOMEditor({
 
           {/* Sidebar */}
           <div className="space-y-4">
+            {/* Bulk margin */}
+            <div className="bg-white border border-[#E5E3DE] rounded-2xl p-5">
+              <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-3">
+                Margin
+              </p>
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type="number"
+                    step="0.1"
+                    min={0}
+                    max={99}
+                    value={globalMargin}
+                    onChange={(e) => setGlobalMargin(parseFloat(e.target.value) || 0)}
+                    className="w-full text-right text-sm border border-[#E5E3DE] rounded-lg pr-6 pl-3 py-1.5 focus:outline-none focus:border-[#111] transition-colors"
+                  />
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[#bbb] text-xs">%</span>
+                </div>
+                <button
+                  onClick={() => applyMarginToAll(globalMargin)}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-[#1a1a1a] text-white hover:bg-[#333] transition-colors whitespace-nowrap"
+                >
+                  Apply to all
+                </button>
+              </div>
+            </div>
+
             {/* Summary */}
             <div className="bg-white border border-[#E5E3DE] rounded-2xl p-5">
               <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-4">

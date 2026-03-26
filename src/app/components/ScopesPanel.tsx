@@ -163,7 +163,7 @@ export default function ScopesPanel({
                 className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-[#E5E3DE] text-[#666] hover:border-[#111] hover:text-[#111] transition-colors disabled:opacity-40"
               >
                 <Download size={11} />
-                Pull from BOM
+                Pull from BOMs
               </button>
               {showPullMenu && (
                 <>

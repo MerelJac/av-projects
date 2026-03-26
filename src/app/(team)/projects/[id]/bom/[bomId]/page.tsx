@@ -6,6 +6,7 @@ import NotesPanel from "@/app/components/NotesPanel";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { calcBOMTotals } from "../actions";
+import DuplicateBomToProjectButton from "./DuplicateBomToProjectButton";
 
 export default async function BOMPage({
   params,
@@ -58,13 +59,20 @@ export default async function BOMPage({
     customerPrices.map((cp) => [cp.itemId, cp.price]),
   );
 
-  const projectBoms = await prisma.billOfMaterials.findMany({
-    where: { projectId: id },
-    include: { lines: { include: { item: true } } },
-  });
+  const [projectBoms, allProjects] = await Promise.all([
+    prisma.billOfMaterials.findMany({
+      where: { projectId: id },
+      include: { lines: { include: { item: true } } },
+    }),
+    prisma.project.findMany({
+      where: { id: { not: id } },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+  ]);
 
   return (
-    <div className=" bg-[#F7F6F3]">
+    <div className="bg-[#F7F6F3]">
       <BOMEditor
         bom={
           {
@@ -79,7 +87,7 @@ export default async function BOMPage({
           const { grandTotal } = calcBOMTotals(
             b.lines as BOMLine[],
             customerPricesRecord,
-            0, // tariff unknown server-side, default 0
+            0,
           );
           return {
             id: b.id,
@@ -96,6 +104,11 @@ export default async function BOMPage({
           currentUserId={currentUserId}
         />
       </div>
+      <DuplicateBomToProjectButton
+        bomId={bomId}
+        bomName={bom.name}
+        projects={allProjects}
+      />
     </div>
   );
 }
