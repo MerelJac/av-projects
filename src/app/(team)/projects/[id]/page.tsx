@@ -167,16 +167,18 @@ export default async function ProjectPage({
               billingTerms={project.billingTerms ?? null}
             />
           </div>
-          {project.totalBudget != null && (
+          {totalContract > 0 && (
             <div className="text-right">
               <p className="text-xs text-[#999] mb-0.5">Budget</p>
               <p className="text-xl font-bold text-[#111]">
-                ${project.totalBudget.toLocaleString()}
+                ${totalContract.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
-              {project.invoiced != null && (
+              <p className="text-xs text-[#999] italic mt-0.5">From approved proposals</p>
+              {invoiced > 0 && (
                 <p className="text-xs text-[#999] mt-0.5">
-                  ${project.invoiced.toLocaleString()} invoiced
+                  ${invoiced.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} invoiced
                 </p>
+                
               )}
             </div>
           )}

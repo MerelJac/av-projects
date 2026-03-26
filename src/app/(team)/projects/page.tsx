@@ -7,7 +7,7 @@ export default async function ProjectsPage() {
     include: {
       customer: true,
       quotes: {
-        select: { id: true, status: true, isDirect: true, isChangeOrder: true },
+        select: { id: true, status: true, isDirect: true, isChangeOrder: true, total: true },
       },
       boms: { select: { id: true } },
     },
@@ -106,6 +106,10 @@ export default async function ProjectsPage() {
                       ).length
                     : 0;
 
+                  const totalBudget = project.quotes
+                    .filter((q) => q.status === "ACCEPTED")
+                    .reduce((sum, q) => sum + (q.total ?? 0), 0);
+
                   return (
                     <tr
                       key={project.id}
@@ -184,8 +188,8 @@ export default async function ProjectsPage() {
                         )}
                       </td>
                       <td className="px-5 py-3.5 text-right text-sm font-semibold text-[#111]">
-                        {project.totalBudget != null ? (
-                          `$${project.totalBudget.toLocaleString()}`
+                        {totalBudget > 0 ? (
+                          `$${totalBudget.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                         ) : (
                           <span className="text-[#ccc] font-normal">—</span>
                         )}
