@@ -186,7 +186,7 @@ export default async function ProjectPage({
 
         {/* Financial Summary */}
         {totalContract > 0 && (
-          <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
+          <div className="bg-white border border-[#E5E3DE] rounded-2xl ">
             <div className="px-6 py-4 border-b border-[#F0EEE9]">
               <h3 className="font-semibold text-sm text-[#111]">
                 Financial Summary
@@ -368,7 +368,7 @@ export default async function ProjectPage({
         </div>
 
         {/* BOMs */}
-        <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
+        <div className="bg-white border border-[#E5E3DE] rounded-2xl ">
           <div className="px-6 py-4 border-b border-[#F0EEE9] flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <Package size={15} className="text-[#999]" />
@@ -422,7 +422,7 @@ export default async function ProjectPage({
         </div>
 
         {/* Quotes */}
-        <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
+        <div className="bg-white border border-[#E5E3DE] rounded-2xl ">
           <div className="px-6 py-4 border-b border-[#F0EEE9] flex items-center gap-2.5">
             <FileText size={15} className="text-[#999]" />
             <h3 className="font-semibold text-sm text-[#111]">Documents</h3>
@@ -506,7 +506,7 @@ export default async function ProjectPage({
         />
 
         {/* Purchase Orders */}
-        <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
+        <div className="bg-white border border-[#E5E3DE] rounded-2xl ">
           <div className="px-6 py-4 border-b border-[#F0EEE9] flex items-center gap-2.5">
             <ShoppingCart size={15} className="text-[#999]" />
             <h3 className="font-semibold text-sm text-[#111]">
@@ -582,7 +582,7 @@ export default async function ProjectPage({
         </div>
 
         {/* Invoices */}
-        <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
+        <div className="bg-white border border-[#E5E3DE] rounded-2xl ">
           <div className="px-6 py-4 border-b border-[#F0EEE9] flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <Receipt size={15} className="text-[#999]" />
@@ -659,7 +659,7 @@ export default async function ProjectPage({
 
         <AllShipments shipments={shipments} />
         {/* Change Orders */}
-        <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
+        <div className="bg-white border border-[#E5E3DE] rounded-2xl ">
           <div className="px-6 py-4 border-b border-[#F0EEE9] flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <GitBranch size={15} className="text-[#999]" />

@@ -165,7 +165,7 @@ export default function ScopesPanel({
   }
 
   return (
-    <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
+    <div className="bg-white border border-[#E5E3DE] rounded-2xl ">
       {/* Header */}
       <div className="px-6 py-4 border-b border-[#F0EEE9] flex items-center justify-between">
         <div className="flex flex-col items-center gap-1">
@@ -205,7 +205,7 @@ export default function ScopesPanel({
               {showPullMenu && (
                 <>
                   <div
-                    className="fixed inset-0 z-10"
+                    className="fixed inset-0"
                     onClick={() => setShowPullMenu(false)}
                   />
                   <div className="absolute right-0 top-full mt-1 bg-white border border-[#E5E3DE] rounded-xl shadow-lg z-20 min-w-48">
@@ -372,7 +372,7 @@ export default function ScopesPanel({
                             </div>
                           </div>
                         </div>
-                        <div className="mt-2 w-full h-1.5 bg-[#F0EEE9] rounded-full overflow-hidden">
+                        <div className="mt-2 w-full h-1.5 bg-[#F0EEE9] rounded-full ">
                           <div
                             className={`h-full rounded-full transition-all ${over ? "bg-red-400" : pct > 80 ? "bg-amber-400" : "bg-green-500"}`}
                             style={{ width: `${pct}%` }}
