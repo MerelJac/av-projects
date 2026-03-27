@@ -173,7 +173,7 @@ export default async function ProjectPage({
               <p className="text-xl font-bold text-[#111]">
                 ${totalContract.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
-              <p className="text-xs text-[#999] italic mt-0.5">From approved proposals</p>
+              <p className="text-xs text-[#999] italic mt-0.5">from approved proposals</p>
               {invoiced > 0 && (
                 <p className="text-xs text-[#999] mt-0.5">
                   ${invoiced.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} invoiced
@@ -256,6 +256,16 @@ export default async function ProjectPage({
                       maximumFractionDigits: 2,
                     })}{" "}
                     labor
+                  </p>
+                )}
+                 {shippingCost > 0 && (
+                  <p className="text-xs text-[#999] mt-0.5">
+                    $
+                    {shippingCost.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}{" "}
+                    shipping
                   </p>
                 )}
               </div>

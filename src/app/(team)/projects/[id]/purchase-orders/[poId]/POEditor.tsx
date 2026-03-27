@@ -1,7 +1,19 @@
 "use client";
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Truck, CheckCircle2, AlertCircle, Plus, Clock, Send, Pencil, Trash2, Search, FileText } from "lucide-react";
+import {
+  ArrowLeft,
+  Truck,
+  CheckCircle2,
+  AlertCircle,
+  Plus,
+  Clock,
+  Send,
+  Pencil,
+  Trash2,
+  Search,
+  FileText,
+} from "lucide-react";
 
 type POLine = {
   id: string;
@@ -15,6 +27,7 @@ type POLine = {
     itemNumber: string;
     manufacturer: string | null;
     description: string | null;
+    unit: string | null;
   } | null;
 };
 
@@ -22,7 +35,7 @@ type ShipmentLine = {
   id: string;
   quantity: number;
   poLineId: string | null;
-  item: { id: string; itemNumber: string; manufacturer: string | null } | null;
+  item: { id: string; itemNumber: string; manufacturer: string | null; unit: string | null } | null;
 };
 
 type Shipment = {
@@ -38,7 +51,10 @@ type Shipment = {
   lines: ShipmentLine[];
 };
 
-type User = { id: string; profile: { firstName: string; lastName: string } | null };
+type User = {
+  id: string;
+  profile: { firstName: string; lastName: string } | null;
+};
 
 type PO = {
   id: string;
@@ -59,10 +75,19 @@ type PO = {
   billingTerms: "NET30" | "PROGRESS" | "PREPAID" | null;
   creditLimit: number | null;
   buyerId: string | null;
-  buyer: { id: string; profile: { firstName: string; lastName: string } | null } | null;
+  buyer: {
+    id: string;
+    profile: { firstName: string; lastName: string } | null;
+  } | null;
 };
 
-const STATUS_OPTIONS = ["DRAFT", "SENT", "PARTIALLY_RECEIVED", "RECEIVED", "CANCELLED"] as const;
+const STATUS_OPTIONS = [
+  "DRAFT",
+  "SENT",
+  "PARTIALLY_RECEIVED",
+  "RECEIVED",
+  "CANCELLED",
+] as const;
 const STATUS_LABELS: Record<string, string> = {
   DRAFT: "Draft",
   SENT: "Sent",
@@ -78,18 +103,31 @@ const STATUS_COLORS: Record<string, string> = {
   CANCELLED: "bg-red-100 text-red-600",
 };
 
-export default function POEditor({ po, projectId, users }: { po: PO; projectId: string; users: User[] }) {
+export default function POEditor({
+  po,
+  projectId,
+  users,
+}: {
+  po: PO;
+  projectId: string;
+  users: User[];
+}) {
   const router = useRouter();
   const [status, setStatus] = useState(po.status);
   const [lines, setLines] = useState<POLine[]>(po.lines);
   const [shipments, setShipments] = useState<Shipment[]>(po.shipments);
-  const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const [toast, setToast] = useState<{
+    type: "success" | "error";
+    msg: string;
+  } | null>(null);
 
   // Shipment form
   const [showShipmentForm, setShowShipmentForm] = useState(false);
   const [tracking, setTracking] = useState("");
   const [carrier, setCarrier] = useState("");
-  const [shipmentLineIds, setShipmentLineIds] = useState<Set<string>>(new Set());
+  const [shipmentLineIds, setShipmentLineIds] = useState<Set<string>>(
+    new Set(),
+  );
   const [shipmentCost, setShipmentCost] = useState("");
   const [addingShipment, setAddingShipment] = useState(false);
 
@@ -117,18 +155,23 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
   async function handleSaveInfo() {
     setSavingInfo(true);
     try {
-      const res = await fetch(`/api/projects/${projectId}/purchase-orders/${po.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          shipToAddress: infoForm.shipToAddress || null,
-          billToAddress: infoForm.billToAddress || null,
-          shippingMethod: infoForm.shippingMethod || null,
-          billingTerms: infoForm.billingTerms || null,
-          creditLimit: infoForm.creditLimit ? parseFloat(infoForm.creditLimit) : null,
-          buyerId: infoForm.buyerId || null,
-        }),
-      });
+      const res = await fetch(
+        `/api/projects/${projectId}/purchase-orders/${po.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            shipToAddress: infoForm.shipToAddress || null,
+            billToAddress: infoForm.billToAddress || null,
+            shippingMethod: infoForm.shippingMethod || null,
+            billingTerms: infoForm.billingTerms || null,
+            creditLimit: infoForm.creditLimit
+              ? parseFloat(infoForm.creditLimit)
+              : null,
+            buyerId: infoForm.buyerId || null,
+          }),
+        },
+      );
       if (!res.ok) throw new Error();
       setEditingInfo(false);
       showToast("success", "PO details saved");
@@ -149,8 +192,20 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
   // Add line state
   const [showAddLine, setShowAddLine] = useState(false);
   const [itemQuery, setItemQuery] = useState("");
-  const [itemResults, setItemResults] = useState<{ id: string; itemNumber: string; manufacturer: string | null; description: string | null }[]>([]);
-  const [selectedItem, setSelectedItem] = useState<{ id: string; itemNumber: string; manufacturer: string | null; description: string | null } | null>(null);
+  const [itemResults, setItemResults] = useState<
+    {
+      id: string;
+      itemNumber: string;
+      manufacturer: string | null;
+      description: string | null;
+    }[]
+  >([]);
+  const [selectedItem, setSelectedItem] = useState<{
+    id: string;
+    itemNumber: string;
+    manufacturer: string | null;
+    description: string | null;
+  } | null>(null);
   const [addQty, setAddQty] = useState("1");
   const [addCost, setAddCost] = useState("");
   const [addingLine, setAddingLine] = useState(false);
@@ -176,7 +231,9 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
       if (!res.ok) throw new Error();
 
       setShipments((prev) =>
-        prev.map((s) => (s.id === shipmentId ? { ...s, receivedAt: new Date() } : s)),
+        prev.map((s) =>
+          s.id === shipmentId ? { ...s, receivedAt: new Date() } : s,
+        ),
       );
 
       const updatedLineIds = new Set(
@@ -187,12 +244,18 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
           prev.map((l) => {
             if (!updatedLineIds.has(l.id)) return l;
             const shipLine = shipment.lines.find((sl) => sl.poLineId === l.id);
-            const newQty = Math.min(l.quantity, l.receivedQuantity + (shipLine?.quantity ?? 0));
-            fetch(`/api/projects/${projectId}/purchase-orders/${po.id}/lines/${l.id}`, {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ receivedQuantity: newQty }),
-            });
+            const newQty = Math.min(
+              l.quantity,
+              l.receivedQuantity + (shipLine?.quantity ?? 0),
+            );
+            fetch(
+              `/api/projects/${projectId}/purchase-orders/${po.id}/lines/${l.id}`,
+              {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ receivedQuantity: newQty }),
+              },
+            );
             return { ...l, receivedQuantity: newQty };
           }),
         );
@@ -224,11 +287,14 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
       prev.map((l) => (l.id === lineId ? { ...l, receivedQuantity: qty } : l)),
     );
     try {
-      await fetch(`/api/projects/${projectId}/purchase-orders/${po.id}/lines/${lineId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ receivedQuantity: qty }),
-      });
+      await fetch(
+        `/api/projects/${projectId}/purchase-orders/${po.id}/lines/${lineId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ receivedQuantity: qty }),
+        },
+      );
     } catch {
       showToast("error", "Failed to update received qty");
     }
@@ -246,30 +312,45 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
     if (isNaN(qty) || isNaN(cost)) return;
 
     setLines((prev) =>
-      prev.map((l) => (l.id === lineId ? { ...l, quantity: qty, cost, costOverridden: true } : l)),
+      prev.map((l) =>
+        l.id === lineId
+          ? { ...l, quantity: qty, cost, costOverridden: true }
+          : l,
+      ),
     );
     setEditingLineId(null);
 
     try {
-      await fetch(`/api/projects/${projectId}/purchase-orders/${po.id}/lines/${lineId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quantity: qty, cost }),
-      });
+      await fetch(
+        `/api/projects/${projectId}/purchase-orders/${po.id}/lines/${lineId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ quantity: qty, cost }),
+        },
+      );
     } catch {
       showToast("error", "Failed to update line");
     }
   }
 
   async function handleResend() {
-    if (!confirm(`Resend this PO as revision ${revision + 1}? This will increment the revision number.`)) return;
+    if (
+      !confirm(
+        `Resend this PO as revision ${revision + 1}? This will increment the revision number.`,
+      )
+    )
+      return;
     setResending(true);
     try {
-      const res = await fetch(`/api/projects/${projectId}/purchase-orders/${po.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resend: true }),
-      });
+      const res = await fetch(
+        `/api/projects/${projectId}/purchase-orders/${po.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ resend: true }),
+        },
+      );
       if (!res.ok) throw new Error();
       setRevision((r) => r + 1);
       setStatus("SENT");
@@ -283,8 +364,14 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
   }
 
   async function handleAddShipment() {
-    if (!tracking.trim()) { showToast("error", "Tracking number required"); return; }
-    if (shipmentLineIds.size === 0) { showToast("error", "Select at least one line"); return; }
+    if (!tracking.trim()) {
+      showToast("error", "Tracking number required");
+      return;
+    }
+    if (shipmentLineIds.size === 0) {
+      showToast("error", "Select at least one line");
+      return;
+    }
     setAddingShipment(true);
     try {
       const selectedLines = lines.filter((l) => shipmentLineIds.has(l.id));
@@ -323,9 +410,12 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
   async function handleDeleteLine(lineId: string) {
     setLines((prev) => prev.filter((l) => l.id !== lineId));
     try {
-      await fetch(`/api/projects/${projectId}/purchase-orders/${po.id}/lines/${lineId}`, {
-        method: "DELETE",
-      });
+      await fetch(
+        `/api/projects/${projectId}/purchase-orders/${po.id}/lines/${lineId}`,
+        {
+          method: "DELETE",
+        },
+      );
     } catch {
       showToast("error", "Failed to remove line");
     }
@@ -335,7 +425,10 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
     setItemQuery(q);
     setSelectedItem(null);
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
-    if (!q.trim()) { setItemResults([]); return; }
+    if (!q.trim()) {
+      setItemResults([]);
+      return;
+    }
     searchTimeout.current = setTimeout(async () => {
       const res = await fetch(`/api/items?q=${encodeURIComponent(q)}&limit=10`);
       const data = await res.json();
@@ -344,17 +437,30 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
   }
 
   async function handleAddLine() {
-    if (!selectedItem) { showToast("error", "Select an item"); return; }
+    if (!selectedItem) {
+      showToast("error", "Select an item");
+      return;
+    }
     const qty = parseInt(addQty);
     const cost = parseFloat(addCost);
-    if (!qty || isNaN(cost)) { showToast("error", "Valid quantity and cost required"); return; }
+    if (!qty || isNaN(cost)) {
+      showToast("error", "Valid quantity and cost required");
+      return;
+    }
     setAddingLine(true);
     try {
-      const res = await fetch(`/api/projects/${projectId}/purchase-orders/${po.id}/lines`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itemId: selectedItem.id, quantity: qty, cost }),
-      });
+      const res = await fetch(
+        `/api/projects/${projectId}/purchase-orders/${po.id}/lines`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            itemId: selectedItem.id,
+            quantity: qty,
+            cost,
+          }),
+        },
+      );
       if (!res.ok) throw new Error();
       const line = await res.json();
       setLines((prev) => [...prev, line]);
@@ -379,17 +485,27 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
   return (
     <div className="bg-[#F7F6F3]">
       {toast && (
-        <div className={`fixed top-5 right-5 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-medium shadow-lg border ${
-          toast.type === "success" ? "bg-white border-green-200 text-green-700" : "bg-white border-red-200 text-red-600"
-        }`}>
-          {toast.type === "success" ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
+        <div
+          className={`fixed top-5 right-5 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-medium shadow-lg border ${
+            toast.type === "success"
+              ? "bg-white border-green-200 text-green-700"
+              : "bg-white border-red-200 text-red-600"
+          }`}
+        >
+          {toast.type === "success" ? (
+            <CheckCircle2 size={15} />
+          ) : (
+            <AlertCircle size={15} />
+          )}
           {toast.msg}
         </div>
       )}
 
       <div className="max-w-4xl mx-auto px-6 py-10">
         <button
-          onClick={() => router.push(po.project ? `/projects/${projectId}` : `/projects`)}
+          onClick={() =>
+            router.push(po.project ? `/projects/${projectId}` : `/projects`)
+          }
           className="flex items-center gap-2 text-sm text-[#666] hover:text-[#111] mb-6 transition-colors"
         >
           <ArrowLeft size={15} />
@@ -406,7 +522,10 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
               {po.quote && (
                 <>
                   <span>·</span>
-                  <a href={`/projects/${projectId}/quotes/${po.quote.id}`} className="hover:text-[#111] transition-colors">
+                  <a
+                    href={`/projects/${projectId}/quotes/${po.quote.id}`}
+                    className="hover:text-[#111] transition-colors"
+                  >
                     Quote #{po.quote.id.slice(0, 8).toUpperCase()}
                   </a>
                 </>
@@ -423,12 +542,18 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
               )}
             </div>
             <p className="text-sm text-[#888] mt-1">
-              {po.vendor?.name ?? "—"} · {new Date(po.createdAt).toLocaleDateString()}
-              {po.sentAt && ` · Sent ${new Date(po.sentAt).toLocaleDateString()}`}
-              {" · "}{totalReceived}/{totalLines} items received
+              {po.vendor?.name ?? "—"} ·{" "}
+              {new Date(po.createdAt).toLocaleDateString()}
+              {po.sentAt &&
+                ` · Sent ${new Date(po.sentAt).toLocaleDateString()}`}
+              {" · "}
+              {totalReceived}/{totalLines} items received
             </p>
             <p className="text-xs text-[#aaa] mt-0.5 font-medium">
-              Total cost: ${totalCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              Total cost: $
+              {totalCost.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+              })}
             </p>
           </div>
 
@@ -440,7 +565,9 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
                   key={s}
                   onClick={() => handleStatusChange(s)}
                   className={`text-xs font-semibold px-3 py-1.5 rounded-xl border transition-colors ${
-                    status === s ? `${STATUS_COLORS[s]} border-current` : "border-[#E5E3DE] text-[#999] hover:bg-[#F7F6F3]"
+                    status === s
+                      ? `${STATUS_COLORS[s]} border-current`
+                      : "border-[#E5E3DE] text-[#999] hover:bg-[#F7F6F3]"
                   }`}
                 >
                   {STATUS_LABELS[s]}
@@ -465,7 +592,11 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
                   className="flex items-center gap-2 text-xs font-semibold bg-[#111] text-white px-3 py-1.5 rounded-xl hover:bg-[#333] disabled:opacity-40 transition-colors"
                 >
                   <Send size={12} />
-                  {resending ? "Sending…" : status === "DRAFT" ? "Send PO" : `Resend (Rev ${revision + 1})`}
+                  {resending
+                    ? "Sending…"
+                    : status === "DRAFT"
+                      ? "Send PO"
+                      : `Resend (Rev ${revision + 1})`}
                 </button>
               )}
             </div>
@@ -505,42 +636,66 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
           <div className="px-6 py-5 grid grid-cols-3 gap-x-8 gap-y-4">
             {/* Vendor ID — always read-only */}
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">Vendor ID</p>
-              <p className="text-sm font-mono text-[#111]">{po.vendor?.id?.slice(0, 8).toUpperCase() ?? "—"}</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">
+                Vendor ID
+              </p>
+              <p className="text-sm font-mono text-[#111]">
+                {po.vendor?.id?.slice(0, 8).toUpperCase() ?? "—"}
+              </p>
             </div>
 
             {editingInfo ? (
               <>
                 <div>
-                  <label className="block text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1.5">Buyer</label>
+                  <label className="block text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1.5">
+                    Buyer
+                  </label>
                   <select
                     className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-[#111]"
                     value={infoForm.buyerId}
-                    onChange={(e) => setInfoForm((f) => ({ ...f, buyerId: e.target.value }))}
+                    onChange={(e) =>
+                      setInfoForm((f) => ({ ...f, buyerId: e.target.value }))
+                    }
                   >
                     <option value="">— None —</option>
                     {users.map((u) => (
                       <option key={u.id} value={u.id}>
-                        {u.profile ? `${u.profile.firstName} ${u.profile.lastName}` : u.id}
+                        {u.profile
+                          ? `${u.profile.firstName} ${u.profile.lastName}`
+                          : u.id}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1.5">Shipping Method</label>
+                  <label className="block text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1.5">
+                    Shipping Method
+                  </label>
                   <input
                     className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#111]"
                     value={infoForm.shippingMethod}
-                    onChange={(e) => setInfoForm((f) => ({ ...f, shippingMethod: e.target.value }))}
+                    onChange={(e) =>
+                      setInfoForm((f) => ({
+                        ...f,
+                        shippingMethod: e.target.value,
+                      }))
+                    }
                     placeholder="e.g. UPS Ground"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1.5">Billing Terms</label>
+                  <label className="block text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1.5">
+                    Billing Terms
+                  </label>
                   <select
                     className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#111] bg-white"
                     value={infoForm.billingTerms}
-                    onChange={(e) => setInfoForm((f) => ({ ...f, billingTerms: e.target.value }))}
+                    onChange={(e) =>
+                      setInfoForm((f) => ({
+                        ...f,
+                        billingTerms: e.target.value,
+                      }))
+                    }
                   >
                     <option value="">— None —</option>
                     <option value="NET30">Net 30</option>
@@ -549,35 +704,58 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1.5">Credit Limit</label>
+                  <label className="block text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1.5">
+                    Credit Limit
+                  </label>
                   <div className="relative">
-                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[#999]">$</span>
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[#999]">
+                      $
+                    </span>
                     <input
                       type="number"
                       className="w-full text-sm border border-[#E5E3DE] rounded-lg pl-6 pr-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#111]"
                       value={infoForm.creditLimit}
-                      onChange={(e) => setInfoForm((f) => ({ ...f, creditLimit: e.target.value }))}
+                      onChange={(e) =>
+                        setInfoForm((f) => ({
+                          ...f,
+                          creditLimit: e.target.value,
+                        }))
+                      }
                       placeholder="0.00"
                     />
                   </div>
                 </div>
                 <div className="col-span-3 grid grid-cols-2 gap-x-8 gap-y-4 mt-1 border-t border-[#F0EEE9] pt-4">
                   <div>
-                    <label className="block text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1.5">Ship-To Address</label>
+                    <label className="block text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1.5">
+                      Ship-To Address
+                    </label>
                     <textarea
                       rows={3}
                       className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-[#111]"
                       value={infoForm.shipToAddress}
-                      onChange={(e) => setInfoForm((f) => ({ ...f, shipToAddress: e.target.value }))}
+                      onChange={(e) =>
+                        setInfoForm((f) => ({
+                          ...f,
+                          shipToAddress: e.target.value,
+                        }))
+                      }
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1.5">Bill-To Address</label>
+                    <label className="block text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1.5">
+                      Bill-To Address
+                    </label>
                     <textarea
                       rows={3}
                       className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-[#111]"
                       value={infoForm.billToAddress}
-                      onChange={(e) => setInfoForm((f) => ({ ...f, billToAddress: e.target.value }))}
+                      onChange={(e) =>
+                        setInfoForm((f) => ({
+                          ...f,
+                          billToAddress: e.target.value,
+                        }))
+                      }
                     />
                   </div>
                 </div>
@@ -585,19 +763,37 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
             ) : (
               <>
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">Buyer</p>
-                  <p className="text-sm text-[#111]">{buyerLabel(infoForm.buyerId || null)}</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">
+                    Buyer
+                  </p>
+                  <p className="text-sm text-[#111]">
+                    {buyerLabel(infoForm.buyerId || null)}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">Shipping Method</p>
-                  <p className="text-sm text-[#111]">{infoForm.shippingMethod || "—"}</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">
+                    Shipping Method
+                  </p>
+                  <p className="text-sm text-[#111]">
+                    {infoForm.shippingMethod || "—"}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">Billing Terms</p>
-                  <p className="text-sm text-[#111]">{{ NET30: "Net 30", PROGRESS: "Progress Billing", PREPAID: "Prepaid" }[infoForm.billingTerms] ?? "—"}</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">
+                    Billing Terms
+                  </p>
+                  <p className="text-sm text-[#111]">
+                    {{
+                      NET30: "Net 30",
+                      PROGRESS: "Progress Billing",
+                      PREPAID: "Prepaid",
+                    }[infoForm.billingTerms] ?? "—"}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">Credit Limit</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">
+                    Credit Limit
+                  </p>
                   <p className="text-sm text-[#111]">
                     {infoForm.creditLimit
                       ? `$${parseFloat(infoForm.creditLimit).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
@@ -607,12 +803,20 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
                 {(infoForm.shipToAddress || infoForm.billToAddress) && (
                   <div className="col-span-3 grid grid-cols-2 gap-x-8 mt-1 border-t border-[#F0EEE9] pt-4">
                     <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">Ship-To Address</p>
-                      <p className="text-sm text-[#111] whitespace-pre-wrap">{infoForm.shipToAddress || "—"}</p>
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">
+                        Ship-To Address
+                      </p>
+                      <p className="text-sm text-[#111] whitespace-pre-wrap">
+                        {infoForm.shipToAddress || "—"}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">Bill-To Address</p>
-                      <p className="text-sm text-[#111] whitespace-pre-wrap">{infoForm.billToAddress || "—"}</p>
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">
+                        Bill-To Address
+                      </p>
+                      <p className="text-sm text-[#111] whitespace-pre-wrap">
+                        {infoForm.billToAddress || "—"}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -626,7 +830,9 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
           <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
             <div className="px-6 py-4 border-b border-[#F0EEE9] flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <h3 className="font-semibold text-sm text-[#111]">Line Items</h3>
+                <h3 className="font-semibold text-sm text-[#111]">
+                  Line Items
+                </h3>
                 <span className="text-xs text-[#bbb]">{lines.length}</span>
               </div>
               {canEdit && (
@@ -642,10 +848,18 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[#F0EEE9] bg-[#FAFAF8]">
-                  <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-6 py-3">Item</th>
-                  <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-4 py-3 w-28">Ordered</th>
-                  <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-4 py-3 w-28">Received</th>
-                  <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-6 py-3 w-32">Cost (ea)</th>
+                  <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-6 py-3">
+                    Item
+                  </th>
+                  <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-4 py-3 w-28">
+                    Ordered
+                  </th>
+                  <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-4 py-3 w-28">
+                    Received
+                  </th>
+                  <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-6 py-3 w-32">
+                    Cost
+                  </th>
                   {canEdit && <th className="w-16" />}
                 </tr>
               </thead>
@@ -654,18 +868,25 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
                   const fullyReceived = line.receivedQuantity >= line.quantity;
                   const isEditing = editingLineId === line.id;
                   return (
-                    <tr key={line.id} className="border-b border-[#F7F6F3] last:border-0">
+                    <tr
+                      key={line.id}
+                      className="border-b border-[#F7F6F3] last:border-0"
+                    >
                       <td className="px-6 py-3">
                         {line.item ? (
                           <>
                             <p className="text-sm font-medium text-[#111]">
                               {line.item.manufacturer && (
-                                <span className="text-[#999] mr-1">{line.item.manufacturer}</span>
+                                <span className="text-[#999] mr-1">
+                                  {line.item.manufacturer}
+                                </span>
                               )}
                               {line.item.itemNumber}
                             </p>
                             {line.item.description && (
-                              <p className="text-xs text-[#999] mt-0.5">{line.item.description}</p>
+                              <p className="text-xs text-[#999] mt-0.5">
+                                {line.item.description}
+                              </p>
                             )}
                           </>
                         ) : (
@@ -682,19 +903,32 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
                             className="w-16 text-right text-xs border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111]"
                           />
                         ) : (
-                          <span className="text-sm text-[#666]">{line.quantity}</span>
+                          <span className="text-sm text-[#666]">
+                            {line.quantity}
+                          </span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          {fullyReceived && <CheckCircle2 size={13} className="text-green-500" />}
+                          {fullyReceived && (
+                            <CheckCircle2
+                              size={13}
+                              className="text-green-500"
+                            />
+                          )}
                           <input
                             type="number"
                             min={0}
                             max={line.quantity}
                             value={line.receivedQuantity}
                             onChange={(e) =>
-                              handleReceivedQtyChange(line.id, Math.min(line.quantity, parseInt(e.target.value) || 0))
+                              handleReceivedQtyChange(
+                                line.id,
+                                Math.min(
+                                  line.quantity,
+                                  parseInt(e.target.value) || 0,
+                                ),
+                              )
                             }
                             className="w-16 text-right text-xs border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111]"
                           />
@@ -703,7 +937,9 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
                       <td className="px-6 py-3 text-right">
                         {isEditing ? (
                           <div className="relative inline-flex">
-                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-[#999]">$</span>
+                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-[#999]">
+                              $
+                            </span>
                             <input
                               type="number"
                               step="0.01"
@@ -712,16 +948,26 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
                               onChange={(e) => setEditCost(e.target.value)}
                               className="w-24 text-right text-xs border border-[#E5E3DE] rounded-lg pl-5 pr-2 py-1 focus:outline-none focus:border-[#111]"
                             />
+                         
                           </div>
                         ) : (
                           <div className="flex items-center justify-end gap-1">
                             {line.costOverridden && (
-                              <span title="Cost manually overridden" className="text-[9px] font-semibold text-amber-600 bg-amber-50 px-1 py-0.5 rounded">
-                                OVR
+                              <span
+                                title="Cost manually overridden"
+                                className="text-[9px] font-semibold text-amber-600 bg-amber-50 px-1 py-0.5 rounded"
+                              >
+                                OVRIDDEN
                               </span>
                             )}
                             <span className="text-sm text-[#666]">
-                              ${line.cost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                              $
+                              {line.cost.toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                              })}
+                            </span>
+                               <span className="text-xs text-[#999] font-medium shrink-0">
+                              {line.item?.unit ? line.item.unit : "each"}
                             </span>
                           </div>
                         )}
@@ -770,7 +1016,9 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
             {/* Add line form */}
             {showAddLine && (
               <div className="px-6 py-5 border-t border-[#F0EEE9] bg-[#FAFAF8] space-y-3">
-                <p className="text-xs font-semibold uppercase tracking-widest text-[#888]">Add Item</p>
+                <p className="text-xs font-semibold uppercase tracking-widest text-[#888]">
+                  Add Item
+                </p>
 
                 {/* Item search */}
                 <div className="relative">
@@ -779,9 +1027,19 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
                     <input
                       type="text"
                       placeholder="Search by item number or description…"
-                      value={selectedItem ? `${selectedItem.itemNumber}${selectedItem.manufacturer ? ` · ${selectedItem.manufacturer}` : ""}` : itemQuery}
+                      value={
+                        selectedItem
+                          ? `${selectedItem.itemNumber}${selectedItem.manufacturer ? ` · ${selectedItem.manufacturer}` : ""}`
+                          : itemQuery
+                      }
                       onChange={(e) => handleItemSearch(e.target.value)}
-                      onFocus={() => { if (selectedItem) { setSelectedItem(null); setItemQuery(""); setItemResults([]); } }}
+                      onFocus={() => {
+                        if (selectedItem) {
+                          setSelectedItem(null);
+                          setItemQuery("");
+                          setItemResults([]);
+                        }
+                      }}
                       className="flex-1 text-sm bg-transparent focus:outline-none"
                     />
                   </div>
@@ -797,10 +1055,14 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
                           className="w-full flex items-start gap-3 px-4 py-2.5 hover:bg-[#F7F6F3] text-left"
                         >
                           <div>
-                            <p className="text-sm font-medium text-[#111]">{item.itemNumber}</p>
+                            <p className="text-sm font-medium text-[#111]">
+                              {item.itemNumber}
+                            </p>
                             {(item.manufacturer || item.description) && (
                               <p className="text-xs text-[#999] mt-0.5 truncate">
-                                {[item.manufacturer, item.description].filter(Boolean).join(" · ")}
+                                {[item.manufacturer, item.description]
+                                  .filter(Boolean)
+                                  .join(" · ")}
                               </p>
                             )}
                           </div>
@@ -813,7 +1075,9 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
                 {/* Qty + cost */}
                 <div className="flex items-center gap-3">
                   <div>
-                    <label className="text-xs text-[#999] block mb-1">Qty</label>
+                    <label className="text-xs text-[#999] block mb-1">
+                      Qty
+                    </label>
                     <input
                       type="number"
                       min={1}
@@ -823,9 +1087,13 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-[#999] block mb-1">Cost each</label>
+                    <label className="text-xs text-[#999] block mb-1">
+                      Cost each
+                    </label>
                     <div className="relative">
-                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[#999]">$</span>
+                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[#999]">
+                        $
+                      </span>
                       <input
                         type="number"
                         step="0.01"
@@ -849,7 +1117,14 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
                     {addingLine ? "Adding…" : "Add to PO"}
                   </button>
                   <button
-                    onClick={() => { setShowAddLine(false); setItemQuery(""); setItemResults([]); setSelectedItem(null); setAddQty("1"); setAddCost(""); }}
+                    onClick={() => {
+                      setShowAddLine(false);
+                      setItemQuery("");
+                      setItemResults([]);
+                      setSelectedItem(null);
+                      setAddQty("1");
+                      setAddCost("");
+                    }}
                     className="text-sm text-[#999] hover:text-[#111] transition-colors"
                   >
                     Cancel
@@ -880,7 +1155,9 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
               <div className="px-6 py-5 border-b border-[#F0EEE9] bg-[#FAFAF8] space-y-4">
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <label className="text-xs font-semibold text-[#888] uppercase tracking-widest block mb-1.5">Tracking #</label>
+                    <label className="text-xs font-semibold text-[#888] uppercase tracking-widest block mb-1.5">
+                      Tracking #
+                    </label>
                     <input
                       type="text"
                       value={tracking}
@@ -890,7 +1167,9 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-[#888] uppercase tracking-widest block mb-1.5">Carrier</label>
+                    <label className="text-xs font-semibold text-[#888] uppercase tracking-widest block mb-1.5">
+                      Carrier
+                    </label>
                     <input
                       type="text"
                       value={carrier}
@@ -900,9 +1179,13 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-[#888] uppercase tracking-widest block mb-1.5">Shipping Cost</label>
+                    <label className="text-xs font-semibold text-[#888] uppercase tracking-widest block mb-1.5">
+                      Shipping Cost
+                    </label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#999]">$</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#999]">
+                        $
+                      </span>
                       <input
                         type="number"
                         min="0"
@@ -921,28 +1204,54 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
                   </label>
                   <div className="space-y-1">
                     {lines.map((line) => (
-                      <div key={line.id} className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-white transition-colors">
+                      <div
+                        key={line.id}
+                        className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-white transition-colors"
+                      >
                         <button
                           onClick={() =>
                             setShipmentLineIds((prev) => {
                               const next = new Set(prev);
-                              if (next.has(line.id)) { next.delete(line.id); } else { next.add(line.id); }
+                              if (next.has(line.id)) {
+                                next.delete(line.id);
+                              } else {
+                                next.add(line.id);
+                              }
                               return next;
                             })
                           }
                           className="flex items-center gap-3 flex-1 text-left"
                         >
-                          <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border transition-colors ${
-                            shipmentLineIds.has(line.id) ? "bg-[#111] border-[#111]" : "border-[#D0CEC8] bg-white"
-                          }`}>
+                          <div
+                            className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border transition-colors ${
+                              shipmentLineIds.has(line.id)
+                                ? "bg-[#111] border-[#111]"
+                                : "border-[#D0CEC8] bg-white"
+                            }`}
+                          >
                             {shipmentLineIds.has(line.id) && (
-                              <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
-                                <polyline points="1,3.5 3.5,6 8,1" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                              <svg
+                                width="9"
+                                height="7"
+                                viewBox="0 0 9 7"
+                                fill="none"
+                              >
+                                <polyline
+                                  points="1,3.5 3.5,6 8,1"
+                                  stroke="white"
+                                  strokeWidth="1.6"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
                               </svg>
                             )}
                           </div>
-                          <span className="text-sm text-[#111]">{line.item?.itemNumber ?? "—"}</span>
-                          <span className="text-xs text-[#999]">qty {line.quantity}</span>
+                          <span className="text-sm text-[#111]">
+                            {line.item?.itemNumber ?? "—"}
+                          </span>
+                          <span className="text-xs text-[#999]">
+                            qty {line.quantity}
+                          </span>
                         </button>
                       </div>
                     ))}
@@ -958,7 +1267,13 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
                     {addingShipment ? "Adding…" : "Add Shipment"}
                   </button>
                   <button
-                    onClick={() => { setShowShipmentForm(false); setTracking(""); setCarrier(""); setShipmentLineIds(new Set()); setShipmentCost(""); }}
+                    onClick={() => {
+                      setShowShipmentForm(false);
+                      setTracking("");
+                      setCarrier("");
+                      setShipmentLineIds(new Set());
+                      setShipmentCost("");
+                    }}
                     className="text-sm text-[#999] hover:text-[#111] transition-colors"
                   >
                     Cancel
@@ -969,7 +1284,9 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
 
             {shipments.length === 0 && !showShipmentForm ? (
               <div className="px-6 py-10 text-center">
-                <p className="text-sm text-[#bbb]">No shipments yet — add tracking info above</p>
+                <p className="text-sm text-[#bbb]">
+                  No shipments yet — add tracking info above
+                </p>
               </div>
             ) : (
               <div className="divide-y divide-[#F0EEE9]">
@@ -977,17 +1294,30 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
                   <div key={s.id} className="px-6 py-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2.5">
-                        <p className="text-sm font-mono font-semibold text-[#111]">{s.tracking}</p>
+                        <p className="text-sm font-mono font-semibold text-[#111]">
+                          {s.tracking}
+                        </p>
                         {s.carrier && (
-                          <span className="text-xs text-[#999] bg-[#F0EEE9] px-2 py-0.5 rounded-md">{s.carrier}</span>
+                          <span className="text-xs text-[#999] bg-[#F0EEE9] px-2 py-0.5 rounded-md">
+                            {s.carrier}
+                          </span>
                         )}
-                        <span className={`flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
-                          s.receivedAt ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
-                        }`}>
+                        <span
+                          className={`flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
+                            s.receivedAt
+                              ? "bg-green-100 text-green-700"
+                              : "bg-amber-100 text-amber-700"
+                          }`}
+                        >
                           {s.receivedAt ? (
-                            <><CheckCircle2 size={10} /> Received {new Date(s.receivedAt).toLocaleDateString()}</>
+                            <>
+                              <CheckCircle2 size={10} /> Received{" "}
+                              {new Date(s.receivedAt).toLocaleDateString()}
+                            </>
                           ) : (
-                            <><Clock size={10} /> In Transit</>
+                            <>
+                              <Clock size={10} /> In Transit
+                            </>
                           )}
                         </span>
                       </div>
@@ -1004,14 +1334,22 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
                     {s.lines.length > 0 && (
                       <div className="mt-3 space-y-1.5 pl-1">
                         {s.lines.map((sl) => {
-                          const poLine = lines.find((l) => l.id === sl.poLineId);
+                          const poLine = lines.find(
+                            (l) => l.id === sl.poLineId,
+                          );
                           const fullyReceived = poLine
                             ? poLine.receivedQuantity >= poLine.quantity
                             : false;
                           return (
-                            <div key={sl.id} className="flex items-center gap-2.5">
+                            <div
+                              key={sl.id}
+                              className="flex items-center gap-2.5"
+                            >
                               {fullyReceived ? (
-                                <CheckCircle2 size={12} className="text-green-500 flex-shrink-0" />
+                                <CheckCircle2
+                                  size={12}
+                                  className="text-green-500 flex-shrink-0"
+                                />
                               ) : (
                                 <div className="w-3 h-3 rounded-full border border-[#D0CEC8] flex-shrink-0" />
                               )}
@@ -1019,9 +1357,13 @@ export default function POEditor({ po, projectId, users }: { po: PO; projectId: 
                                 {sl.item?.itemNumber ?? "—"}
                               </span>
                               {sl.item?.manufacturer && (
-                                <span className="text-xs text-[#999]">{sl.item.manufacturer}</span>
+                                <span className="text-xs text-[#999]">
+                                  {sl.item.manufacturer}
+                                </span>
                               )}
-                              <span className="text-xs text-[#bbb]">×{sl.quantity}</span>
+                              <span className="text-xs text-[#bbb]">
+                                ×{sl.quantity}
+                              </span>
                             </div>
                           );
                         })}
