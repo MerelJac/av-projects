@@ -288,10 +288,18 @@ model CustomerItemPrice {
   @@unique([customerId, itemId])
 }
 
+model Salesperson {
+  id       String    @id @default(uuid())
+  name     String
+  projects Project[]
+}
+
 model Project {
   id String @id @default(uuid())
 
-  name String
+  name          String
+  salespersonId String?
+  salesperson   Salesperson? @relation(fields: [salespersonId], references: [id])
 
   customerId String
   customer   Customer @relation(fields: [customerId], references: [id])

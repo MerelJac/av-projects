@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Tag } from "lucide-react";
+import { Tag, Users } from "lucide-react";
 
 const sections = [
   {
@@ -7,6 +7,12 @@ const sections = [
     icon: Tag,
     label: "Item Options",
     description: "Manage dropdown options for item categories and units",
+  },
+    {
+    href: "/settings/salespeople",
+    icon: Users,
+    label: "Salespeople",
+    description: "Manage dropdown options for salespeople",
   },
 ];
 
@@ -16,7 +22,7 @@ export default function SettingsPage() {
       <div className="max-w-2xl mx-auto px-6 py-10">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-[#111] tracking-tight">Settings</h1>
-          <p className="text-sm text-[#999] mt-1">Manage catalog configuration and defaults.</p>
+          <p className="text-sm text-[#999] mt-1">Manage configuration and defaults.</p>
         </div>
 
         <div className="space-y-3">
