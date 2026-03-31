@@ -22,7 +22,7 @@ export async function sendAdditionalWorkoutEmailToTrainer(to: string, clientName
           </a>
         </p>
         <br/>
-        <p style="font-size: 0.9rem; color: #888;">— AV Projects Club</p>
+        <p style="font-size: 0.9rem; color: #888;">— Antares</p>
       </div>
     `,
     text: `New Workout Added for ${clientName} 🔥

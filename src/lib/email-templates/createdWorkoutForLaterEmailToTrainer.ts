@@ -28,7 +28,7 @@ export async function sendCreatedWorkoutForLaterEmailToTrainer(
           </a>
         </p>
         <br/>
-        <p style="font-size: 0.9rem; color: #888;">— AV Projects Club</p>
+        <p style="font-size: 0.9rem; color: #888;">— Antares</p>
       </div>
     `,
     text: `Created Workout for ${clientName} 🔥

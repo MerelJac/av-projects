@@ -97,7 +97,7 @@ export default function SidebarLayout({
           <Menu className="w-4 h-4" />
         </button>
         <span className="ml-3 font-syne font-bold text-base text-secondary-color">
-          AV Projects
+          Antares
         </span>
       </header>
 
@@ -123,7 +123,7 @@ export default function SidebarLayout({
         <div className="px-5 py-5 border-b border-surface2 flex items-center justify-between">
           <div>
             <h1 className="font-syne font-extrabold text-base text-secondary-color tracking-tight">
-              AV Projects
+              Antares
             </h1>
             <p className="text-[10px] font-semibold tracking-widest uppercase text-muted mt-0.5">
               Call One, Inc

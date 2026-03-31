@@ -6,7 +6,7 @@ import { sendEmail } from "./config";
 export async function sendForgotPasswordEmail(to: string, resetUrl: string) {
   return sendEmail({
     to,
-    subject: "Reset your AV Projects Club password",
+    subject: "Reset your Antares password",
     html: `
         <div style="font-family:sans-serif; line-height:1.5; color:#333;">
           <h2>Password reset requested</h2>
@@ -18,7 +18,7 @@ export async function sendForgotPasswordEmail(to: string, resetUrl: string) {
           </p>
           <p>If you didn’t request this, you can safely ignore it.</p>
           <br/>
-          <p style="font-size:0.9rem; color:#888;">— AV Projects Club</p>
+          <p style="font-size:0.9rem; color:#888;">— Antares</p>
         </div>
       `,
     text: "Reset your password! Click the link to reset: " + resetUrl,

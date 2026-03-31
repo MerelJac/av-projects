@@ -37,7 +37,7 @@ export default function LoginPage() {
         {/* Brand */}
         <div className="text-center space-y-1">
           <h1 className="font-syne font-extrabold text-3xl text-secondary-color tracking-tight">
-            AV Projects
+            Antares
           </h1>
           <p className="text-sm text-muted">Sign in to your account</p>
         </div>
@@ -103,7 +103,7 @@ export default function LoginPage() {
         </form>
 
         <p className="text-xs text-center text-muted">
-          © {new Date().getFullYear()} AV Projects
+          © {new Date().getFullYear()} Antares
         </p>
       </div>
     </div>

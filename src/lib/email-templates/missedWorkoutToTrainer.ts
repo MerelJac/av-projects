@@ -26,7 +26,7 @@ export async function missedWorkoutToTrainer(
             </a>
         </p>
         <br/>
-        <p style="font-size: 0.9rem; color: #888;">— AV Projects Club</p>
+        <p style="font-size: 0.9rem; color: #888;">— Antares</p>
       </div>
     `,
     text: `Missed Workout Notification 
