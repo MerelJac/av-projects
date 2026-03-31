@@ -109,6 +109,24 @@ export default async function ReportsPage() {
               className="text-[#999] group-hover:text-[#111] transition-colors"
             />
           </Link>
+
+          <Link
+            href="/reports/bc"
+            className="bg-white border border-[#E5E3DE] rounded-2xl px-6 py-5 hover:border-[#111] transition-colors group flex items-center justify-between col-span-2"
+          >
+            <div>
+              <p className="text-sm font-bold text-[#111]">
+                Business Central Reports
+              </p>
+              <p className="text-xs text-[#999] mt-0.5">
+                Vendor, customer, and item reports — live from BC with auto-linking
+              </p>
+            </div>
+            <ArrowRight
+              size={16}
+              className="text-[#999] group-hover:text-[#111] transition-colors"
+            />
+          </Link>
         </div>
       </div>
     </div>

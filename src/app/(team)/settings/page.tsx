@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Tag, Users } from "lucide-react";
+import { Tag, Users, RefreshCw } from "lucide-react";
 
 const sections = [
   {
@@ -8,12 +8,12 @@ const sections = [
     label: "Item Options",
     description: "Manage dropdown options for item categories and units",
   },
-    {
+  {
     href: "/settings/salespeople",
     icon: Users,
     label: "Salespeople",
     description: "Manage dropdown options for salespeople",
-  },
+  }
 ];
 
 export default function SettingsPage() {

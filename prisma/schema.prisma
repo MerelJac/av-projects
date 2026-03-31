@@ -151,13 +151,15 @@ model PasswordResetToken {
 
 model Customer {
   id          String  @id @default(uuid())
+  bcId        String? @unique // Business Central customer ID
   name        String
   email       String?
   phone       String?
   billingTerm String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  bcSyncedAt DateTime?
 
   quotes        Quote[]
   projects      Project[]
@@ -174,6 +176,7 @@ enum BillingTerms {
 
 model Item {
   id           String  @id @default(uuid())
+  bcId         String? @unique // Business Central item ID
   itemNumber   String  @unique
   manufacturer String?
 
@@ -196,6 +199,7 @@ model Item {
 
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
+  bcSyncedAt         DateTime?
   customerPrices     CustomerItemPrice[]
   description        String?
   priceHistory       ItemPriceHistory[]
@@ -538,6 +542,7 @@ model SalesOrderLine {
 
 model Vendor {
   id             String        @id @default(uuid())
+  bcId           String?       @unique // Business Central vendor ID
   name           String
   email          String?
   phone          String?
@@ -545,6 +550,7 @@ model Vendor {
   active         Boolean       @default(true)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
+  bcSyncedAt     DateTime?
   // Default fields — copied to PO at creation, editable per PO
   shipToAddress  String?
   billToAddress  String?
@@ -644,4 +650,14 @@ enum POStatus {
   PARTIALLY_RECEIVED
   RECEIVED
   CANCELLED
+}
+
+// Tracks each Business Central sync run for auditing and incremental sync
+model BcSyncLog {
+  id       String   @id @default(uuid())
+  entity   String // "vendor" | "customer" | "item"
+  status   String // "success" | "error"
+  synced   Int      @default(0) // records upserted
+  error    String?
+  syncedAt DateTime @default(now())
 }
