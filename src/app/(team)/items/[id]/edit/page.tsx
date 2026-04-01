@@ -12,7 +12,7 @@ export default async function ItemEditPage({
 }) {
   const { id } = await params;
 
-  const [item, vendors, categories, units] = await Promise.all([
+  const [item, vendors, categories, units, types] = await Promise.all([
     prisma.item.findUnique({ where: { id } }),
     prisma.vendor.findMany({
       where: { active: true },
@@ -26,6 +26,11 @@ export default async function ItemEditPage({
     }),
     prisma.itemDropdownOption.findMany({
       where: { field: "unit" },
+      orderBy: { value: "asc" },
+      select: { value: true },
+    }),
+        prisma.itemDropdownOption.findMany({
+      where: { field: "types" },
       orderBy: { value: "asc" },
       select: { value: true },
     }),
@@ -55,7 +60,6 @@ export default async function ItemEditPage({
 
         <ItemEditForm
           categories={categories.map((c) => c.value)}
-          types={categories.map((c) => c.value)}
           units={units.map((u) => u.value)}
           item={{
             id: item.id,

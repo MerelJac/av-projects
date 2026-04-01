@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   if (!field || !value?.trim()) {
     return NextResponse.json({ error: "field and value required" }, { status: 400 });
   }
-  const validFields = ["category", "unit"];
+  const validFields = ["category", "unit", "types"];
   if (!validFields.includes(field)) {
     return NextResponse.json({ error: "Invalid field" }, { status: 400 });
   }

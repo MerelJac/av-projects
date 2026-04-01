@@ -29,12 +29,10 @@ export default function ItemEditForm({
   item,
   vendors,
   categories,
-  types,
   units,
 }: {
   item: Item;
   vendors: Vendor[];
-  types: string[];
   categories: string[];
   units: string[];
 }) {
@@ -70,7 +68,6 @@ export default function ItemEditForm({
     setTimeout(() => setToast(null), 3500);
   };
 
-  console.log("Rendering ItemEditForm with item:", item); // Debug log
   async function handleSubmit() {
     console.log("Form values on submit:", form); // Debug log
     setSaving(true);
@@ -196,11 +193,10 @@ export default function ItemEditForm({
                 onChange={(e) => set("type", e.target.value)}
                 className="w-full text-sm text-[#111] border border-[#E5E3DE] rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#111] transition-colors bg-white"
               >
-                {types.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
+                <option value="HARDWARE">Hardware</option>
+                <option value="SOFTWARE">Software</option>
+                <option value="SUBSCRIPTION">Subscription</option>
+                <option value="SERVICE">Service</option>
               </select>
             </div>
           </div>

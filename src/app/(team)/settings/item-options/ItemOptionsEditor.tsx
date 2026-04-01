@@ -122,6 +122,9 @@ export default function ItemOptionsEditor({
 
   return (
     <div className="space-y-6">
+      <p className="text-sm text-[#666]">
+       NOTE: Item <code className="bg-gray-200 rounded p-1">type</code> is hardcoded. To add more types, please contact support.
+      </p>
       <OptionSection
         title="Categories"
         field="category"
