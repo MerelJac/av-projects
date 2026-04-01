@@ -5,8 +5,10 @@ import { Clock, Send, AlertCircle, CheckCircle2, Package } from "lucide-react";
 const STATUS_CONFIG = {
   DRAFT: { label: "Draft", color: "text-gray-500 bg-gray-100", icon: <Clock size={11} /> },
   SENT: { label: "Sent", color: "text-blue-600 bg-blue-50", icon: <Send size={11} /> },
-  PARTIALLY_RECEIVED: { label: "Partial", color: "text-amber-6PurchaseOrdersPage00 bg-amber-50", icon: <AlertCircle size={11} /> },
+  PARTIALLY_RECEIVED: { label: "Partial Received", color: "text-amber-6PurchaseOrdersPage00 bg-amber-50", icon: <AlertCircle size={11} /> },
   RECEIVED: { label: "Received", color: "text-green-600 bg-green-50", icon: <CheckCircle2 size={11} /> },
+    PARTIALLY_RETURNED: { label: "Partially Returned", color: "text-amber-6PurchaseOrdersPage00 bg-amber-50", icon: <AlertCircle size={11} /> },
+  RETURNED: { label: "Returned", color: "text-green-600 bg-green-50", icon: <CheckCircle2 size={11} /> },
     CANCELLED: { label: "Cancelled", color: "text-red-600 bg-red-50", icon: <AlertCircle size={11} /> },
 };
 

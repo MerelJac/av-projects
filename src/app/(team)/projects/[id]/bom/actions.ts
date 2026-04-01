@@ -1,5 +1,3 @@
-// at the top of the file, before the component
-
 import { BOMLine } from "@/types/bom";
 
 export function calcBOMTotals(
