@@ -39,10 +39,12 @@ export async function POST(
   // Generate a human-readable sequential PO number inside a transaction
   const po = await prisma.$transaction(async (tx) => {
     const count = await tx.purchaseOrder.count();
-    const poNumber = `PO-${new Date().getFullYear()}-${String(count + 1).padStart(4, "0")}`;
+    const poId = `${new Date().getFullYear()}-${String(count + 1).padStart(4, "0")}`
+    const poNumber = `PO-AV-${poId}`;
 
     return tx.purchaseOrder.create({
       data: {
+        id: poId,
         poNumber,
         vendorId,
         projectId: id,

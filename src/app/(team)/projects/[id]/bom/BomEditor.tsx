@@ -1100,7 +1100,7 @@ export default function BOMEditor({
                     >
                       <div>
                         <p className="text-xs font-mono font-semibold text-[#111]">
-                          #{q.id.slice(0, 8).toUpperCase()}
+                          #{q.id.toUpperCase()}
                         </p>
                         <p className="text-[10px] text-[#999] mt-0.5">
                           {new Date(q.createdAt).toLocaleDateString()}

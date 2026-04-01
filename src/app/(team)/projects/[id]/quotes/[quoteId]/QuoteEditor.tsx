@@ -304,7 +304,7 @@ export default function QuoteEditor({
             </div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-[#111] tracking-tight font-mono">
-                #{initialQuote.id.slice(0, 8).toUpperCase()}
+                #{initialQuote.id.toUpperCase()}
               </h1>
               <span
                 className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${statusCfg.color}`}
@@ -774,7 +774,7 @@ export default function QuoteEditor({
                 <div className="relative bg-white rounded-2xl shadow-2xl border border-[#E5E3DE] w-[800px] h-[90vh] mx-4 flex flex-col overflow-hidden">
                   <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#F0EEE9]">
                     <p className="text-sm font-semibold text-[#111]">
-                      Quote #{initialQuote.id.slice(0, 8).toUpperCase()}
+                      Quote #{initialQuote.id.toUpperCase()}
                     </p>
                     <div className="flex items-center gap-2">
                       <a

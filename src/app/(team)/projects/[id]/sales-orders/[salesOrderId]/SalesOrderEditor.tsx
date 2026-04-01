@@ -155,14 +155,14 @@ export default function SalesOrderEditor({
                       )
                     }
                   >
-                    from Quote #{initialSO.quote.id.slice(0, 8).toUpperCase()}
+                    from Quote #{initialSO.quote.id.toUpperCase()}
                   </span>
                 </>
               )}
             </div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-[#111] tracking-tight font-mono">
-                SO-{initialSO.id.slice(0, 8).toUpperCase()}
+                SO-{initialSO.id.toUpperCase()}
               </h1>
               <span
                 className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${statusCfg.color}`}

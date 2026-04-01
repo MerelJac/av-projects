@@ -354,7 +354,7 @@ export default async function TimePage() {
                 <h3 className="text-sm font-bold text-[#111]">Recent Entries</h3>
               </div>
               <div className="divide-y divide-[#F7F6F3]">
-                {entries.slice(0, 8).map(e => (
+                {entries.map(e => (
                   <div key={e.id} className="px-5 py-2.5 flex items-center gap-3">
                     <div className="w-6 h-6 rounded-full bg-[#F0EEE9] flex items-center justify-center text-[10px] font-bold text-[#888] shrink-0">
                       {userName(e.user)[0]?.toUpperCase()}

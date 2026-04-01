@@ -62,6 +62,7 @@ export async function POST(
 
   const quote = await prisma.quote.create({
     data: {
+      id: `AV-${new Date().getFullYear()}-${String(Date.now()).slice(-5)}`,
       customerId: project.customerId,
       projectId: id,
       status: "DRAFT",

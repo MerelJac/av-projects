@@ -56,8 +56,8 @@ export default async function AllShipments({
           <tbody>
             {shipments.map((s) => {
               const poHref =
-                s.purchaseOrder && s.salesOrderId && s.projectId
-                  ? `/projects/${s.projectId}/sales-orders/${s.salesOrderId}/purchase-orders/${s.purchaseOrder.id}`
+                s.projectId && s.purchaseOrderId
+                  ? `/projects/${s.projectId}/purchase-orders/${s.purchaseOrderId}`
                   : null;
 
               return (
@@ -105,9 +105,14 @@ export default async function AllShipments({
                   </td>
                   <td className="px-3 py-3.5 text-sm text-[#666]">
                     {poHref ? (
-                      <Link href={poHref} className="hover:underline">
-                        {s.purchaseOrder?.vendor?.name ?? "—"}
-                      </Link>
+                      <>
+                        <Link href={poHref} className="hover:underline">
+                          {s.purchaseOrder?.vendor?.name ?? "—"}
+                        </Link>
+                        <Link href={poHref} className="hover:underline">
+                          PO-{s.purchaseOrderId?.toUpperCase() ?? "—"}
+                        </Link>
+                      </>
                     ) : (
                       (s.purchaseOrder?.vendor?.name ?? "—")
                     )}

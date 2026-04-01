@@ -22,7 +22,7 @@ export async function GET(
 
   const buffer = await renderToBuffer(
     buildQuotePDF({
-      quoteNumber: quote.id.slice(0, 8).toUpperCase(),
+      quoteNumber: quote.id.toUpperCase(),
       customerName: quote.customer.name,
       isDirect: quote.isDirect,
       isChangeOrder: quote.isChangeOrder,

@@ -69,10 +69,12 @@ export async function POST(
 
   const invoice = await prisma.$transaction(async (tx) => {
     const count = await tx.invoice.count();
-    const invoiceNumber = `INV-${new Date().getFullYear()}-${String(count + 1).padStart(4, "0")}`;
+    const invoiceId = `${new Date().getFullYear()}-${String(count + 1).padStart(4, "0")}`;
+    const invoiceNumber = `INV-AV-${invoiceId}`;
 
     return tx.invoice.create({
       data: {
+        id: invoiceId,
         projectId,
         quoteId: quoteId ?? null,
         invoiceNumber,

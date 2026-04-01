@@ -96,7 +96,7 @@ export default async function PurchaseOrdersPage() {
                     <tr key={po.id} className="border-b border-[#F7F6F3] last:border-0 hover:bg-[#FAFAF9] transition-colors">
                       <td className="px-5 py-3.5">
                         <Link href={href} className="text-xs font-mono font-semibold text-[#111] hover:underline">
-                          PO-{po.id.slice(0, 8).toUpperCase()}
+                          PO-{po.id.toUpperCase()}
                         </Link>
                         <p className="text-[10px] text-[#bbb] mt-0.5">
                           {po.createdAt.toLocaleDateString()}

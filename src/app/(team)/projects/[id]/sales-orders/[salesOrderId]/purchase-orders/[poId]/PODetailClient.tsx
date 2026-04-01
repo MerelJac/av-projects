@@ -153,7 +153,7 @@ export default function PODetailClient({
             </p>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-[#111] tracking-tight font-mono">
-                PO-{po.id.slice(0, 8).toUpperCase()}
+                PO-{po.id.toUpperCase()}
               </h1>
               <span
                 className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${cfg.color}`}

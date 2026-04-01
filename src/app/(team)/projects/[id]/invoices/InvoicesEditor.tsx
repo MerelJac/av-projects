@@ -205,7 +205,7 @@ export default function InvoicesEditor({
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <p className="text-xs font-mono font-semibold text-[#111] truncate">
-                          {inv.invoiceNumber ?? inv.id.slice(0, 8).toUpperCase()}
+                          {inv.invoiceNumber ?? inv.id.toUpperCase()}
                         </p>
                         <p className="text-xs text-[#999] mt-0.5">
                           {formatDate(inv.createdAt)}
@@ -280,7 +280,7 @@ export default function InvoicesEditor({
                         Invoice
                       </p>
                       <p className="text-lg font-bold font-mono text-[#111] mt-0.5">
-                        {selected.invoiceNumber ?? selected.id.slice(0, 8).toUpperCase()}
+                        {selected.invoiceNumber ?? selected.id.toUpperCase()}
                       </p>
                     </div>
                     <div className="text-right">
@@ -321,7 +321,7 @@ export default function InvoicesEditor({
                       <div>
                         <p className="text-xs text-[#999] mb-0.5">Quote</p>
                         <p className="font-mono text-xs font-medium text-[#111]">
-                          #{selected.quote.id.slice(0, 8).toUpperCase()}
+                          #{selected.quote.id.toUpperCase()}
                         </p>
                       </div>
                     )}

@@ -27,7 +27,7 @@ export async function GET(
 
   const buffer = await renderToBuffer(
     buildPOPDF({
-      poNumber: po.poNumber ?? po.id.slice(0, 8).toUpperCase(),
+      poNumber: po.poNumber ?? po.id.toUpperCase(),
       createdAt: po.createdAt,
       vendorName: po.vendor?.name ?? "Unknown Vendor",
       vendorAddress: null,
@@ -36,7 +36,7 @@ export async function GET(
       shippingMethod: po.shippingMethod,
       billingTerms: po.billingTerms,
       buyerName,
-      vendorId: po.vendor?.id?.slice(0, 8).toUpperCase() ?? "—",
+      vendorId: po.vendor?.id?.toUpperCase() ?? "—",
       lines: po.lines.map((l) => ({
         id: l.id,
         itemNumber: l.item?.itemNumber ?? "—",

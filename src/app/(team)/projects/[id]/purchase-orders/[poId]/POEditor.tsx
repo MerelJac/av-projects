@@ -513,7 +513,7 @@ export default function POEditor({
                     href={`/projects/${projectId}/quotes/${po.quote.id}`}
                     className="hover:text-[#111] transition-colors"
                   >
-                    Quote #{po.quote.id.slice(0, 8).toUpperCase()}
+                    Quote #{po.quote.id.toUpperCase()}
                   </a>
                 </>
               )}
@@ -632,7 +632,7 @@ export default function POEditor({
                 Vendor ID
               </p>
               <p className="text-sm font-mono text-[#111]">
-                {po.vendor?.id?.slice(0, 8).toUpperCase() ?? "—"}
+                {po.vendor?.id?.toUpperCase() ?? "—"}
               </p>
             </div>
 

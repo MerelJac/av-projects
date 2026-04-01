@@ -17,6 +17,8 @@ export function AddVendorButton() {
     setError(null);
     const fd = new FormData(e.currentTarget);
     const result = await createVendor({
+      // add vendor id
+      id: `VEN-${new Date().getFullYear()}-${String(Date.now()).slice(-5)}`,
       name: fd.get("name") as string,
       email: (fd.get("email") as string) || null,
       phone: (fd.get("phone") as string) || null,

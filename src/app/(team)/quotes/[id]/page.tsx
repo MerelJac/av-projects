@@ -66,7 +66,7 @@ export default async function QuoteViewPage({
             {quote.project && <span> · {quote.project.name}</span>}
           </p>
           <h1 className="text-2xl font-bold text-[#111] font-mono tracking-tight">
-            #{quote.id.slice(0, 8).toUpperCase()}
+            #{quote.id.toUpperCase()}
           </h1>
           <p className="text-xs text-[#999] mt-1">
             {new Date(quote.createdAt).toLocaleDateString()}

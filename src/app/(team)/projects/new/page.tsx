@@ -106,7 +106,7 @@ export default async function NewProjectPage() {
                   <option value="">No quote</option>
                   {quotes.map((q) => (
                     <option key={q.id} value={q.id}>
-                      {q.customer.name} — #{q.id.slice(0, 8).toUpperCase()}
+                      {q.customer.name} — #{q.id.toUpperCase()}
                     </option>
                   ))}
                 </select>

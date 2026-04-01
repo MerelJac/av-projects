@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 
 export async function createVendor(data: {
+  id: string;
   name: string;
   email: string | null;
   phone: string | null;

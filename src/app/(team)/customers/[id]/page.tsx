@@ -161,7 +161,7 @@ export default async function CustomerPage({
                   >
                     <div className="flex items-center gap-2.5">
                       <span className="text-xs font-mono font-semibold text-[#111]">
-                        #{quote.id.slice(0, 8).toUpperCase()}
+                        #{quote.id.toUpperCase()}
                       </span>
                       <span
                         className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${quoteStatusStyles[quote.status]}`}

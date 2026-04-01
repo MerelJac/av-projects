@@ -62,7 +62,7 @@ export default async function QuotesPage() {
                       href={q.projectId ? `/projects/${q.projectId}/quotes/${q.id}` : `/quotes/${q.id}`}
                       className="text-xs font-mono font-semibold text-[#111] hover:underline"
                     >
-                      #{q.id.slice(0, 8).toUpperCase()}
+                      #{q.id.toUpperCase()}
                     </Link>
                   </td>
                   <td className="px-3 py-3 text-sm text-[#111]">

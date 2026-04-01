@@ -1,7 +1,9 @@
 "use client";
 // src/app/(team)/customers/[id]/pricing/PricingEditor.tsx
-import { useState } from "react";
-import { CheckCircle2, AlertCircle } from "lucide-react";
+import { useState, useMemo } from "react";
+import { CheckCircle2, AlertCircle, Search, ChevronLeft, ChevronRight } from "lucide-react";
+
+const PAGE_SIZE = 25;
 
 type ItemRow = {
   id: string;
@@ -37,11 +39,27 @@ export default function PricingEditor({
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [dirty, setDirty] = useState(false);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+
+  const filteredItems = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return q ? items.filter((i) => i.itemNumber.toLowerCase().includes(q)) : items;
+  }, [items, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pagedItems = filteredItems.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const showToast = (type: "success" | "error", msg: string) => {
     setToast({ type, msg });
     setTimeout(() => setToast(null), 3500);
   };
+
+  function handleSearch(value: string) {
+    setSearch(value);
+    setPage(1);
+  }
 
   function handleChange(itemId: string, value: string) {
     setPrices((prev) => ({ ...prev, [itemId]: value }));
@@ -85,6 +103,18 @@ export default function PricingEditor({
         </div>
       )}
 
+      {/* Search */}
+      <div className="relative mb-3">
+        <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#aaa]" />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => handleSearch(e.target.value)}
+          placeholder="Search by item number…"
+          className="w-full text-sm border border-[#E5E3DE] rounded-xl pl-9 pr-4 py-2.5 focus:outline-none focus:border-[#111] bg-white transition-colors"
+        />
+      </div>
+
       <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
         {/* Table header */}
         <div className="grid grid-cols-7 px-5 py-3 border-b border-[#F0EEE9]">
@@ -95,7 +125,10 @@ export default function PricingEditor({
           ))}
         </div>
 
-        {items.map((item) => {
+        {pagedItems.length === 0 && (
+          <div className="px-5 py-10 text-center text-sm text-[#aaa]">No items match your search.</div>
+        )}
+        {pagedItems.map((item) => {
           const customerPrice = parseFloat(prices[item.id] || "0") || 0;
           const margin =
             item.cost && customerPrice
@@ -181,6 +214,31 @@ export default function PricingEditor({
           );
         })}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-3 px-1">
+          <span className="text-xs text-[#999]">
+            {filteredItems.length} items · page {currentPage} of {totalPages}
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="p-1.5 rounded-lg border border-[#E5E3DE] bg-white hover:bg-[#F7F6F3] disabled:opacity-40 transition-colors"
+            >
+              <ChevronLeft size={14} />
+            </button>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="p-1.5 rounded-lg border border-[#E5E3DE] bg-white hover:bg-[#F7F6F3] disabled:opacity-40 transition-colors"
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Save bar */}
       <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 transition-all duration-200 ${

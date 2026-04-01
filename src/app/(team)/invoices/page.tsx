@@ -171,7 +171,7 @@ export default async function InvoicesPage() {
                           href={href}
                           className="text-xs font-mono font-semibold text-[#111] hover:underline"
                         >
-                          {inv.invoiceNumber ?? inv.id.slice(0, 8).toUpperCase()}
+                          {inv.invoiceNumber ?? inv.id.toUpperCase()}
                         </Link>
                         <p className="text-[10px] text-[#bbb] mt-0.5">
                           {new Date(inv.createdAt).toLocaleDateString()}

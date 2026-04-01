@@ -82,7 +82,7 @@ export default function AllSalesOrders({
                       href={`/projects/${so.projectId}/sales-orders/${so.id}`}
                       className="text-xs font-mono font-semibold text-[#111] hover:underline"
                     >
-                      {so.id.slice(0, 8).toUpperCase()}
+                      {so.id.toUpperCase()}
                     </Link>
                     {so.quote && (
                       <p className="text-[10px] text-[#999]">
