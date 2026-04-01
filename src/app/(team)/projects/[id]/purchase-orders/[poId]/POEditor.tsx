@@ -1235,7 +1235,7 @@ export default function POEditor({
 
             {returns.length === 0 ? (
               <div className="px-6 py-8 text-center">
-                <p className="text-sm text-[#bbb]">No returns on this PO</p>
+                <p className="text-sm text-[#bbb]">No returns on this PO. You can start returns when items have been received.</p>
               </div>
             ) : (
               <div className="divide-y divide-[#F0EEE9]">

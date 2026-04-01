@@ -36,7 +36,7 @@ export default async function ReportsPage() {
             {
               label: "Total COGS",
               value: `$${fmt(totals.cogs)}`,
-              sub: `$${fmt(totals.materialCost)} material · $${fmt(totals.laborCost)} labor · $${fmt(totals.shippingCost)} shipping`,
+              sub: `$${fmt(totals.materialCost)} material + $${fmt(totals.laborCost)} labor + $${fmt(totals.shippingCost)} shipping  - $${fmt(totals.returnCredit)} returns`,
             },
             {
               label: "Gross Profit",

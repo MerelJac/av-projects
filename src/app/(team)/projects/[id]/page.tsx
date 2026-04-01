@@ -13,9 +13,7 @@ import {
   Plus,
   ArrowRight,
   Receipt,
-  Delete,
 } from "lucide-react";
-import ChangeOrderNotes from "@/app/components/ChangeOrderNotes";
 import AllShipments from "@/app/components/shipments/AllShipments";
 import MilestonesPanel from "@/app/components/MilestonesPanel";
 import ScopesPanel from "@/app/components/ScopesPanel";
@@ -100,7 +98,7 @@ export default async function ProjectPage({
 
   // Fetch credited return quantities per PO line for this project.
   // Wrapped in try/catch — the table won't exist until the migration runs.
-  let returnedQtyByLineId: Record<string, number> = {};
+  const returnedQtyByLineId: Record<string, number> = {};
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rows = await (prisma as any).purchaseOrderReturnLine.groupBy({
@@ -108,7 +106,10 @@ export default async function ProjectPage({
       where: { poReturn: { status: "CREDITED", po: { projectId: id } } },
       _sum: { quantity: true },
     });
-    for (const row of rows as { poLineId: string; _sum: { quantity: number | null } }[]) {
+    for (const row of rows as {
+      poLineId: string;
+      _sum: { quantity: number | null };
+    }[]) {
       returnedQtyByLineId[row.poLineId] = row._sum.quantity ?? 0;
     }
   } catch {
@@ -134,9 +135,8 @@ export default async function ProjectPage({
   const changeOrderTotal = financials.changeOrderTotal;
   const totalContract = financials.totalContract;
 
-  const poCost = financials.poCost;
   const shippingCost = financials.shippingCost;
-
+  const returnCredit = financials.returnCredit;
 
   const materialCost = financials.materialCost;
 
@@ -145,14 +145,13 @@ export default async function ProjectPage({
 
   const cogs = financials.cogs;
 
-  // 
+  //
   const grossProfit = totalContract - cogs;
   const marginPct =
     totalContract > 0 ? (grossProfit / totalContract) * 100 : null;
 
   const invoiced = financials.invoiced;
   const collected = financials.collected;
-
 
   const shipments = await prisma.shipment.findMany({
     include: {
@@ -183,14 +182,24 @@ export default async function ProjectPage({
             <div className="text-right">
               <p className="text-xs text-[#999] mb-0.5">Budget</p>
               <p className="text-xl font-bold text-[#111]">
-                ${totalContract.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                $
+                {totalContract.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </p>
-              <p className="text-xs text-[#999] italic mt-0.5">from approved proposals</p>
+              <p className="text-xs text-[#999] italic mt-0.5">
+                from approved proposals
+              </p>
               {invoiced > 0 && (
                 <p className="text-xs text-[#999] mt-0.5">
-                  ${invoiced.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} invoiced
+                  $
+                  {invoiced.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}{" "}
+                  invoiced
                 </p>
-                
               )}
             </div>
           )}
@@ -270,7 +279,7 @@ export default async function ProjectPage({
                     labor
                   </p>
                 )}
-                 {shippingCost > 0 && (
+                {shippingCost > 0 && (
                   <p className="text-xs text-[#999] mt-0.5">
                     $
                     {shippingCost.toLocaleString(undefined, {
@@ -278,6 +287,16 @@ export default async function ProjectPage({
                       maximumFractionDigits: 2,
                     })}{" "}
                     shipping
+                  </p>
+                )}
+                {returnCredit > 0 && (
+                  <p className="text-xs text-[#999] mt-0.5">
+                    $
+                    {returnCredit.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}{" "}
+                    return credits
                   </p>
                 )}
               </div>
@@ -645,8 +664,7 @@ export default async function ProjectPage({
                   >
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-medium text-[#111]">
-                        {inv.invoiceNumber ??
-                          `#${inv.id.toUpperCase()}`}
+                        {inv.invoiceNumber ?? `#${inv.id.toUpperCase()}`}
                       </span>
                       <span
                         className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusColor}`}

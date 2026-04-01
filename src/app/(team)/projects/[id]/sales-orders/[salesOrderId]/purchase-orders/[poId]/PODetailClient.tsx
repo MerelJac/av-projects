@@ -91,6 +91,16 @@ const PO_STATUS: Record<
     color: "bg-green-100 text-green-700",
     icon: <CheckCircle2 size={13} />,
   },
+    PARTIALLY_RETURNED: {
+    label: "Partially Returned",
+    color: "bg-amber-100 text-amber-700",
+    icon: <AlertCircle size={13} />,
+  },
+  RETURNED: {
+    label: "Fully Returned",
+    color: "bg-green-100 text-green-700",
+    icon: <CheckCircle2 size={13} />,
+  },
     CANCELLED: {
     label: "Cancelled",
     color: "bg-red-100 text-red-700",
@@ -475,7 +485,7 @@ export default function PODetailClient({
               </div>
 
               {returns.length === 0 ? (
-                <p className="px-5 py-8 text-sm text-[#bbb] text-center">No returns on this PO</p>
+                <p className="px-5 py-8 text-sm text-[#bbb] text-center">No returns on this PO. You can start returns when items have been received.</p>
               ) : (
                 <div className="divide-y divide-[#F7F6F3]">
                   {returns.map((ret) => {

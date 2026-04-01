@@ -7,7 +7,11 @@ type QuoteSlice = {
   status: string;
   isChangeOrder: boolean;
 };
-type POLineSlice = { cost: number; quantity: number; returnedQuantity?: number };
+type POLineSlice = {
+  cost: number;
+  quantity: number;
+  returnedQuantity?: number;
+};
 type POSlice = { status: string; lines: POLineSlice[] };
 type ShipmentSlice = { cost: unknown };
 type ScopeSlice = {
@@ -36,17 +40,24 @@ export function calcMaterialCost(
   shipments: ShipmentSlice[],
 ) {
   // Includes draft, partially received, sent, and fully received PO Costs. Excludes Cancelled POs from Total.
-  // Subtracts credited return quantities so returned items don't inflate material cost.
-  const poCost = purchaseOrders
+  const activeLines = purchaseOrders
     .filter((po) => po.status !== "CANCELLED")
-    .flatMap((po) => po.lines)
-    .reduce((s, l) => {
-      const returned = l.returnedQuantity ?? 0;
-      const effective = Math.max(0, l.quantity - returned);
-      return s + l.cost * effective;
-    }, 0);
+    .flatMap((po) => po.lines);
+
+  const grossPoCost = activeLines.reduce((s, l) => s + l.cost * l.quantity, 0);
+  const returnCredit = activeLines.reduce((s, l) => {
+    const returned = l.returnedQuantity ?? 0;
+    return s + l.cost * Math.max(0, returned);
+  }, 0);
+  const poCost = grossPoCost - returnCredit;
   const shippingCost = shipments.reduce((s, sh) => s + Number(sh.cost ?? 0), 0);
-  return { poCost, shippingCost, materialCost: poCost + shippingCost };
+  return {
+    grossPoCost,
+    returnCredit,
+    poCost,
+    shippingCost,
+    materialCost: poCost + shippingCost,
+  };
 }
 
 export function calcLaborCost(scopes: ScopeSlice[]) {
@@ -94,10 +105,8 @@ export function calcProjectFinancials(p: {
   const { contractBase, changeOrderTotal, totalContract } = calcContractValue(
     p.quotes,
   );
-  const { poCost, shippingCost, materialCost } = calcMaterialCost(
-    p.purchaseOrders,
-    p.shipments,
-  );
+  const { grossPoCost, returnCredit, poCost, shippingCost, materialCost } =
+    calcMaterialCost(p.purchaseOrders, p.shipments);
   const {
     laborCost,
     budgetedLaborCost,
@@ -106,7 +115,7 @@ export function calcProjectFinancials(p: {
   } = calcLaborCost(p.scopes);
   const { invoiced, collected, outstanding } = calcInvoicing(p.invoices);
 
-  const cogs = materialCost + laborCost + shippingCost;
+  const cogs = materialCost + laborCost + shippingCost - returnCredit || 0;
   const grossProfit = totalContract - cogs;
   const marginPct =
     totalContract > 0 ? (grossProfit / totalContract) * 100 : null;
@@ -119,6 +128,8 @@ export function calcProjectFinancials(p: {
     contractBase,
     changeOrderTotal,
     totalContract,
+    grossPoCost,
+    returnCredit,
     poCost,
     shippingCost,
     materialCost,
