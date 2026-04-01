@@ -31,6 +31,7 @@ export default async function ItemEditPage({
     }),
   ]);
   if (!item) return notFound();
+  console.log("Fetched item for editing:", item); // Debug log
 
   return (
     <div className="bg-[#F7F6F3]">
@@ -44,12 +45,17 @@ export default async function ItemEditPage({
         </Link>
 
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-[#111] tracking-tight">Edit Item</h1>
-          <p className="text-sm text-[#999] mt-1 font-mono">{item.itemNumber}</p>
+          <h1 className="text-2xl font-bold text-[#111] tracking-tight">
+            Edit Item
+          </h1>
+          <p className="text-sm text-[#999] mt-1 font-mono">
+            {item.itemNumber}
+          </p>
         </div>
 
         <ItemEditForm
           categories={categories.map((c) => c.value)}
+          types={categories.map((c) => c.value)}
           units={units.map((u) => u.value)}
           item={{
             id: item.id,
@@ -62,7 +68,9 @@ export default async function ItemEditPage({
             type: item.type,
             active: item.active,
             approved: item.approved,
-            eolDate: item.eolDate ? item.eolDate.toISOString().split("T")[0] : null,
+            eolDate: item.eolDate
+              ? item.eolDate.toISOString().split("T")[0]
+              : null,
             description: item.description,
             unit: item.unit,
             preferredVendorId: item.preferredVendorId,

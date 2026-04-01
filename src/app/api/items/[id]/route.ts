@@ -30,7 +30,7 @@ export async function PUT(
     itemNumber, manufacturer, description, cost, price, lastSoldPrice,
     category, type, active, approved, eolDate,
     preferredVendorId,
-    changedBy,
+    changedBy, unit
   } = body;
 
   if (type && !Object.values(ItemType).includes(type)) {
@@ -67,6 +67,7 @@ export async function PUT(
     ...(description   !== undefined && { description: description?.trim() || null }),
     ...(eolDate            !== undefined && { eolDate: eolDate ? new Date(eolDate) : null }),
     ...(preferredVendorId  !== undefined && { preferredVendorId: preferredVendorId || null }),
+    ...(unit          !== undefined && { unit: unit?.trim() || null }),
   };
 
   const [item] = await prisma.$transaction([
