@@ -6,19 +6,19 @@ const reports = [
     href: "/reports/bc/vendors",
     icon: Building2,
     label: "Vendor Report",
-    description: "Compare Anteres vendors against Business Central — auto-links by name",
+    description: "Compare Antares vendors against Business Central — auto-links by name",
   },
   {
     href: "/reports/bc/customers",
     icon: Users,
     label: "Customer Report",
-    description: "Compare Anteres customers against Business Central — auto-links by name",
+    description: "Compare Antares customers against Business Central — auto-links by name",
   },
   {
     href: "/reports/bc/items",
     icon: Package,
     label: "Item Report",
-    description: "Compare Anteres items against Business Central by item number",
+    description: "Compare Antares items against Business Central by item number",
   },
   {
     href: "/reports/bc/invoices",

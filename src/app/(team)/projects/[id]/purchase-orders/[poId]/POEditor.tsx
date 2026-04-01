@@ -35,7 +35,12 @@ type ShipmentLine = {
   id: string;
   quantity: number;
   poLineId: string | null;
-  item: { id: string; itemNumber: string; manufacturer: string | null; unit: string | null } | null;
+  item: {
+    id: string;
+    itemNumber: string;
+    manufacturer: string | null;
+    unit: string | null;
+  } | null;
 };
 
 type Shipment = {
@@ -282,24 +287,6 @@ export default function POEditor({
     }
   }
 
-  async function handleReceivedQtyChange(lineId: string, qty: number) {
-    setLines((prev) =>
-      prev.map((l) => (l.id === lineId ? { ...l, receivedQuantity: qty } : l)),
-    );
-    try {
-      await fetch(
-        `/api/projects/${projectId}/purchase-orders/${po.id}/lines/${lineId}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ receivedQuantity: qty }),
-        },
-      );
-    } catch {
-      showToast("error", "Failed to update received qty");
-    }
-  }
-
   function startEditLine(line: POLine) {
     setEditingLineId(line.id);
     setEditQty(String(line.quantity));
@@ -337,7 +324,7 @@ export default function POEditor({
   async function handleResend() {
     if (
       !confirm(
-        `Resend this PO as revision ${revision + 1}? This will increment the revision number.`,
+        `This currently does not do anything. Resend this PO as revision ${revision + 1}? This will increment the revision number. `,
       )
     )
       return;
@@ -603,12 +590,17 @@ export default function POEditor({
           </div>
         </div>
 
+        {/* ONLY show if status is not CANCELLED */}
+
+        {status === "CANCELLED" && <p className="text-xs font-semibold px-3 py-1.5 rounded-xl border transition-colors bg-red-100 text-red-600 border-current text-center my-4">This PO has been cancelled. You cannot edit it or add shipments while it is cancelled.</p>}
+
         {/* PO Info Card */}
         <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden mb-6">
           <div className="px-6 py-4 border-b border-[#F0EEE9] flex items-center justify-between">
             <h3 className="font-semibold text-sm text-[#111]">Order Details</h3>
             {!editingInfo ? (
               <button
+                disabled={status === "CANCELLED"}
                 onClick={() => setEditingInfo(true)}
                 className="flex items-center gap-1.5 text-xs text-[#888] hover:text-[#111] transition-colors"
               >
@@ -916,22 +908,9 @@ export default function POEditor({
                               className="text-green-500"
                             />
                           )}
-                          <input
-                            type="number"
-                            min={0}
-                            max={line.quantity}
-                            value={line.receivedQuantity}
-                            onChange={(e) =>
-                              handleReceivedQtyChange(
-                                line.id,
-                                Math.min(
-                                  line.quantity,
-                                  parseInt(e.target.value) || 0,
-                                ),
-                              )
-                            }
-                            className="w-16 text-right text-xs border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111]"
-                          />
+                          <span className="text-sm text-[#666]">
+                            {line.receivedQuantity}
+                          </span>
                         </div>
                       </td>
                       <td className="px-6 py-3 text-right">
@@ -948,7 +927,6 @@ export default function POEditor({
                               onChange={(e) => setEditCost(e.target.value)}
                               className="w-24 text-right text-xs border border-[#E5E3DE] rounded-lg pl-5 pr-2 py-1 focus:outline-none focus:border-[#111]"
                             />
-                         
                           </div>
                         ) : (
                           <div className="flex items-center justify-end gap-1">
@@ -966,7 +944,7 @@ export default function POEditor({
                                 minimumFractionDigits: 2,
                               })}
                             </span>
-                               <span className="text-xs text-[#999] font-medium shrink-0">
+                            <span className="text-xs text-[#999] font-medium shrink-0">
                               {line.item?.unit ? line.item.unit : "each"}
                             </span>
                           </div>
@@ -1143,6 +1121,7 @@ export default function POEditor({
                 <span className="text-xs text-[#bbb]">{shipments.length}</span>
               </div>
               <button
+                disabled={status === "CANCELLED"}
                 onClick={() => setShowShipmentForm(true)}
                 className="flex items-center gap-1.5 text-xs font-semibold bg-[#111] text-white px-3 py-1.5 rounded-lg hover:bg-[#333] transition-colors"
               >

@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Syne, DM_Sans } from 'next/font/google'
+import { Syne, DM_Sans, Orbitron } from 'next/font/google'
 
 const syne = Syne({
   subsets: ['latin'],
   weight: ['400', '600', '700', '800'],
   variable: '--font-syne',
+})
+const orbitron = Orbitron({
+  subsets: ['latin'],
+  weight: ['400', '600', '700', '800'],
+  variable: '--font-orbitron',
 })
 
 const dmSans = DM_Sans({
@@ -29,7 +34,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${syne.variable} ${dmSans.variable}`}>
+    <html lang="en" className={`${orbitron.variable} ${dmSans.variable}`}>
       <body
         className="bg-background text-foreground font-sans"
       >

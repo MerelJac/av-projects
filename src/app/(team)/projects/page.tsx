@@ -106,6 +106,7 @@ export default async function ProjectsPage() {
                       ).length
                     : 0;
 
+                    // total budget is sum of accepted quotes (proposals, sales orders, change orders)
                   const totalBudget = project.quotes
                     .filter((q) => q.status === "ACCEPTED")
                     .reduce((sum, q) => sum + (q.total ?? 0), 0);

@@ -3,12 +3,16 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Building2, Plus } from "lucide-react";
 import { AddVendorButton } from "./AddVendorButton";
+import { getVendorLocalBalances } from "@/lib/bc-local";
 
 export default async function VendorsPage() {
-  const vendors = await prisma.vendor.findMany({
-    orderBy: { name: "asc" },
-    include: { _count: { select: { purchaseOrders: true } } },
-  });
+  const [vendors, localBalanceMap] = await Promise.all([
+    prisma.vendor.findMany({
+      orderBy: { name: "asc" },
+      include: { _count: { select: { purchaseOrders: true } } },
+    }),
+    getVendorLocalBalances(),
+  ]);
 
   return (
     <div className="min-h-screen bg-[#F7F6F3]">
@@ -28,7 +32,7 @@ export default async function VendorsPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#F0EEE9]">
-                  {["Name", "Email", "Phone", "POs", ""].map((h) => (
+                  {["Name",  "Antares Balance", "POs", ""].map((h) => (
                     <th
                       key={h}
                       className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-5 py-3"
@@ -45,8 +49,11 @@ export default async function VendorsPage() {
                     className="border-b border-[#F7F6F3] last:border-0 hover:bg-[#FAFAF9] transition-colors"
                   >
                     <td className="px-5 py-3.5 text-sm font-medium text-[#111]">{v.name}</td>
-                    <td className="px-5 py-3.5 text-sm text-[#666]">{v.email ?? "—"}</td>
-                    <td className="px-5 py-3.5 text-sm text-[#666]">{v.phone ?? "—"}</td>
+                    <td className="px-5 py-3.5 text-sm text-[#666]">
+                      {localBalanceMap.has(v.id)
+                        ? `$${localBalanceMap.get(v.id)!.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                        : "—"}
+                    </td>
                     <td className="px-5 py-3.5 text-sm text-[#666]">
                       {v._count.purchaseOrders}
                     </td>

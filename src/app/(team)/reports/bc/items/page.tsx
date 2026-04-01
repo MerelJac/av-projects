@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { bcFetchAll, BcItem } from "@/lib/bc";
-import ReportTable, { Column, MatchBadge } from "../ReportTable";
+import ReportTable, { Column } from "../ReportTable";
 
 type ItemRow = {
   matchStatus: "linked" | "matched-by-number" | "local-only" | "bc-only";
@@ -19,41 +19,16 @@ type ItemRow = {
   bcType: string | null;
 };
 
-const fmt = (n: number | null) =>
-  n != null
-    ? n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    : null;
-
 const COLUMNS: Column[] = [
-  {
-    key: "matchStatus",
-    label: "Status",
-    render: (v) => <MatchBadge status={v as string} />,
-  },
-  { key: "localItemNumber", label: "Anteres #" },
-  { key: "localDescription", label: "Anteres Description" },
-  {
-    key: "localCost",
-    label: "Anteres Cost",
-    render: (v) => (v != null ? `$${fmt(v as number)}` : <span className="text-[#ccc]">—</span>),
-  },
-  {
-    key: "localPrice",
-    label: "Anteres Price",
-    render: (v) => (v != null ? `$${fmt(v as number)}` : <span className="text-[#ccc]">—</span>),
-  },
+  { key: "matchStatus", label: "Status", type: "match-badge" },
+  { key: "localItemNumber", label: "Antares #" },
+  { key: "localDescription", label: "Antares Description" },
+  { key: "localCost", label: "Antares Cost", type: "currency" },
+  { key: "localPrice", label: "Antares Price", type: "currency" },
   { key: "bcNumber", label: "BC #" },
   { key: "bcName", label: "BC Description" },
-  {
-    key: "bcCost",
-    label: "BC Cost",
-    render: (v) => (v != null ? `$${fmt(v as number)}` : <span className="text-[#ccc]">—</span>),
-  },
-  {
-    key: "bcPrice",
-    label: "BC Price",
-    render: (v) => (v != null ? `$${fmt(v as number)}` : <span className="text-[#ccc]">—</span>),
-  },
+  { key: "bcCost", label: "BC Cost", type: "currency" },
+  { key: "bcPrice", label: "BC Price", type: "currency" },
   { key: "bcType", label: "BC Type" },
   { key: "bcId", label: "BC ID" },
 ];

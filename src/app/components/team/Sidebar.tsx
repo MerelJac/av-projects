@@ -26,6 +26,7 @@ import {
   X,
   GitCompare,
 } from "lucide-react";
+import { AntaresLogo } from "../../../../public/AntaresLogo";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -96,9 +97,7 @@ export default function SidebarLayout({
         >
           <Menu className="w-4 h-4" />
         </button>
-        <span className="ml-3 font-syne font-bold text-base text-secondary-color">
-          Antares
-        </span>
+      <AntaresLogo subtitle="Call One, Inc" />
       </header>
 
       {/* Mobile overlay */}
@@ -122,12 +121,7 @@ export default function SidebarLayout({
         {/* Brand */}
         <div className="px-5 py-5 border-b border-surface2 flex items-center justify-between">
           <div>
-            <h1 className="font-syne font-extrabold text-base text-secondary-color tracking-tight">
-              Antares
-            </h1>
-            <p className="text-[10px] font-semibold tracking-widest uppercase text-muted mt-0.5">
-              Call One, Inc
-            </p>
+          <AntaresLogo subtitle="Call One, Inc" />
           </div>
           <button
             onClick={() => setOpen(false)}

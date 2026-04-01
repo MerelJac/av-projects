@@ -25,6 +25,7 @@ export default async function ItemPage({
         include: { customer: true },
         orderBy: { createdAt: "desc" },
       },
+      preferredVendor: true,
     },
   });
 
@@ -73,7 +74,9 @@ export default async function ItemPage({
               <p className="text-sm text-[#666] mt-1">{item.manufacturer}</p>
             )}
             {item.description && (
-              <p className="text-sm text-[#888] mt-2 max-w-lg">{item.description}</p>
+              <p className="text-sm text-[#888] mt-2 max-w-lg">
+                {item.description}
+              </p>
             )}
           </div>
           <Link
@@ -170,10 +173,16 @@ export default async function ItemPage({
               </p>
             </div>
 
-                        <div className="px-6 py-5">
+            <div className="px-6 py-5">
               <p className="text-xs text-[#999] mb-1">Unit</p>
               <p className="text-sm font-medium text-[#111]">
                 {item.unit ?? <span className="text-[#ccc]">—</span>}
+              </p>
+            </div>
+                 <div className="px-6 py-5">
+              <p className="text-xs text-[#999] mb-1">Preferred Vendor</p>
+              <p className="text-sm font-medium text-[#111]">
+                {item.preferredVendor?.name ?? <span className="text-[#ccc]">—</span>}
               </p>
             </div>
           </div>

@@ -2,43 +2,36 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { bcFetchAll, BcCustomer } from "@/lib/bc";
-import ReportTable, { Column, MatchBadge } from "../ReportTable";
+import { getCustomerLocalBalances } from "@/lib/bc-local";
+import ReportTable, { Column } from "../ReportTable";
 
 type CustomerRow = {
   matchStatus: "linked" | "matched-by-name" | "local-only" | "bc-only";
-  localId: string | null;
-  localName: string | null;
-  localEmail: string | null;
-  localPhone: string | null;
-  bcId: string | null;
-  bcName: string | null;
-  bcEmail: string | null;
-  bcPhone: string | null;
+  name: string | null;
+  localBalance: number | null;
+  bcBalance: number | null;
+  totalBalance: number | null;
 };
 
 const COLUMNS: Column[] = [
-  {
-    key: "matchStatus",
-    label: "Status",
-    render: (v) => <MatchBadge status={v as string} />,
-  },
-  { key: "localName", label: "Anteres Name" },
-  { key: "localEmail", label: "Anteres Email" },
-  { key: "localPhone", label: "Anteres Phone" },
-  { key: "bcName", label: "BC Name" },
-  { key: "bcEmail", label: "BC Email" },
-  { key: "bcPhone", label: "BC Phone" },
-  { key: "bcId", label: "BC ID" },
+  { key: "matchStatus", label: "Status", type: "match-badge" },
+  { key: "name", label: "Name" },
+  { key: "localBalance", label: "Antares AR", type: "currency" },
+  { key: "bcBalance", label: "BC Balance", type: "currency" },
+  { key: "totalBalance", label: "Total Balance", type: "currency" },
 ];
 
 export default async function CustomerReportPage() {
-  const [bcCustomers, localCustomers] = await Promise.all([
+  const [bcCustomers, localCustomers, localArMap] = await Promise.all([
     bcFetchAll<BcCustomer>("customers"),
     prisma.customer.findMany({ orderBy: { name: "asc" } }),
+    getCustomerLocalBalances(),
   ]);
 
   const bcById = new Map(bcCustomers.map((c) => [c.id, c]));
-  const bcByName = new Map(bcCustomers.map((c) => [c.displayName.toLowerCase().trim(), c]));
+  const bcByName = new Map(
+    bcCustomers.map((c) => [c.displayName.toLowerCase().trim(), c]),
+  );
   const matchedBcIds = new Set<string>();
 
   const rows: CustomerRow[] = [];
@@ -63,16 +56,15 @@ export default async function CustomerReportPage() {
 
     if (bcCustomer) matchedBcIds.add(bcCustomer.id);
 
+    const localAr = localArMap.get(local.id) ?? null;
+    const bcAr = bcCustomer?.balanceDue ?? null;
+
     rows.push({
       matchStatus,
-      localId: local.id,
-      localName: local.name,
-      localEmail: local.email ?? null,
-      localPhone: local.phone ?? null,
-      bcId: bcCustomer?.id ?? null,
-      bcName: bcCustomer?.displayName ?? null,
-      bcEmail: bcCustomer?.email ?? null,
-      bcPhone: bcCustomer?.phoneNumber ?? null,
+      name: local.name,
+      localBalance: localAr,
+      bcBalance: bcAr,
+      totalBalance: (localAr ?? 0) + (bcAr ?? 0) || null,
     });
   }
 
@@ -80,14 +72,10 @@ export default async function CustomerReportPage() {
     if (!matchedBcIds.has(bcc.id)) {
       rows.push({
         matchStatus: "bc-only",
-        localId: null,
-        localName: null,
-        localEmail: null,
-        localPhone: null,
-        bcId: bcc.id,
-        bcName: bcc.displayName,
-        bcEmail: bcc.email,
-        bcPhone: bcc.phoneNumber,
+        name: bcc.displayName,
+        localBalance: null,
+        bcBalance: bcc.balanceDue ?? null,
+        totalBalance: bcc.balanceDue ?? null,
       });
     }
   }
@@ -95,7 +83,10 @@ export default async function CustomerReportPage() {
   if (bcIdUpdates.length > 0) {
     await Promise.all(
       bcIdUpdates.map(({ id, bcId }) =>
-        prisma.customer.update({ where: { id }, data: { bcId, bcSyncedAt: new Date() } }),
+        prisma.customer.update({
+          where: { id },
+          data: { bcId, bcSyncedAt: new Date() },
+        }),
       ),
     );
   }
@@ -103,8 +94,12 @@ export default async function CustomerReportPage() {
   const ORDER = { linked: 0, "matched-by-name": 1, "local-only": 2, "bc-only": 3 };
   rows.sort((a, b) => ORDER[a.matchStatus] - ORDER[b.matchStatus]);
 
-  const linked = rows.filter((r) => r.matchStatus === "linked" || r.matchStatus === "matched-by-name").length;
-  const unmatched = rows.filter((r) => r.matchStatus === "local-only" || r.matchStatus === "bc-only").length;
+  const linked = rows.filter(
+    (r) => r.matchStatus === "linked" || r.matchStatus === "matched-by-name",
+  ).length;
+  const unmatched = rows.filter(
+    (r) => r.matchStatus === "local-only" || r.matchStatus === "bc-only",
+  ).length;
 
   return (
     <div className="bg-[#F7F6F3] min-h-screen">
@@ -117,10 +112,13 @@ export default async function CustomerReportPage() {
             <ArrowLeft size={18} />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-[#111] tracking-tight">Customer Report</h1>
+            <h1 className="text-2xl font-bold text-[#111] tracking-tight">
+              Customer Report
+            </h1>
             <p className="text-xs text-[#999] mt-0.5">
               {linked} linked · {unmatched} unmatched
-              {bcIdUpdates.length > 0 && ` · ${bcIdUpdates.length} auto-linked by name`}
+              {bcIdUpdates.length > 0 &&
+                ` · ${bcIdUpdates.length} auto-linked by name`}
             </p>
           </div>
         </div>

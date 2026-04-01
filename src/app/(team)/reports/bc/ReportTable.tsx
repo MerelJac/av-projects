@@ -1,6 +1,7 @@
 "use client";
 
-import { Download } from "lucide-react";
+import { useState } from "react";
+import { Download, ChevronLeft, ChevronRight } from "lucide-react";
 
 export type Column = {
   key: string;
@@ -13,11 +14,13 @@ type Props = {
   columns: Column[];
   rows: Record<string, unknown>[];
   filename?: string;
+  pageSize?: number;
 };
 
 const MATCH_STYLES: Record<string, string> = {
   "linked": "bg-green-100 text-green-700",
   "matched-by-name": "bg-blue-100 text-blue-700",
+  "matched-by-number": "bg-blue-100 text-blue-700",
   "local-only": "bg-amber-100 text-amber-700",
   "bc-only": "bg-purple-100 text-purple-700",
 };
@@ -25,6 +28,7 @@ const MATCH_STYLES: Record<string, string> = {
 const MATCH_LABELS: Record<string, string> = {
   "linked": "Linked",
   "matched-by-name": "Auto-matched",
+  "matched-by-number": "Auto-matched",
   "local-only": "Local only",
   "bc-only": "BC only",
 };
@@ -61,9 +65,16 @@ function downloadCSV(csv: string, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-export default function ReportTable({ title, columns, rows, filename }: Props) {
+export default function ReportTable({ title, columns, rows, filename, pageSize = 50 }: Props) {
+  const [page, setPage] = useState(0);
+
+  const totalPages = Math.ceil(rows.length / pageSize);
+  const pageRows = rows.slice(page * pageSize, (page + 1) * pageSize);
+  const start = page * pageSize + 1;
+  const end = Math.min((page + 1) * pageSize, rows.length);
+
   function handleExport() {
-    const csv = toCSV(columns, rows);
+    const csv = toCSV(columns, rows); // always all rows
     downloadCSV(csv, filename ?? `${title.toLowerCase().replace(/\s+/g, "-")}.csv`);
   }
 
@@ -95,22 +106,58 @@ export default function ReportTable({ title, columns, rows, filename }: Props) {
             </tr>
           </thead>
           <tbody className="divide-y divide-[#F7F6F3]">
-            {rows.map((row, i) => (
+            {pageRows.map((row, i) => (
               <tr key={i} className="hover:bg-[#FAFAF9] transition-colors">
-                {columns.map((col) => (
-                  <td key={col.key} className="px-4 py-3 first:pl-6 last:pr-6">
-                    {col.render
-                      ? col.render(row[col.key], row)
-                      : row[col.key] != null
-                        ? String(row[col.key])
-                        : <span className="text-[#ccc]">—</span>}
-                  </td>
-                ))}
+                {columns.map((col) => {
+                  const val = row[col.key];
+                  let cell: React.ReactNode;
+                  if (col.type === "match-badge") {
+                    cell = <MatchBadge status={val as string} />;
+                  } else if (col.type === "currency") {
+                    cell = val != null
+                      ? `$${(val as number).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                      : <span className="text-[#ccc]">—</span>;
+                  } else {
+                    cell = val != null ? String(val) : <span className="text-[#ccc]">—</span>;
+                  }
+                  return (
+                    <td key={col.key} className="px-4 py-3 first:pl-6 last:pr-6">
+                      {cell}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="px-6 py-3 border-t border-[#F0EEE9] flex items-center justify-between">
+          <p className="text-xs text-[#999]">
+            {start}–{end} of {rows.length}
+          </p>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPage((p) => p - 1)}
+              disabled={page === 0}
+              className="p-1 rounded-lg text-[#999] hover:text-[#111] hover:bg-[#F7F6F3] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <span className="text-xs text-[#666] px-2">
+              Page {page + 1} of {totalPages}
+            </span>
+            <button
+              onClick={() => setPage((p) => p + 1)}
+              disabled={page >= totalPages - 1}
+              className="p-1 rounded-lg text-[#999] hover:text-[#111] hover:bg-[#F7F6F3] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

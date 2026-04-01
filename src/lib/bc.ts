@@ -39,6 +39,7 @@ async function getToken(): Promise<string> {
   const json = (await res.json()) as { access_token: string; expires_in: number };
   _token = json.access_token;
   _tokenExpiry = Date.now() + json.expires_in * 1000;
+  console.log("Fetched new BC token, expires in", json.expires_in, "seconds");
   return _token;
 }
 
@@ -69,7 +70,8 @@ export async function bcFetchAll<T>(
     results.push(...json.value);
     url = json["@odata.nextLink"] ?? null;
   }
-
+  console.log(`Fetched ${results.length} items from BC /${path}`);
+  console.debug("Sample item:", results[0]);
   return results;
 }
 
@@ -81,6 +83,7 @@ export interface BcVendor {
   email: string;
   phoneNumber: string;
   lastModifiedDateTime: string;
+  balance: number | null;
 }
 
 export interface BcCustomer {
@@ -88,6 +91,7 @@ export interface BcCustomer {
   displayName: string;
   email: string;
   phoneNumber: string;
+  balanceDue: number | null;
   lastModifiedDateTime: string;
 }
 

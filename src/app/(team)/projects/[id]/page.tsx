@@ -21,6 +21,7 @@ import MilestonesPanel from "@/app/components/MilestonesPanel";
 import ScopesPanel from "@/app/components/ScopesPanel";
 import BillingTermsEditor from "@/app/components/BillingTermsEditor";
 import DeleteProjectButton from "@/app/components/projects/DeleteProjectButton";
+import { calcProjectFinancials } from "@/lib/utils/financials";
 
 const quoteStatusStyles: Record<string, string> = {
   ACCEPTED: "bg-green-100 text-green-700",
@@ -96,51 +97,33 @@ export default async function ProjectPage({
   ]);
 
   if (!project) return notFound();
+  const financials = calcProjectFinancials(project);
+
   const changeOrders = project.quotes.filter((q) => q.isChangeOrder);
-  const changeOrderTotal = changeOrders.reduce(
-    (sum, co) => sum + (co.total ?? 0),
-    0,
-  );
 
-  const contractBase = project.quotes
-    .filter((q) => q.status === "ACCEPTED" && !q.isChangeOrder)
-    .reduce((sum, q) => sum + (q.total ?? 0), 0);
-  const coTotal = project.quotes
-    .filter((q) => q.status === "ACCEPTED" && q.isChangeOrder)
-    .reduce((sum, q) => sum + (q.total ?? 0), 0);
-  const totalContract = contractBase + coTotal;
+  const contractBase = financials.contractBase;
+  const changeOrderTotal = financials.changeOrderTotal;
+  const totalContract = financials.totalContract;
 
-  const poCost = project.purchaseOrders
-    .filter((po) => po.status !== "CANCELLED")
-    .flatMap((po) => po.lines)
-    .reduce((sum, l) => sum + l.cost * l.quantity, 0);
+  const poCost = financials.poCost;
+  const shippingCost = financials.shippingCost;
 
-  const shippingCost = project.shipments.reduce(
-    (sum, s) => sum + Number(s.cost ?? 0),
-    0,
-  );
 
-  const materialCost = poCost + shippingCost;
+  const materialCost = financials.materialCost;
 
   // Labor cost: actual logged hours × cost rate per scope
-  const laborCost = project.scopes.reduce((sum, sc) => {
-    if (!sc.costPerHour) return sum;
-    const actualHours = sc.timeEntries.reduce((h, t) => h + t.hours, 0);
-    return sum + actualHours * sc.costPerHour;
-  }, 0);
+  const laborCost = financials.laborCost;
 
-  const cogs = materialCost + laborCost;
+  const cogs = financials.cogs;
 
+  // 
   const grossProfit = totalContract - cogs;
   const marginPct =
     totalContract > 0 ? (grossProfit / totalContract) * 100 : null;
 
-  const invoiced = project.invoices
-    .filter((i) => i.status !== "VOID")
-    .reduce((sum, i) => sum + (i.amount ?? 0), 0);
-  const collected = project.invoices
-    .filter((i) => i.status === "PAID")
-    .reduce((sum, i) => sum + (i.amount ?? 0), 0);
+  const invoiced = financials.invoiced;
+  const collected = financials.collected;
+
 
   const shipments = await prisma.shipment.findMany({
     include: {
@@ -205,12 +188,12 @@ export default async function ProjectPage({
                     maximumFractionDigits: 2,
                   })}
                 </p>
-                {coTotal !== 0 && (
+                {changeOrderTotal !== 0 && (
                   <p
-                    className={`text-xs mt-0.5 font-medium ${coTotal >= 0 ? "text-green-600" : "text-red-500"}`}
+                    className={`text-xs mt-0.5 font-medium ${changeOrderTotal >= 0 ? "text-green-600" : "text-red-500"}`}
                   >
-                    {coTotal >= 0 ? "+" : ""}$
-                    {coTotal.toLocaleString(undefined, {
+                    {changeOrderTotal >= 0 ? "+" : ""}$
+                    {changeOrderTotal.toLocaleString(undefined, {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })}{" "}
