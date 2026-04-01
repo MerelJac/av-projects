@@ -97,7 +97,7 @@ const laborItem = await prisma.item.upsert({
     price: 150,
     approved: true,
     category: "Services",
-    type: "SERVICE",
+    type: "INTERNAL_SERVICE",
   },
 });
 

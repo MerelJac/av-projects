@@ -7,7 +7,7 @@ import { ArrowLeft, Upload, AlertCircle, CheckCircle2,  FileText, ChevronDown } 
 const ITEM_FIELDS = [
   { key: "itemNumber", label: "Item Number", required: true },
   { key: "manufacturer", label: "Manufacturer", required: false },
-  { key: "type", label: "Type", required: true, hint: "HARDWARE, SOFTWARE, SUBSCRIPTION, SERVICE" },
+  { key: "type", label: "Type", required: true, hint: "HARDWARE, SOFTWARE, SUBSCRIPTION, INTERNAL_SERVICE, EXTERNAL_SERVICE" , },
   { key: "description", label: "Description", required: false },
   { key: "unit", label: "Unit", required: false },
   { key: "cost", label: "Cost", required: false },

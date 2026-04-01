@@ -13,13 +13,13 @@ export async function POST(
   const { quoteId } = await req.json();
 
   const quote = await prisma.quote.findUnique({
-    where: { id: quoteId },
+    where: { id: quoteId, status: "ACCEPTED" },
     include: { lines: { include: { item: true } } },
   });
 
   if (!quote) return NextResponse.json({ error: "Quote not found" }, { status: 404 });
 
-  const serviceLines = quote.lines.filter((l) => l.item?.type === "SERVICE");
+  const serviceLines = quote.lines.filter((l) => l.item?.type === "INTERNAL_SERVICE");
 
   let created = 0;
   let skipped = 0;

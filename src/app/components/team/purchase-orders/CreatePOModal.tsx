@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { X, Package, Tag } from "lucide-react";
 import { VendorSelect } from "@/app/(team)/vendors/VendorSelect";
+import { isInternalService } from "@/lib/utils/items";
 
 type QuoteLine = {
   id: string;
@@ -10,7 +11,13 @@ type QuoteLine = {
   quantity: number;
   price: number;
   cost: number | null;
-  item: { id: string; itemNumber: string; manufacturer: string | null } | null;
+  item: {
+    id: string;
+    itemNumber: string;
+    manufacturer: string | null;
+    type: string;
+    preferredVendor?: { name: string } | null;
+  } | null;
 };
 
 type VendorPrice = { itemId: string; cost: number };
@@ -29,6 +36,7 @@ export default function CreatePOModal({
 }) {
   const router = useRouter();
   const [claimedLines, setClaimedLines] = useState<ClaimedLine[]>([]);
+
   const [loadingClaimed, setLoadingClaimed] = useState(true);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [vendorId, setVendorId] = useState("");
@@ -70,8 +78,11 @@ export default function CreatePOModal({
     !!line.item &&
     claimedLines.some((c) => c.itemId === line.item!.id && c.quantity === line.quantity);
 
+  const isInternal = (line: QuoteLine) =>
+    !!line.item && isInternalService(line.item);
+
   const toggle = (id: string, line: QuoteLine) => {
-    if (isClaimed(line)) return;
+    if (isClaimed(line) || isInternal(line)) return;
     setSelected((prev) => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
@@ -176,6 +187,8 @@ export default function CreatePOModal({
           ) : (
             lines.map((line) => {
               const claimed = isClaimed(line);
+              const internal = isInternal(line);
+              const locked = claimed || internal;
               const isSelected = selected.has(line.id);
               const vendorCost = line.item
                 ? vendorPrices.get(line.item.id)
@@ -186,25 +199,25 @@ export default function CreatePOModal({
               return (
                 <div
                   key={line.id}
-                  className={`transition-colors ${claimed ? "opacity-40 bg-[#F7F6F3]" : ""}`}
+                  className={`transition-colors ${locked ? "opacity-40 bg-[#F7F6F3]" : ""}`}
                 >
                   <button
                     onClick={() => toggle(line.id, line)}
-                    disabled={claimed}
+                    disabled={locked}
                     className={`w-full flex items-center gap-3 px-6 py-3 transition-colors text-left ${
-                      claimed ? "cursor-not-allowed" : "hover:bg-[#F7F6F3]"
+                      locked ? "cursor-not-allowed" : "hover:bg-[#F7F6F3]"
                     }`}
                   >
                     <div
                       className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border transition-colors ${
-                        claimed
+                        locked
                           ? "border-[#D0CEC8] bg-[#F0EEE9]"
                           : isSelected
                             ? "bg-[#111] border-[#111]"
                             : "border-[#D0CEC8] bg-white"
                       }`}
                     >
-                      {isSelected && !claimed && (
+                      {isSelected && !locked && (
                         <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
                           <polyline
                             points="1,3.5 3.5,6 8,1"
@@ -215,7 +228,7 @@ export default function CreatePOModal({
                           />
                         </svg>
                       )}
-                      {claimed && (
+                      {locked && (
                         <svg width="8" height="9" viewBox="0 0 8 9" fill="none">
                           <rect
                             x="1"
@@ -252,6 +265,11 @@ export default function CreatePOModal({
                           On PO
                         </span>
                       )}
+                      {internal  && (
+                        <span className="text-[10px] font-semibold text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded">
+                          Internal
+                        </span>
+                      )}
                       <span className="text-xs text-[#999]">
                         qty {line.quantity}
                       </span>
@@ -267,7 +285,7 @@ export default function CreatePOModal({
                   </button>
 
                   {/* Cost override — only show when selected and vendor has a price or item has a cost */}
-                  {isSelected && !claimed && vendorId && (
+                  {isSelected && !locked && vendorId && (
                     <div className="px-6 pb-3 flex items-center gap-2">
                       <span className="text-xs text-[#999]">Cost each:</span>
                       <div className="relative">

@@ -21,8 +21,8 @@ export type QuoteWithDetails = Prisma.QuoteGetPayload<{
     customer: true;
     project: true;
     boms: { include: { bom: { select: { id: true; name: true } } } };
-    lines: { include: { item: true; bundle: true } };
-    quoteBundles: { include: { lines: { include: { item: true } } } };
+    lines: { include: { item: { include: { preferredVendor: { select: { name: true } } } }; bundle: true } };
+    quoteBundles: { include: { lines: { include: { item: { include: { preferredVendor: { select: { name: true } } } } } } } };
     salesOrder: { select: { id: true } };
   };
 }> & {

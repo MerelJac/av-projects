@@ -21,7 +21,7 @@ export default async function BOMPage({
     where: { id: bomId },
     include: {
       project: { include: { customer: true } },
-      lines: { include: { item: true } },
+      lines: { include: { item: { include: { preferredVendor: { select: { name: true } } } } } },
       quotes: {
         include: {
           quote: {

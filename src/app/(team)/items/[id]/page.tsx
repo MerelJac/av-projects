@@ -8,7 +8,8 @@ const typeStyles: Record<string, string> = {
   HARDWARE: "bg-blue-50 text-blue-700",
   SOFTWARE: "bg-purple-50 text-purple-700",
   SUBSCRIPTION: "bg-amber-50 text-amber-700",
-  SERVICE: "bg-green-50 text-green-700",
+  INTERNAL_SERVICE: "bg-green-50 text-green-700",
+  EXTERNAL_SERVICE: "bg-green-50 text-green-700",
 };
 
 export default async function ItemPage({

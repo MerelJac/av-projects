@@ -368,6 +368,8 @@ export default function BOMEditor({
               id: l.item.id,
               itemNumber: l.item.itemNumber,
               manufacturer: l.item.manufacturer ?? null,
+              type: l.item.type,
+              preferredVendor: l.item.preferredVendor ?? null,
             },
           }))}
           onClose={() => setShowCreatePO(false)}

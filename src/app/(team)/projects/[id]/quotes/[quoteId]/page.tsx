@@ -31,11 +31,11 @@ export default async function QuotePage({
         },
       },
       lines: {
-        include: { item: true, bundle: true },
+        include: { item: { include: { preferredVendor: { select: { name: true } } } }, bundle: true },
         orderBy: { id: "asc" },
       },
       quoteBundles: {
-        include: { lines: { include: { item: true } } },
+        include: { lines: { include: { item: { include: { preferredVendor: { select: { name: true } } } } } } },
         orderBy: { createdAt: "asc" },
       },
       salesOrder: { select: { id: true } },

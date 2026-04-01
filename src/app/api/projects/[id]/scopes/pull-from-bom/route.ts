@@ -19,7 +19,7 @@ export async function POST(
 
   if (!bom) return NextResponse.json({ error: "BOM not found" }, { status: 404 });
 
-  const serviceLines = bom.lines.filter((l) => l.item.type === "SERVICE");
+  const serviceLines = bom.lines.filter((l) => l.item.type === "INTERNAL_SERVICE");
 
   let created = 0;
   let skipped = 0;

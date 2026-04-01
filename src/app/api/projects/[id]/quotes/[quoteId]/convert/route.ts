@@ -24,10 +24,10 @@ export async function POST(
   if (quote.salesOrder) return NextResponse.json({ salesOrderId: quote.salesOrder.id, alreadyExisted: true });
 
   const hardwareLines = quote.lines.filter(
-    (l) => !l.item || l.item.type !== "SERVICE"
+    (l) => !l.item || ( l.item.type !== "INTERNAL_SERVICE" && l.item.type !== "EXTERNAL_SERVICE")
   );
   const serviceLines = quote.lines.filter(
-    (l) => l.item?.type === "SERVICE"
+    (l) => (  l.item && (l.item.type === "INTERNAL_SERVICE" || l.item.type === "EXTERNAL_SERVICE"))
   );
 
   const result = await prisma.$transaction(async (tx) => {
@@ -49,8 +49,8 @@ export async function POST(
       },
     });
 
-    // Auto-create project scopes from service lines
-    for (const line of serviceLines) {
+    // Auto-create project scopes from service lines only for INTERNAL_SERVICE
+    for (const line of serviceLines.filter((l) => l.item?.type === "INTERNAL_SERVICE")) {
       // Avoid duplicates if scope for this item already exists
       const existing = line.itemId
         ? await tx.projectScope.findFirst({

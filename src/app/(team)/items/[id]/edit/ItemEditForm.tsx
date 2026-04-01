@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, AlertCircle } from "lucide-react";
 
-type ItemType = "HARDWARE" | "SOFTWARE" | "SUBSCRIPTION" | "SERVICE";
+type ItemType = "HARDWARE" | "SOFTWARE" | "SUBSCRIPTION" | "INTERNAL_SERVICE" | "EXTERNAL_SERVICE";
 
 type Item = {
   id: string;
@@ -196,7 +196,8 @@ export default function ItemEditForm({
                 <option value="HARDWARE">Hardware</option>
                 <option value="SOFTWARE">Software</option>
                 <option value="SUBSCRIPTION">Subscription</option>
-                <option value="SERVICE">Service</option>
+                <option value="INTERNAL_SERVICE">Internal Service</option>
+                <option value="EXTERNAL_SERVICE">External Service</option>
               </select>
             </div>
           </div>

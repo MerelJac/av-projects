@@ -10,6 +10,7 @@ export type BOMItem = {
   cost: number | null;
   category: string | null;
   type: ItemType;
+  preferredVendor?: { name: string } | null;
 };
 
 export type BOMLineType = {

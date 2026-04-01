@@ -178,7 +178,7 @@ export default function ScopesPanel({
             )}
           </div>
           <p className="text-xs text-[#bbb]">
-            Pulls <code>SERVICE</code> items
+            Pulls <code>INTERNAL SERVICE</code> items
           </p>
         </div>
 
@@ -283,7 +283,7 @@ export default function ScopesPanel({
       {scopes.length === 0 && !showAdd ? (
         <div className="px-6 py-10 text-center">
           <p className="text-sm text-[#bbb]">
-            No scopes yet — pull SERVICE items from a BOM to get started
+            No scopes yet — pull INTERNAL_SERVICE items from a BOM to get started
           </p>
         </div>
       ) : (

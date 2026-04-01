@@ -9,7 +9,7 @@ export function calcBOMTotals(
     customerPrices[itemId] ?? standardPrice;
 
   const hardwareLines = lines.filter((l) => l.item.type !== "SERVICE");
-  const serviceLines = lines.filter((l) => l.item.type === "SERVICE");
+  const serviceLines = lines.filter((l) => (l.item.type === "INTERNAL_SERVICE" || l.item.type === "EXTERNAL_SERVICE"));
 
   const totalHardwareSell = hardwareLines.reduce(
     (sum, l) =>

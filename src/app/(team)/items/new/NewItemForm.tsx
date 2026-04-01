@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, AlertCircle, Package } from "lucide-react";
 import Link from "next/link";
 
-const ITEM_TYPES = ["HARDWARE", "SOFTWARE", "SUBSCRIPTION", "SERVICE"] as const;
+import { ITEM_TYPES } from "@/types/item";
 
 export default function NewItemForm({ units }: { units: string[] }) {
   const router = useRouter();
