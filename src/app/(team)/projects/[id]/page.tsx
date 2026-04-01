@@ -97,7 +97,36 @@ export default async function ProjectPage({
   ]);
 
   if (!project) return notFound();
-  const financials = calcProjectFinancials(project);
+
+  // Fetch credited return quantities per PO line for this project.
+  // Wrapped in try/catch — the table won't exist until the migration runs.
+  let returnedQtyByLineId: Record<string, number> = {};
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rows = await (prisma as any).purchaseOrderReturnLine.groupBy({
+      by: ["poLineId"],
+      where: { poReturn: { status: "CREDITED", po: { projectId: id } } },
+      _sum: { quantity: true },
+    });
+    for (const row of rows as { poLineId: string; _sum: { quantity: number | null } }[]) {
+      returnedQtyByLineId[row.poLineId] = row._sum.quantity ?? 0;
+    }
+  } catch {
+    // Pre-migration: return lines table doesn't exist yet; returnedQuantity defaults to 0
+  }
+
+  const projectForFinancials = {
+    ...project,
+    purchaseOrders: project.purchaseOrders.map((po) => ({
+      ...po,
+      lines: po.lines.map((l) => ({
+        ...l,
+        returnedQuantity: returnedQtyByLineId[l.id] ?? 0,
+      })),
+    })),
+  };
+
+  const financials = calcProjectFinancials(projectForFinancials);
 
   const changeOrders = project.quotes.filter((q) => q.isChangeOrder);
 

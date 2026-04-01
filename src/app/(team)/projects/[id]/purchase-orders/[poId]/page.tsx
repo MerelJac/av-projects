@@ -24,6 +24,12 @@ export default async function POPage({
           },
           orderBy: { createdAt: "desc" },
         },
+        returns: {
+          include: {
+            lines: { include: { poLine: { include: { item: true } } } },
+          },
+          orderBy: { createdAt: "desc" },
+        },
       },
     }),
     prisma.user.findMany({
@@ -42,6 +48,7 @@ export default async function POPage({
       ...s,
       cost: s.cost != null ? Number(s.cost) : null,
     })),
+    returns: po.returns,
   };
 
   return <POEditor po={poSerialized} projectId={id} users={users} />;

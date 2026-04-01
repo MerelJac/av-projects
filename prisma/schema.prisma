@@ -483,48 +483,74 @@ enum SalesOrderStatus {
 }
 
 model PurchaseOrder {
-  id             String              @id @default(uuid())
+  id             String                @id @default(uuid())
   poNumber       String?
-  revision       Int                 @default(1)
+  revision       Int                   @default(1)
   sentAt         DateTime?
   vendorId       String?
-  vendor         Vendor?             @relation(fields: [vendorId], references: [id])
+  vendor         Vendor?               @relation(fields: [vendorId], references: [id])
   notes          String?
   projectId      String?
-  project        Project?            @relation(fields: [projectId], references: [id])
+  project        Project?              @relation(fields: [projectId], references: [id])
   quoteId        String?
-  quote          Quote?              @relation(fields: [quoteId], references: [id])
+  quote          Quote?                @relation(fields: [quoteId], references: [id])
   salesOrderId   String?
-  salesOrder     SalesOrder?         @relation(fields: [salesOrderId], references: [id])
-  status         POStatus            @default(DRAFT)
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
+  salesOrder     SalesOrder?           @relation(fields: [salesOrderId], references: [id])
+  status         POStatus              @default(DRAFT)
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
   // Snapshot fields — copied from vendor defaults at creation, editable per PO
   shipToAddress  String?
   billToAddress  String?
   shippingMethod String?
   billingTerms   BillingTerms?
-  creditLimit    Decimal?            @db.Decimal(10, 2)
+  creditLimit    Decimal?              @db.Decimal(10, 2)
   buyerId        String?
-  buyer          User?               @relation("POBuyer", fields: [buyerId], references: [id])
+  buyer          User?                 @relation("POBuyer", fields: [buyerId], references: [id])
   lines          PurchaseOrderLine[]
   shipments      Shipment[]
   shipmentLines  ShipmentLine[]
+  returns        PurchaseOrderReturn[]
 }
 
 model PurchaseOrderLine {
-  id               String          @id @default(uuid())
+  id               String                    @id @default(uuid())
   poId             String
-  purchaseOrder    PurchaseOrder   @relation(fields: [poId], references: [id], onDelete: Cascade)
+  purchaseOrder    PurchaseOrder             @relation(fields: [poId], references: [id], onDelete: Cascade)
   itemId           String
-  item             Item            @relation(fields: [itemId], references: [id])
+  item             Item                      @relation(fields: [itemId], references: [id])
   salesOrderLineId String?
-  salesOrderLine   SalesOrderLine? @relation(fields: [salesOrderLineId], references: [id])
+  salesOrderLine   SalesOrderLine?           @relation(fields: [salesOrderLineId], references: [id])
   quantity         Int
-  receivedQuantity Int             @default(0)
+  receivedQuantity Int                       @default(0)
   cost             Float
-  costOverridden   Boolean         @default(false)
+  costOverridden   Boolean                   @default(false)
   shipmentLines    ShipmentLine[]
+  returnLines      PurchaseOrderReturnLine[]
+}
+
+model PurchaseOrderReturn {
+  id           String                    @id @default(uuid())
+  returnNumber String?
+  poId         String
+  po           PurchaseOrder             @relation(fields: [poId], references: [id], onDelete: Cascade)
+  status       ReturnStatus              @default(PENDING)
+  reason       String?
+  rmaNumber    String?
+  notes        String?
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+  lines        PurchaseOrderReturnLine[]
+}
+
+model PurchaseOrderReturnLine {
+  id            String              @id @default(uuid())
+  returnId      String
+  poReturn      PurchaseOrderReturn @relation(fields: [returnId], references: [id], onDelete: Cascade)
+  poLineId      String
+  poLine        PurchaseOrderLine   @relation(fields: [poLineId], references: [id])
+  quantity      Int
+  creditPerUnit Float?
 }
 
 model SalesOrderLine {
@@ -649,6 +675,15 @@ enum POStatus {
   SENT
   PARTIALLY_RECEIVED
   RECEIVED
+  PARTIALLY_RETURNED
+  RETURNED
+  CANCELLED
+}
+
+enum ReturnStatus {
+  PENDING
+  SENT
+  CREDITED
   CANCELLED
 }
 

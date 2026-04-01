@@ -7,7 +7,7 @@ type QuoteSlice = {
   status: string;
   isChangeOrder: boolean;
 };
-type POLineSlice = { cost: number; quantity: number };
+type POLineSlice = { cost: number; quantity: number; returnedQuantity?: number };
 type POSlice = { status: string; lines: POLineSlice[] };
 type ShipmentSlice = { cost: unknown };
 type ScopeSlice = {
@@ -35,11 +35,16 @@ export function calcMaterialCost(
   purchaseOrders: POSlice[],
   shipments: ShipmentSlice[],
 ) {
-  // Includes draft, partially received, sent, and fully received PO Costs. Excludes Cancelled POs from Total
+  // Includes draft, partially received, sent, and fully received PO Costs. Excludes Cancelled POs from Total.
+  // Subtracts credited return quantities so returned items don't inflate material cost.
   const poCost = purchaseOrders
     .filter((po) => po.status !== "CANCELLED")
     .flatMap((po) => po.lines)
-    .reduce((s, l) => s + l.cost * l.quantity, 0);
+    .reduce((s, l) => {
+      const returned = l.returnedQuantity ?? 0;
+      const effective = Math.max(0, l.quantity - returned);
+      return s + l.cost * effective;
+    }, 0);
   const shippingCost = shipments.reduce((s, sh) => s + Number(sh.cost ?? 0), 0);
   return { poCost, shippingCost, materialCost: poCost + shippingCost };
 }

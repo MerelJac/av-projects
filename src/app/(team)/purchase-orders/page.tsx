@@ -79,7 +79,7 @@ export default async function PurchaseOrdersPage() {
               </thead>
               <tbody>
                 {pos.map((po) => {
-                  const cfg = STATUS_CONFIG[po.status];
+                  const cfg = STATUS_CONFIG[po.status as keyof typeof STATUS_CONFIG];
                   const totalQty = po.lines.reduce((s, l) => s + l.quantity, 0);
                   const receivedQty = po.lines.reduce((s, l) => s + l.receivedQuantity, 0);
                   const totalCost = po.lines.reduce((s, l) => s + l.cost * l.quantity, 0);

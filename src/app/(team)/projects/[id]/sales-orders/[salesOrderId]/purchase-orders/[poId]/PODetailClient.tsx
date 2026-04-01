@@ -12,8 +12,10 @@ import {
   Plus,
   X,
   Check,
+  RotateCcw,
 } from "lucide-react";
 import { POWithDetails } from "@/types/purchaseOrder";
+import ReturnItemsModal from "@/app/components/team/purchase-orders/ReturnItemsModal";
 
 type SerializedPOLine = Omit<
   POWithDetails["lines"][number],
@@ -27,9 +29,42 @@ type SerializedPOLine = Omit<
     | null;
 };
 
+type POReturnLine = {
+  id: string;
+  poLineId: string;
+  quantity: number;
+  creditPerUnit: number | null;
+  poLine: { item: { itemNumber: string; manufacturer: string | null } | null };
+};
+
+type POReturn = {
+  id: string;
+  returnNumber: string | null;
+  status: string;
+  reason: string | null;
+  rmaNumber: string | null;
+  notes: string | null;
+  createdAt: Date | string;
+  lines: POReturnLine[];
+};
+
 type SerializedPO = Omit<POWithDetails, "lines"> & {
   lines: SerializedPOLine[];
   salesOrder: { customer: { name: string }; project: { name: string } } | null;
+  returns: POReturn[];
+};
+
+const RETURN_STATUS_LABELS: Record<string, string> = {
+  PENDING: "Pending",
+  SENT: "Sent to Vendor",
+  CREDITED: "Credited",
+  CANCELLED: "Cancelled",
+};
+const RETURN_STATUS_COLORS: Record<string, string> = {
+  PENDING: "bg-amber-50 text-amber-700 border-amber-200",
+  SENT: "bg-blue-50 text-blue-700 border-blue-200",
+  CREDITED: "bg-green-50 text-green-700 border-green-200",
+  CANCELLED: "bg-gray-100 text-gray-500 border-gray-200",
 };
 
 const PO_STATUS: Record<
@@ -76,7 +111,10 @@ export default function PODetailClient({
 }) {
   const router = useRouter();
   const [po, setPO] = useState(initialPO);
+  const [returns, setReturns] = useState<POReturn[]>(initialPO.returns);
   const [showLogShipment, setShowLogShipment] = useState(false);
+  const [showReturnModal, setShowReturnModal] = useState(false);
+  const [updatingReturnId, setUpdatingReturnId] = useState<string | null>(null);
   const [toast, setToast] = useState<{
     type: "success" | "error";
     msg: string;
@@ -92,6 +130,50 @@ export default function PODetailClient({
       `/api/projects/${projectId}/sales-orders/${salesOrderId}/purchase-orders/${po.id}`,
     );
     if (res.ok) setPO(await res.json());
+  }
+
+  async function handleReturnSaved() {
+    setShowReturnModal(false);
+    const res = await fetch(
+      `/api/projects/${projectId}/purchase-orders/${po.id}/returns`
+    );
+    if (res.ok) setReturns(await res.json());
+    showToastMsg("success", "Return created");
+  }
+
+  async function handleUpdateReturnStatus(returnId: string, newStatus: string) {
+    setUpdatingReturnId(returnId);
+    try {
+      const res = await fetch(
+        `/api/projects/${projectId}/purchase-orders/${po.id}/returns/${returnId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: newStatus }),
+        }
+      );
+      if (!res.ok) throw new Error();
+      setReturns((prev) =>
+        prev.map((r) => (r.id === returnId ? { ...r, status: newStatus } : r))
+      );
+      if (newStatus === "CREDITED") showToastMsg("success", "Return credited — costs updated");
+    } catch {
+      showToastMsg("error", "Failed to update return status");
+    } finally {
+      setUpdatingReturnId(null);
+    }
+  }
+
+  async function handleDeleteReturn(returnId: string) {
+    try {
+      await fetch(
+        `/api/projects/${projectId}/purchase-orders/${po.id}/returns/${returnId}`,
+        { method: "DELETE" }
+      );
+      setReturns((prev) => prev.filter((r) => r.id !== returnId));
+    } catch {
+      showToastMsg("error", "Failed to delete return");
+    }
   }
 
   async function markSent() {
@@ -368,6 +450,117 @@ export default function PODetailClient({
                 </div>
               )}
             </div>
+
+            {/* Returns */}
+            <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
+              <div className="px-5 py-3.5 border-b border-[#F0EEE9] flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <RotateCcw size={14} className="text-[#999]" />
+                  <p className="text-xs font-semibold uppercase tracking-widest text-[#888]">
+                    Returns
+                  </p>
+                  {returns.length > 0 && (
+                    <span className="text-xs text-[#bbb]">{returns.length}</span>
+                  )}
+                </div>
+                {po.lines.some((l) => l.receivedQuantity > 0) && po.status !== "CANCELLED" && (
+                  <button
+                    onClick={() => setShowReturnModal(true)}
+                    className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-[#E5E3DE] hover:bg-[#F0EEE9] transition-colors"
+                  >
+                    <RotateCcw size={11} />
+                    Return Items
+                  </button>
+                )}
+              </div>
+
+              {returns.length === 0 ? (
+                <p className="px-5 py-8 text-sm text-[#bbb] text-center">No returns on this PO</p>
+              ) : (
+                <div className="divide-y divide-[#F7F6F3]">
+                  {returns.map((ret) => {
+                    const totalCredit = ret.lines.reduce(
+                      (s, l) => s + l.quantity * (l.creditPerUnit ?? 0),
+                      0
+                    );
+                    const statusColor = RETURN_STATUS_COLORS[ret.status] ?? "bg-gray-100 text-gray-500 border-gray-200";
+                    return (
+                      <div key={ret.id} className="px-5 py-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <span className="text-sm font-mono font-semibold text-[#111]">
+                                {ret.returnNumber ?? ret.id.slice(0, 8).toUpperCase()}
+                              </span>
+                              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${statusColor}`}>
+                                {RETURN_STATUS_LABELS[ret.status] ?? ret.status}
+                              </span>
+                              {ret.rmaNumber && (
+                                <span className="text-xs text-[#666] bg-[#F0EEE9] px-2 py-0.5 rounded font-mono">
+                                  RMA: {ret.rmaNumber}
+                                </span>
+                              )}
+                            </div>
+                            <div className="space-y-0.5">
+                              {ret.lines.map((rl) => (
+                                <div key={rl.id} className="flex items-center gap-2 text-xs text-[#666]">
+                                  <RotateCcw size={10} className="text-[#bbb] flex-shrink-0" />
+                                  <span className="font-mono text-[#444]">
+                                    {rl.poLine.item?.itemNumber ?? "—"}
+                                  </span>
+                                  <span>×{rl.quantity}</span>
+                                  {rl.creditPerUnit != null && (
+                                    <span className="text-green-700">
+                                      ${(rl.quantity * rl.creditPerUnit).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    </span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                            {ret.reason && (
+                              <p className="text-xs text-[#999] mt-1">Reason: {ret.reason}</p>
+                            )}
+                          </div>
+                          <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                            {totalCredit > 0 && (
+                              <span className="text-sm font-semibold text-green-700">
+                                +${totalCredit.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                              </span>
+                            )}
+                            {ret.status === "PENDING" && (
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={() => handleUpdateReturnStatus(ret.id, "SENT")}
+                                  disabled={updatingReturnId === ret.id}
+                                  className="text-[10px] font-semibold px-2 py-1 rounded-lg border border-[#E5E3DE] hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-colors disabled:opacity-40"
+                                >
+                                  Mark Sent
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteReturn(ret.id)}
+                                  className="p-1 rounded hover:bg-red-50 text-[#bbb] hover:text-red-500"
+                                >
+                                  <X size={13} />
+                                </button>
+                              </div>
+                            )}
+                            {ret.status === "SENT" && (
+                              <button
+                                onClick={() => handleUpdateReturnStatus(ret.id, "CREDITED")}
+                                disabled={updatingReturnId === ret.id}
+                                className="text-[10px] font-semibold px-2 py-1 rounded-lg border border-[#E5E3DE] hover:bg-green-50 hover:border-green-200 hover:text-green-700 transition-colors disabled:opacity-40"
+                              >
+                                {updatingReturnId === ret.id ? "Updating…" : "Mark Credited"}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Sidebar */}
@@ -473,6 +666,40 @@ export default function PODetailClient({
           onCancel={() => setShowLogShipment(false)}
         />
       )}
+
+      {/* Return Items Modal */}
+      {showReturnModal && (() => {
+        const returnedByLine: Record<string, number> = {};
+        for (const ret of returns) {
+          if (ret.status === "CANCELLED") continue;
+          for (const rl of ret.lines) {
+            returnedByLine[rl.poLineId] = (returnedByLine[rl.poLineId] ?? 0) + rl.quantity;
+          }
+        }
+        const returnableLines = po.lines
+          .filter((l) => l.item !== null)
+          .map((l) => ({
+            id: l.id,
+            quantity: l.quantity,
+            receivedQuantity: l.receivedQuantity,
+            cost: l.cost,
+            alreadyReturnedQuantity: returnedByLine[l.id] ?? 0,
+            item: {
+              itemNumber: l.item!.itemNumber,
+              manufacturer: l.item!.manufacturer,
+              description: l.item!.description,
+            },
+          }));
+        return (
+          <ReturnItemsModal
+            projectId={projectId}
+            poId={po.id}
+            lines={returnableLines}
+            onSaved={handleReturnSaved}
+            onCancel={() => setShowReturnModal(false)}
+          />
+        );
+      })()}
     </div>
   );
 }

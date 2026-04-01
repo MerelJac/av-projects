@@ -28,6 +28,12 @@ export default async function PODetailPage({
       salesOrder: {
         include: { customer: true, project: true },
       },
+      returns: {
+        include: {
+          lines: { include: { poLine: { include: { item: true } } } },
+        },
+        orderBy: { createdAt: "desc" },
+      },
     },
   });
 

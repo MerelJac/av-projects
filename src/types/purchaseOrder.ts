@@ -30,3 +30,13 @@ type POLineForClient = Omit<POWithDetails["lines"][number], "salesOrderLine"> & 
 export type POWithDetailsForClient = Omit<POWithDetails, "lines"> & {
   lines: POLineForClient[];
 };
+
+export type POReturnWithLines = Prisma.PurchaseOrderReturnGetPayload<{
+  include: {
+    lines: {
+      include: {
+        poLine: { include: { item: true } };
+      };
+    };
+  };
+}>;
