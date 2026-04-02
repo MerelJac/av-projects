@@ -6,6 +6,7 @@ import {
   Upload,
   ChevronLeft,
   ChevronRight,
+  Search,
 } from "lucide-react";
 
 const typeStyles: Record<string, string> = {
@@ -21,19 +22,31 @@ const PAGE_SIZE = 50;
 export default async function ItemsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; q?: string }>;
 }) {
-  const { page: pageParam } = await searchParams;
-  const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
+  const { page: pageParam, q } = await searchParams;
+  const query = q?.trim() ?? "";
+  const page = query ? 1 : Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
   const skip = (page - 1) * PAGE_SIZE;
+
+  const where = query
+    ? {
+        OR: [
+          { itemNumber: { contains: query, mode: "insensitive" as const } },
+          { manufacturer: { contains: query, mode: "insensitive" as const } },
+          { description: { contains: query, mode: "insensitive" as const } },
+        ],
+      }
+    : {};
 
   const [items, total] = await Promise.all([
     prisma.item.findMany({
+      where,
       orderBy: { itemNumber: "asc" },
       skip,
       take: PAGE_SIZE,
     }),
-    prisma.item.count(),
+    prisma.item.count({ where }),
   ]);
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -41,7 +54,7 @@ export default async function ItemsPage({
   return (
     <div className="bg-[#F7F6F3]">
       <div className="max-w-5xl mx-auto px-6 py-10">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-[#111] tracking-tight">
             Items
           </h1>
@@ -62,6 +75,18 @@ export default async function ItemsPage({
             </Link>
           </div>
         </div>
+
+        <form method="GET" action="/items" className="mb-4">
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#999] pointer-events-none" />
+            <input
+              name="q"
+              defaultValue={query}
+              placeholder="Search by item number, manufacturer, or description…"
+              className="w-full pl-8 pr-4 py-2 text-sm bg-white border border-[#E5E3DE] rounded-xl text-[#111] placeholder:text-[#bbb] focus:outline-none focus:ring-2 focus:ring-[#111]/10"
+            />
+          </div>
+        </form>
 
         <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
           <table className="w-full">
@@ -92,7 +117,7 @@ export default async function ItemsPage({
                     colSpan={6}
                     className="px-5 py-12 text-center text-sm text-[#bbb]"
                   >
-                    No items yet
+                    {query ? `No items matching "${query}"` : "No items yet"}
                   </td>
                 </tr>
               ) : (
@@ -162,10 +187,11 @@ export default async function ItemsPage({
           <div className="flex items-center justify-between mt-4">
             <p className="text-xs text-[#999]">
               {skip + 1}–{Math.min(skip + PAGE_SIZE, total)} of {total} items
+              {query && ` matching "${query}"`}
             </p>
             <div className="flex items-center gap-1">
               <Link
-                href={`/items?page=${page - 1}`}
+                href={`/items?page=${page - 1}${query ? `&q=${encodeURIComponent(query)}` : ""}`}
                 aria-disabled={page <= 1}
                 className={`p-1.5 rounded-lg border border-[#E5E3DE] transition-colors ${
                   page <= 1
@@ -179,7 +205,7 @@ export default async function ItemsPage({
                 {page} / {totalPages}
               </span>
               <Link
-                href={`/items?page=${page + 1}`}
+                href={`/items?page=${page + 1}${query ? `&q=${encodeURIComponent(query)}` : ""}`}
                 aria-disabled={page >= totalPages}
                 className={`p-1.5 rounded-lg border border-[#E5E3DE] transition-colors ${
                   page >= totalPages
