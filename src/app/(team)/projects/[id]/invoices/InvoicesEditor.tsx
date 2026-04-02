@@ -14,6 +14,8 @@ import {
   Percent,
   List,
   ChevronRight,
+  Eye,
+  Mail,
 } from "lucide-react";
 import NotesPanel from "@/app/components/NotesPanel";
 
@@ -56,23 +58,67 @@ const STATUS_CONFIG: Record<
   string,
   { label: string; color: string; icon: React.ReactNode }
 > = {
-  DRAFT:    { label: "Draft",    color: "bg-gray-100 text-gray-600",   icon: <FileText size={12} /> },
-  SENT:     { label: "Sent",     color: "bg-blue-100 text-blue-700",   icon: <Send size={12} /> },
-  PENDING:  { label: "Pending",  color: "bg-amber-100 text-amber-700", icon: <Clock size={12} /> },
-  PAID:     { label: "Paid",     color: "bg-green-100 text-green-700", icon: <CheckCircle2 size={12} /> },
-  REJECTED: { label: "Rejected", color: "bg-red-100 text-red-600",     icon: <XCircle size={12} /> },
-  REVISED:  { label: "Revised",  color: "bg-purple-100 text-purple-700", icon: <RefreshCw size={12} /> },
-  VOID:     { label: "Void",     color: "bg-gray-100 text-gray-400",   icon: <Ban size={12} /> },
+  DRAFT: {
+    label: "Draft",
+    color: "bg-gray-100 text-gray-600",
+    icon: <FileText size={12} />,
+  },
+  PENDING: {
+    label: "Pending",
+    color: "bg-amber-100 text-amber-700",
+    icon: <Clock size={12} />,
+  },
+  SENT: {
+    label: "Sent",
+    color: "bg-blue-100 text-blue-700",
+    icon: <Send size={12} />,
+  },
+
+  PAID: {
+    label: "Paid",
+    color: "bg-green-100 text-green-700",
+    icon: <CheckCircle2 size={12} />,
+  },
+  REJECTED: {
+    label: "Rejected",
+    color: "bg-red-100 text-red-600",
+    icon: <XCircle size={12} />,
+  },
+  REVISED: {
+    label: "Revised",
+    color: "bg-purple-100 text-purple-700",
+    icon: <RefreshCw size={12} />,
+  },
+  VOID: {
+    label: "Void",
+    color: "bg-gray-100 text-gray-400",
+    icon: <Ban size={12} />,
+  },
 };
 
-const STATUS_ORDER = ["DRAFT", "SENT", "PENDING", "PAID", "REJECTED", "REVISED", "VOID"] as const;
+const STATUS_ORDER = [
+  "DRAFT",
+  "SENT",
+  "PENDING",
+  "PAID",
+  "REJECTED",
+  "REVISED",
+  "VOID",
+] as const;
 
 const fmt = (n: number) =>
-  n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  n.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
 function formatDate(d: Date | null | string) {
   if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  return new Date(d).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 export default function InvoicesEditor({
@@ -89,8 +135,33 @@ export default function InvoicesEditor({
   const [selectedId, setSelectedId] = useState<string | null>(
     initialInvoices[0]?.id ?? null,
   );
-  const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const [toast, setToast] = useState<{
+    type: "success" | "error";
+    msg: string;
+  } | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
+  const [sendingEmail, setSendingEmail] = useState(false);
+
+  function handlePreviewPDF(invoiceId: string) {
+    window.open(`/api/projects/${project.id}/invoices/${invoiceId}/pdf?preview=true`, "_blank");
+  }
+
+  async function handleSendEmail(invoiceId: string) {
+    setSendingEmail(true);
+    try {
+      const res = await fetch(
+        `/api/projects/${project.id}/invoices/${invoiceId}/send-email`,
+        { method: "POST" },
+      );
+      if (!res.ok) throw new Error();
+      showToast("success", "Invoice sent to Call One Finance");
+      router.refresh();
+    } catch {
+      showToast("error", "Failed to send invoice");
+    } finally {
+      setSendingEmail(false);
+    }
+  }
 
   const selected = invoices.find((i) => i.id === selectedId) ?? null;
 
@@ -112,7 +183,9 @@ export default function InvoicesEditor({
       );
       if (!res.ok) throw new Error();
       const updated = await res.json();
-      setInvoices((prev) => prev.map((i) => (i.id === invoiceId ? { ...i, ...updated } : i)));
+      setInvoices((prev) =>
+        prev.map((i) => (i.id === invoiceId ? { ...i, ...updated } : i)),
+      );
       showToast("success", `Status updated to ${STATUS_CONFIG[status]?.label}`);
       router.refresh();
     } catch {
@@ -141,7 +214,11 @@ export default function InvoicesEditor({
               : "bg-white border-red-200 text-red-600"
           }`}
         >
-          {toast.type === "success" ? <CheckCircle2 size={15} /> : <XCircle size={15} />}
+          {toast.type === "success" ? (
+            <CheckCircle2 size={15} />
+          ) : (
+            <XCircle size={15} />
+          )}
           {toast.msg}
         </div>
       )}
@@ -160,19 +237,29 @@ export default function InvoicesEditor({
         <div className="flex items-start justify-between mb-8">
           <div>
             <p className="text-xs text-[#999] mb-1">{project.customer.name}</p>
-            <h1 className="text-2xl font-bold text-[#111] tracking-tight">Invoices</h1>
+            <h1 className="text-2xl font-bold text-[#111] tracking-tight">
+              Invoices
+            </h1>
           </div>
 
           {/* Summary stats */}
           <div className="flex items-center gap-4 text-right">
             <div>
-              <p className="text-xs text-[#999] uppercase tracking-widest">Invoiced</p>
-              <p className="text-lg font-bold text-[#111]">${fmt(totalInvoiced)}</p>
+              <p className="text-xs text-[#999] uppercase tracking-widest">
+                Invoiced
+              </p>
+              <p className="text-lg font-bold text-[#111]">
+                ${fmt(totalInvoiced)}
+              </p>
             </div>
             <div className="w-px h-10 bg-[#E5E3DE]" />
             <div>
-              <p className="text-xs text-[#999] uppercase tracking-widest">Collected</p>
-              <p className="text-lg font-bold text-green-600">${fmt(totalPaid)}</p>
+              <p className="text-xs text-[#999] uppercase tracking-widest">
+                Collected
+              </p>
+              <p className="text-lg font-bold text-green-600">
+                ${fmt(totalPaid)}
+              </p>
             </div>
           </div>
         </div>
@@ -182,7 +269,8 @@ export default function InvoicesEditor({
             <DollarSign size={32} className="text-[#ddd] mx-auto mb-3" />
             <p className="text-sm font-semibold text-[#888]">No invoices yet</p>
             <p className="text-xs text-[#bbb] mt-1">
-              Create invoices from a quote using the &quot;Create Invoice&quot; button.
+              Create invoices from a quote using the &quot;Create Invoice&quot;
+              button.
             </p>
           </div>
         ) : (
@@ -224,17 +312,29 @@ export default function InvoicesEditor({
                       </div>
                     </div>
                     {inv.customerName && (
-                      <p className="text-xs text-[#999] mt-1.5 truncate">{inv.customerName}</p>
+                      <p className="text-xs text-[#999] mt-1.5 truncate">
+                        {inv.customerName}
+                      </p>
                     )}
                     <div className="flex items-center justify-between mt-1">
                       <span className="text-[10px] text-[#bbb] flex items-center gap-1">
                         {inv.chargeType === "PERCENTAGE" ? (
-                          <><Percent size={9} />{inv.chargePercent}%</>
+                          <>
+                            <Percent size={9} />
+                            {inv.chargePercent}%
+                          </>
                         ) : (
-                          <><List size={9} />{inv.lines.length} line{inv.lines.length !== 1 ? "s" : ""}</>
+                          <>
+                            <List size={9} />
+                            {inv.lines.length} line
+                            {inv.lines.length !== 1 ? "s" : ""}
+                          </>
                         )}
                       </span>
-                      <ChevronRight size={12} className={`text-[#ccc] transition-transform ${isSelected ? "rotate-90" : ""}`} />
+                      <ChevronRight
+                        size={12}
+                        className={`text-[#ccc] transition-transform ${isSelected ? "rotate-90" : ""}`}
+                      />
                     </div>
                   </button>
                 );
@@ -283,11 +383,30 @@ export default function InvoicesEditor({
                         {selected.invoiceNumber ?? selected.id.toUpperCase()}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-xs text-[#999]">Total</p>
-                      <p className="text-2xl font-bold text-[#111]">
-                        ${fmt(selected.amount ?? 0)}
-                      </p>
+                    <div className="flex items-start gap-3">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handlePreviewPDF(selected.id)}
+                          className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border border-[#E5E3DE] text-[#666] hover:bg-[#F7F6F3] transition-all"
+                        >
+                          <Eye size={13} />
+                          Preview PDF
+                        </button>
+                        <button
+                          onClick={() => handleSendEmail(selected.id)}
+                          disabled={sendingEmail}
+                          className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-[#111] text-white hover:bg-[#333] transition-all disabled:opacity-50"
+                        >
+                          <Mail size={13} />
+                          {sendingEmail ? "Sending…" : "Send to Finance"}
+                        </button>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-[#999]">Total</p>
+                        <p className="text-2xl font-bold text-[#111]">
+                          ${fmt(selected.amount ?? 0)}
+                        </p>
+                      </div>
                     </div>
                   </div>
 
@@ -295,28 +414,45 @@ export default function InvoicesEditor({
                   <div className="grid grid-cols-3 gap-4 mb-5 border-t border-[#F0EEE9] pt-4 text-sm">
                     <div>
                       <p className="text-xs text-[#999] mb-0.5">Issued</p>
-                      <p className="font-medium text-[#111]">{formatDate(selected.issuedAt)}</p>
+                      <p className="font-medium text-[#111]">
+                        {formatDate(selected.issuedAt)}
+                      </p>
                     </div>
                     <div>
                       <p className="text-xs text-[#999] mb-0.5">Due</p>
-                      <p className="font-medium text-[#111]">{formatDate(selected.dueDate)}</p>
+                      <p className="font-medium text-[#111]">
+                        {formatDate(selected.dueDate)}
+                      </p>
                     </div>
                     <div>
                       <p className="text-xs text-[#999] mb-0.5">Paid</p>
-                      <p className="font-medium text-[#111]">{formatDate(selected.paidAt)}</p>
+                      <p className="font-medium text-[#111]">
+                        {formatDate(selected.paidAt)}
+                      </p>
                     </div>
                     {selected.billingTerms && (
                       <div>
                         <p className="text-xs text-[#999] mb-0.5">Terms</p>
-                        <p className="font-medium text-[#111]">{{ NET30: "Net 30", PROGRESS: "Progress Billing", PREPAID: "Prepaid" }[selected.billingTerms]}</p>
+                        <p className="font-medium text-[#111]">
+                          {
+                            {
+                              NET30: "Net 30",
+                              PROGRESS: "Progress Billing",
+                              PREPAID: "Prepaid",
+                            }[selected.billingTerms]
+                          }
+                        </p>
                       </div>
                     )}
-                    {selected.chargeType === "PERCENTAGE" && selected.chargePercent && (
-                      <div>
-                        <p className="text-xs text-[#999] mb-0.5">Charge</p>
-                        <p className="font-medium text-[#111]">{selected.chargePercent}% of quote</p>
-                      </div>
-                    )}
+                    {selected.chargeType === "PERCENTAGE" &&
+                      selected.chargePercent && (
+                        <div>
+                          <p className="text-xs text-[#999] mb-0.5">Charge</p>
+                          <p className="font-medium text-[#111]">
+                            {selected.chargePercent}% of quote
+                          </p>
+                        </div>
+                      )}
                     {selected.quote && (
                       <div>
                         <p className="text-xs text-[#999] mb-0.5">Quote</p>
@@ -332,13 +468,19 @@ export default function InvoicesEditor({
                     <div className="border-t border-[#F0EEE9] pt-4 mb-5">
                       <p className="text-xs text-[#999] mb-1">Bill To</p>
                       {selected.customerName && (
-                        <p className="text-sm font-semibold text-[#111]">{selected.customerName}</p>
+                        <p className="text-sm font-semibold text-[#111]">
+                          {selected.customerName}
+                        </p>
                       )}
                       {selected.customerEmail && (
-                        <p className="text-sm text-[#666]">{selected.customerEmail}</p>
+                        <p className="text-sm text-[#666]">
+                          {selected.customerEmail}
+                        </p>
                       )}
                       {selected.customerPhone && (
-                        <p className="text-sm text-[#666]">{selected.customerPhone}</p>
+                        <p className="text-sm text-[#666]">
+                          {selected.customerPhone}
+                        </p>
                       )}
                       {selected.billToAddress && (
                         <p className="text-sm text-[#666] whitespace-pre-wrap mt-0.5">
@@ -349,54 +491,66 @@ export default function InvoicesEditor({
                   )}
 
                   {/* Line items */}
-                  {selected.chargeType === "LINE_ITEMS" && selected.lines.length > 0 && (
-                    <div className="border-t border-[#F0EEE9] pt-4">
-                      <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-3">
-                        Line Items
-                      </p>
-                      <table className="w-full">
-                        <thead>
-                          <tr className="border-b border-[#F0EEE9]">
-                            <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] pb-2">
-                              Description
-                            </th>
-                            <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] pb-2 w-12">
-                              Qty
-                            </th>
-                            <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] pb-2 w-24">
-                              Price
-                            </th>
-                            <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] pb-2 w-24">
-                              Total
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {selected.lines.map((l) => (
-                            <tr key={l.id} className="border-b border-[#F7F6F3] last:border-0">
-                              <td className="py-2 text-sm text-[#111]">
-                                {l.description}
-                                {l.isBundleTotal && (
-                                  <span className="ml-1.5 text-[10px] text-[#bbb] font-medium">bundle</span>
-                                )}
-                              </td>
-                              <td className="py-2 text-sm text-[#666] text-right">{l.quantity}</td>
-                              <td className="py-2 text-sm text-[#666] text-right">${fmt(l.price)}</td>
-                              <td className="py-2 text-sm font-semibold text-[#111] text-right">
-                                ${fmt(l.price * l.quantity)}
-                              </td>
+                  {selected.chargeType === "LINE_ITEMS" &&
+                    selected.lines.length > 0 && (
+                      <div className="border-t border-[#F0EEE9] pt-4">
+                        <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-3">
+                          Line Items
+                        </p>
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-[#F0EEE9]">
+                              <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] pb-2">
+                                Description
+                              </th>
+                              <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] pb-2 w-12">
+                                Qty
+                              </th>
+                              <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] pb-2 w-24">
+                                Price
+                              </th>
+                              <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] pb-2 w-24">
+                                Total
+                              </th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+                          </thead>
+                          <tbody>
+                            {selected.lines.map((l) => (
+                              <tr
+                                key={l.id}
+                                className="border-b border-[#F7F6F3] last:border-0"
+                              >
+                                <td className="py-2 text-sm text-[#111]">
+                                  {l.description}
+                                  {l.isBundleTotal && (
+                                    <span className="ml-1.5 text-[10px] text-[#bbb] font-medium">
+                                      bundle
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="py-2 text-sm text-[#666] text-right">
+                                  {l.quantity}
+                                </td>
+                                <td className="py-2 text-sm text-[#666] text-right">
+                                  ${fmt(l.price)}
+                                </td>
+                                <td className="py-2 text-sm font-semibold text-[#111] text-right">
+                                  ${fmt(l.price * l.quantity)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
 
                   {/* Invoice notes (from creation) */}
                   {selected.notes && (
                     <div className="border-t border-[#F0EEE9] pt-4 mt-4">
                       <p className="text-xs text-[#999] mb-1">Notes</p>
-                      <p className="text-sm text-[#666] whitespace-pre-wrap">{selected.notes}</p>
+                      <p className="text-sm text-[#666] whitespace-pre-wrap">
+                        {selected.notes}
+                      </p>
                     </div>
                   )}
                 </div>

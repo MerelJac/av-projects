@@ -12,12 +12,14 @@ export async function GET(
 
   const poLines = await prisma.purchaseOrderLine.findMany({
     where: { purchaseOrder: { projectId: id } },
-    include: { purchaseOrder: { select: { poNumber: true } } },
+    include: { purchaseOrder: { select: { poNumber: true, status: true } } },
   });
 
   const claimed = poLines.map((l) => ({
     itemId: l.itemId,
     quantity: l.quantity,
+    receivedQuantity: l.receivedQuantity,
+    poStatus: l.purchaseOrder.status,
     po: l.poId,
     poNumber: l.purchaseOrder.poNumber,
   }));

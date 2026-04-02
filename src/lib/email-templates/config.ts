@@ -28,7 +28,7 @@ export async function sendEmail({
     Source: process.env.SES_FROM_ADDRESS!,
     Destination: {
       ToAddresses: [to],
-      BccAddresses: ["coachmerel.training@gmail.com"],
+      BccAddresses: ["mjacobs@calloneonline.com"],
     }, // Removed BccAddresses: ["mjacobs@calloneonline.com"]
     Message: {
       Subject: { Data: subject },

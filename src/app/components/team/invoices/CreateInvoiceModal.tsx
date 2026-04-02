@@ -172,7 +172,7 @@ export default function CreateInvoiceModal({
         setError(msg ?? "Failed to create invoice.");
         return;
       }
-      router.refresh();
+      router.push(`/projects/${projectId}/invoices`);
       onClose();
     } catch {
       setError("Failed to create invoice.");

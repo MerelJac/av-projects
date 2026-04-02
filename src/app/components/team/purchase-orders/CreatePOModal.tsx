@@ -21,7 +21,7 @@ type QuoteLine = {
 };
 
 type VendorPrice = { itemId: string; cost: number };
-type ClaimedLine = { itemId: string; quantity: number };
+type ClaimedLine = { itemId: string; quantity: number; po: string; poNumber: string | null };
 
 export default function CreatePOModal({
   projectId,
@@ -74,9 +74,12 @@ export default function CreatePOModal({
       .catch(() => {});
   }, [vendorId]);
 
-  const isClaimed = (line: QuoteLine) =>
-    !!line.item &&
-    claimedLines.some((c) => c.itemId === line.item!.id && c.quantity === line.quantity);
+  const getClaimedBy = (line: QuoteLine): ClaimedLine | undefined =>
+    line.item
+      ? claimedLines.find((c) => c.itemId === line.item!.id && c.quantity === line.quantity)
+      : undefined;
+
+  const isClaimed = (line: QuoteLine) => !!getClaimedBy(line);
 
   const isInternal = (line: QuoteLine) =>
     !!line.item && isInternalService(line.item);
@@ -186,7 +189,8 @@ export default function CreatePOModal({
             </p>
           ) : (
             lines.map((line) => {
-              const claimed = isClaimed(line);
+              const claimedBy = getClaimedBy(line);
+              const claimed = !!claimedBy;
               const internal = isInternal(line);
               const locked = claimed || internal;
               const isSelected = selected.has(line.id);
@@ -260,9 +264,9 @@ export default function CreatePOModal({
                     </div>
 
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      {claimed && (
+                      {claimedBy && (
                         <span className="text-[10px] font-semibold text-[#999] bg-[#F0EEE9] px-1.5 py-0.5 rounded">
-                          On PO
+                          {claimedBy.poNumber ?? "On PO"}
                         </span>
                       )}
                       {internal  && (

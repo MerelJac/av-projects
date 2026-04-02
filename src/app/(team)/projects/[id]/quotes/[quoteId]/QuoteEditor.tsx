@@ -698,7 +698,7 @@ export default function QuoteEditor({
               className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-[#111] border border-[#E5E3DE] hover:bg-[#F7F6F3] transition-colors"
             >
               <Package size={14} />
-                         <span className="flex flex-col items-start">
+              <span className="flex flex-col items-start">
                 <span>Create Purchase Order</span>
                 <span className="text-xs font-normal text-[#999]">
                   Start buying!
@@ -765,7 +765,7 @@ export default function QuoteEditor({
               </button>
             </div>
 
-        <AuditFeed documentType="QUOTE" documentId={initialQuote.id} /> 
+            <AuditFeed documentType="QUOTE" documentId={initialQuote.id} />
             {/* PDF Preview Modal */}
             {showPDFPreview && (
               <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -889,7 +889,7 @@ function LineRow({
               type="number"
               min={0}
               step={0.01}
-              value={line.price}
+              value={line.price.toFixed(2)}
               onChange={(e) =>
                 onUpdate({ price: parseFloat(e.target.value) || 0 })
               }
@@ -899,9 +899,7 @@ function LineRow({
         </td>
         <td className="px-5 py-3 text-right text-sm font-semibold text-[#111]">
           $
-          {(line.price * line.quantity).toLocaleString(undefined, {
-            minimumFractionDigits: 2,
-          })}
+          {(line.price * line.quantity).toFixed(2)}
         </td>
         <td className="pr-3">
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">

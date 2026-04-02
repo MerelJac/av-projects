@@ -404,7 +404,7 @@ function SOLineRow({
         </div>
       </td>
       <td className="px-5 py-3 text-right text-sm font-semibold text-[#111]">
-        ${(Number(line.price) * line.quantity).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+        ${(Number(line.price) * line.quantity).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2, })}
       </td>
       <td className="pr-3">
         <div className="flex items-center justify-end opacity-0 group-hover:opacity-100 transition-all">

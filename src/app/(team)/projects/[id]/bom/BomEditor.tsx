@@ -21,6 +21,7 @@ import CreatePOModal from "@/app/components/team/purchase-orders/CreatePOModal";
 import { BOM, BOMLine } from "@/types/bom";
 import { Item } from "@/types/item";
 import { calcBOMTotals } from "./actions";
+import Link from "next/link";
 
 const quoteStatusColors: Record<string, string> = {
   DRAFT: "bg-gray-100 text-gray-600",
@@ -65,7 +66,14 @@ export default function BOMEditor({
     new Set(),
   );
   const [claimedPOs, setClaimedPOs] = useState<
-    { itemId: string; quantity: number; po: string; poNumber: string }[]
+    {
+      itemId: string;
+      quantity: number;
+      receivedQuantity: number;
+      poStatus: string;
+      po: string;
+      poNumber: string | null;
+    }[]
   >([]);
 
   const [editingSectionName, setEditingSectionName] = useState<string | null>(
@@ -477,7 +485,9 @@ export default function BOMEditor({
               className="flex items-center gap-2 bg-[#111] text-white text-sm font-semibold px-5 py-2 rounded-xl hover:bg-[#333] disabled:opacity-40 transition-colors max-w-sm"
             >
               <Zap size={14} />
-              {generating ? "Generating…" : "Generate Proposal, Sales Order, or Change Order"}
+              {generating
+                ? "Generating…"
+                : "Generate Proposal, Sales Order, or Change Order"}
             </button>
           </div>
         </div>
@@ -630,6 +640,9 @@ export default function BOMEditor({
                         Description / Notes
                       </th>
                       <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3 w-16">
+                        PO Status
+                      </th>
+                      <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3 w-16">
                         Qty
                       </th>
                       <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3 w-16">
@@ -730,7 +743,7 @@ export default function BOMEditor({
                                 </span>
                               </div>
                             </td>
-                            <td colSpan={7} className="px-3 py-2 text-right">
+                            <td colSpan={9} className="px-3 py-2 text-right">
                               <span className="text-xs font-semibold text-[#888]">
                                 $
                                 {sectionSellTotal.toLocaleString(undefined, {
@@ -738,6 +751,10 @@ export default function BOMEditor({
                                 })}
                               </span>
                             </td>
+                            <td
+                              colSpan={10}
+                              className="px-3 py-2 text-right"
+                            ></td>
                             <td />
                           </tr>
 
@@ -753,6 +770,31 @@ export default function BOMEditor({
                               const costExt = costEach * line.quantity;
                               const sellExt = sellEach * line.quantity;
 
+                              const claimed = claimedPOs.filter(
+                                (c) => c.itemId === line.itemId,
+                              );
+                              const isReceived = claimed.some(
+                                (c) =>
+                                  c.receivedQuantity > 0 &&
+                                  c.receivedQuantity >= c.quantity,
+                              );
+                              const isOnPO = !isReceived && claimed.length > 0;
+                              const claimLabel = isReceived
+                                ? `Received ${claimed[0].poNumber ?? "On PO"}`
+                                : isOnPO
+                                  ? (claimed[0].poNumber ?? "On PO")
+                                  : null;
+
+                              console.log(
+                                "line",
+                                line.id,
+                                "claimed",
+                                claimed,
+                                "isOnPO",
+                                isOnPO,
+                                "isReceived",
+                                isReceived,
+                              );
                               return (
                                 <tr
                                   key={line.id}
@@ -769,7 +811,7 @@ export default function BOMEditor({
                                     </span>
                                   </td>
                                   {/* Part # */}
-                                  <td className="px-3 py-2">
+                                  <td className="px-3 py-2 flex flex-col items-center justify-start ">
                                     <span className="text-xs font-mono font-semibold text-[#111]">
                                       {line.item.itemNumber}
                                     </span>
@@ -795,6 +837,29 @@ export default function BOMEditor({
                                       className="w-full text-xs text-[#666] placeholder:text-[#ccc] focus:outline-none border-0 bg-transparent border-b border-transparent focus:border-[#E5E3DE] transition-colors py-0.5"
                                     />
                                   </td>
+                                  {/* Received / PO # */}
+                                  <td className="px-3 py-2 flex flex-col items-center justify-start ">
+                                    {claimLabel && (
+                                      <span
+                                        className={`ml-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded ${
+                                          isReceived
+                                            ? "bg-green-50 text-green-700"
+                                            : "bg-[#F0EEE9] text-[#999]"
+                                        }`}
+                                      >
+                                        <Link
+                                          href={
+                                            isReceived
+                                              ? `/projects/${projectId}/purchase-orders/${claimed[0].po}`
+                                              : `/projects/${projectId}/purchase-orders/${claimed[0].po}`
+                                          }
+                                        >
+                                          {claimLabel}
+                                        </Link>
+                                      </span>
+                                    )}
+                                  </td>
+
                                   {/* Qty */}
                                   <td className="px-3 py-2 text-right">
                                     <div className="inline-flex flex-col items-end gap-0.5">

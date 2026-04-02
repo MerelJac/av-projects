@@ -59,7 +59,7 @@ export default function SignupPage() {
               <p className="text-xs text-muted leading-relaxed">
                 Registration is limited to invited users only.{" "}
                 <a
-                  href="mailto:coachmerel.training@gmail.com?subject=Dialed%20Fitness%20Inquiry"
+                  href="mailto:mjacobs@calloneonline.com?subject=Dialed%20Fitness%20Inquiry"
                   className="underline text-foreground hover:text-blue-700"
                 >
                   Contact us{" "}
