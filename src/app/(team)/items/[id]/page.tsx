@@ -32,6 +32,18 @@ export default async function ItemPage({
 
   if (!item) return notFound();
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const movements: any[] = await (prisma as any).inventoryMovement.findMany({
+    where: { itemId: id },
+    include: {
+      invoice: { select: { invoiceNumber: true } },
+      shipment: { select: { id: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const onHand: number = movements.reduce((s: number, m: { quantityDelta: number }) => s + m.quantityDelta, 0);
+
   const margin =
     item.cost && item.price
       ? (((item.price - item.cost) / item.price) * 100).toFixed(1)
@@ -99,7 +111,6 @@ export default async function ItemPage({
             {[
               { label: "Cost", value: item.cost },
               { label: "List Price", value: item.price },
-              { label: "Last Sold", value: item.lastSoldPrice },
             ].map(({ label, value }) => (
               <div key={label} className="px-6 py-5">
                 <p className="text-xs text-[#999] mb-1">{label}</p>
@@ -194,6 +205,73 @@ export default async function ItemPage({
             <h2 className="text-sm font-semibold text-[#111]">Price History</h2>
           </div>
           <PriceHistory itemId={item.id} />
+        </div>
+
+        {/* Inventory */}
+        <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-[#F0EEE9] flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#888]">
+              Inventory
+            </p>
+            <span
+              className={`text-sm font-bold px-3 py-1 rounded-xl ${
+                onHand <= 0
+                  ? "bg-red-50 text-red-600"
+                  : onHand <= 2
+                    ? "bg-amber-50 text-amber-600"
+                    : "bg-green-50 text-green-700"
+              }`}
+            >
+              {onHand} on hand{item.unit ? ` ${item.unit}` : ""}
+            </span>
+          </div>
+
+          {movements.length === 0 ? (
+            <p className="px-6 py-8 text-sm text-[#bbb] text-center">
+              No inventory movements yet
+            </p>
+          ) : (
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-[#F0EEE9]">
+                  <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-6 py-3">Date</th>
+                  <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">Type</th>
+                  <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">Reference</th>
+                  <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-6 py-3">Qty</th>
+                </tr>
+              </thead>
+              <tbody>
+                {movements.map((m) => {
+                  const isIn = m.quantityDelta > 0;
+                  return (
+                    <tr key={m.id} className="border-b border-[#F7F6F3] last:border-0">
+                      <td className="px-6 py-3 text-xs text-[#999]">
+                        {new Date(m.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      </td>
+                      <td className="px-3 py-3">
+                        <span className={`text-xs font-semibold ${
+                          m.type === "RECEIPT" ? "text-green-600" :
+                          m.type === "INVOICE" ? "text-red-500" :
+                          m.type === "RETURN"  ? "text-purple-600" :
+                          "text-amber-600"
+                        }`}>
+                          {m.type.charAt(0) + m.type.slice(1).toLowerCase()}
+                        </span>
+                      </td>
+                      <td className="px-3 py-3 text-xs text-[#666] font-mono">
+                        {m.invoice?.invoiceNumber ? `#${m.invoice.invoiceNumber}` : m.shipment?.id ? `Shipment` : "—"}
+                      </td>
+                      <td className="px-6 py-3 text-right">
+                        <span className={`text-sm font-bold ${isIn ? "text-green-600" : "text-red-500"}`}>
+                          {isIn ? "+" : ""}{m.quantityDelta}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
 
         {/* Customer Pricing */}

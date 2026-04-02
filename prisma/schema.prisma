@@ -70,8 +70,9 @@ model Invoice {
 
   createdAt DateTime @default(now())
 
-  lines         InvoiceLine[]
-  depositQuotes Quote[]       @relation("DepositInvoice")
+  lines              InvoiceLine[]
+  depositQuotes      Quote[]             @relation("DepositInvoice")
+  inventoryMovements InventoryMovement[]
 }
 
 model InvoiceLine {
@@ -89,6 +90,11 @@ model InvoiceLine {
   isBundleTotal Boolean       @default(false) // true = rolled-up hidden-bundle line
   scopeId       String?
   scope         ProjectScope? @relation(fields: [scopeId], references: [id])
+
+  // Inventory tracking
+  itemId             String?
+  item               Item?               @relation(fields: [itemId], references: [id])
+  inventoryMovements InventoryMovement[]
 }
 
 model QuoteBundle {
@@ -213,6 +219,8 @@ model Item {
   scopes             ProjectScope[]
   shipmentLines      ShipmentLine[]
   vendorPrices       VendorItemPrice[]
+  inventoryMovements InventoryMovement[]
+  invoiceLines       InvoiceLine[]
 }
 
 enum ItemType {
@@ -637,25 +645,26 @@ model SalesOrder {
 }
 
 model Shipment {
-  id               String         @id @default(uuid())
-  projectId        String
-  project          Project        @relation(fields: [projectId], references: [id])
-  purchaseOrderId  String?
-  purchaseOrder    PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id])
-  salesOrderId     String?
-  salesOrder       SalesOrder?    @relation(fields: [salesOrderId], references: [id])
-  itemId           String?
-  item             Item?          @relation(fields: [itemId], references: [id])
-  quantity         Int
-  receivedQuantity Int            @default(0)
-  carrier          String?
-  tracking         String?
-  shippedBy        String?
-  notes            String?
-  cost             Decimal?       @db.Decimal(10, 2)
-  receivedAt       DateTime?
-  createdAt        DateTime       @default(now())
-  lines            ShipmentLine[]
+  id                 String              @id @default(uuid())
+  projectId          String
+  project            Project             @relation(fields: [projectId], references: [id])
+  purchaseOrderId    String?
+  purchaseOrder      PurchaseOrder?      @relation(fields: [purchaseOrderId], references: [id])
+  salesOrderId       String?
+  salesOrder         SalesOrder?         @relation(fields: [salesOrderId], references: [id])
+  itemId             String?
+  item               Item?               @relation(fields: [itemId], references: [id])
+  quantity           Int
+  receivedQuantity   Int                 @default(0)
+  carrier            String?
+  tracking           String?
+  shippedBy          String?
+  notes              String?
+  cost               Decimal?            @db.Decimal(10, 2)
+  receivedAt         DateTime?
+  createdAt          DateTime            @default(now())
+  lines              ShipmentLine[]
+  inventoryMovements InventoryMovement[]
 }
 
 model ShipmentLine {
@@ -711,4 +720,36 @@ model BcSyncLog {
   synced   Int      @default(0) // records upserted
   error    String?
   syncedAt DateTime @default(now())
+}
+
+// ─── Inventory ────────────────────────────────────────────────────────────────
+
+enum InventoryMovementType {
+  RECEIPT // shipment received — quantity increases
+  INVOICE // item invoiced — quantity decreases
+  ADJUSTMENT // manual correction
+  RETURN // PO return — quantity decreases
+}
+
+/// Append-only ledger. on-hand = SUM(quantityDelta) per item.
+model InventoryMovement {
+  id            String                @id @default(uuid())
+  itemId        String
+  item          Item                  @relation(fields: [itemId], references: [id])
+  type          InventoryMovementType
+  quantityDelta Int // positive = stock in, negative = stock out
+
+  // Optional source references
+  shipmentId    String?
+  shipment      Shipment?    @relation(fields: [shipmentId], references: [id])
+  invoiceId     String?
+  invoice       Invoice?     @relation(fields: [invoiceId], references: [id])
+  invoiceLineId String?
+  invoiceLine   InvoiceLine? @relation(fields: [invoiceLineId], references: [id])
+
+  notes     String?
+  createdAt DateTime @default(now())
+
+  @@index([itemId])
+  @@index([type])
 }
