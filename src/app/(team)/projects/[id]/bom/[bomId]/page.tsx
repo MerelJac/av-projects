@@ -59,6 +59,21 @@ export default async function BOMPage({
     customerPrices.map((cp) => [cp.itemId, cp.price]),
   );
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const allocationMovements: { bomLineId: string; quantityDelta: number }[] = await (prisma as any).inventoryMovement.findMany({
+    where: {
+      type: "BOM_ALLOCATION",
+      bomLineId: { in: bom.lines.map((l) => l.id) },
+    },
+    select: { bomLineId: true, quantityDelta: true },
+  });
+  const lineAllocations: Record<string, number> = {};
+  for (const m of allocationMovements) {
+    if (m.bomLineId) {
+      lineAllocations[m.bomLineId] = (lineAllocations[m.bomLineId] ?? 0) + Math.abs(m.quantityDelta);
+    }
+  }
+
   const [projectBoms, allProjects] = await Promise.all([
     prisma.billOfMaterials.findMany({
       where: { projectId: id },
@@ -83,6 +98,7 @@ export default async function BOMPage({
         items={items as BOMItem[]}
         customerPrices={customerPricesRecord}
         projectId={id}
+        lineAllocations={lineAllocations}
         projectBoms={projectBoms.map((b) => {
           const { grandTotal } = calcBOMTotals(
             b.lines as BOMLine[],

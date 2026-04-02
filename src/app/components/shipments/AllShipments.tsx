@@ -105,14 +105,14 @@ export default async function AllShipments({
                   </td>
                   <td className="px-3 py-3.5 text-sm text-[#666]">
                     {poHref ? (
-                      <>
+                      <div className="flex flex-col gap-2">
                         <Link href={poHref} className="hover:underline">
                           {s.purchaseOrder?.vendor?.name ?? "—"}
                         </Link>
-                        <Link href={poHref} className="hover:underline">
+                        <Link href={poHref} className="hover:underline text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
                           PO-{s.purchaseOrderId?.toUpperCase() ?? "—"}
                         </Link>
-                      </>
+                      </div>
                     ) : (
                       (s.purchaseOrder?.vendor?.name ?? "—")
                     )}

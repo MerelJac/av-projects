@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   Package,
   ChevronDown,
@@ -16,6 +16,7 @@ type Movement = {
   notes: string | null;
   createdAt: string;
   invoiceNumber: string | null;
+  purchaseOrderNumber: string | null;
 };
 
 type ItemRow = {
@@ -171,9 +172,8 @@ export default function InventoryReport({ rows }: { rows: ItemRow[] }) {
                   const isOut = row.onHand <= 0;
                   const isLow = row.onHand > 0 && row.onHand <= 2;
                   return (
-                    <>
+                    <React.Fragment key={row.id}>
                       <tr
-                        key={row.id}
                         onClick={() => toggle(row.id)}
                         className={`border-b border-[#F7F6F3] cursor-pointer transition-colors hover:bg-[#FAFAF9] ${
                           isExpanded ? "bg-[#FAFAF9]" : ""
@@ -286,6 +286,11 @@ export default function InventoryReport({ rows }: { rows: ItemRow[] }) {
                                         — {m.notes}
                                       </span>
                                     )}
+                                      {m.purchaseOrderNumber && (
+                                      <span className="text-[#aaa]">
+                                        — {m.purchaseOrderNumber}
+                                      </span>
+                                    )}
                                   </div>
                                 );
                               })}
@@ -293,7 +298,7 @@ export default function InventoryReport({ rows }: { rows: ItemRow[] }) {
                           </td>
                         </tr>
                       )}
-                    </>
+                    </React.Fragment>
                   );
                 })}
               </tbody>

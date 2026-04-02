@@ -463,6 +463,8 @@ model BOMLine {
   costEach  Float?
   sellEach  Float?
   sortOrder Int?
+
+  inventoryMovements InventoryMovement[]
 }
 
 enum NoteDocumentType {
@@ -726,9 +728,10 @@ model BcSyncLog {
 
 enum InventoryMovementType {
   RECEIPT // shipment received — quantity increases
-  INVOICE // item invoiced — quantity decreases
+  BOM_ALLOCATION // item consumed by project BOM on receipt — quantity decreases
   ADJUSTMENT // manual correction
   RETURN // PO return — quantity decreases
+  INVOICE // legacy: kept for history, no longer written
 }
 
 /// Append-only ledger. on-hand = SUM(quantityDelta) per item.
@@ -746,6 +749,8 @@ model InventoryMovement {
   invoice       Invoice?     @relation(fields: [invoiceId], references: [id])
   invoiceLineId String?
   invoiceLine   InvoiceLine? @relation(fields: [invoiceLineId], references: [id])
+  bomLineId     String?
+  bomLine       BOMLine?     @relation(fields: [bomLineId], references: [id])
 
   notes     String?
   createdAt DateTime @default(now())

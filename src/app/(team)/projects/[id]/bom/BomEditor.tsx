@@ -36,12 +36,14 @@ export default function BOMEditor({
   projectId,
   customerPrices,
   projectBoms,
+  lineAllocations = {},
 }: {
   bom: BOM;
   items: Item[];
   projectId: string;
   customerPrices: Record<string, number>;
   projectBoms: { id: string; name: string; lineCount: number; total: number }[];
+  lineAllocations?: Record<string, number>;
 }) {
   const router = useRouter();
   const [lines, setLines] = useState<BOMLine[]>(() =>
@@ -112,7 +114,6 @@ export default function BOMEditor({
     fetch(`/api/projects/${projectId}/purchase-orders/claimed-lines`)
       .then((r) => r.json())
       .then(setClaimedPOs);
-    console.log("claimed lines", claimedPOs);
   }, [projectId]);
 
   function effectivePrice(
@@ -773,28 +774,26 @@ export default function BOMEditor({
                               const claimed = claimedPOs.filter(
                                 (c) => c.itemId === line.itemId,
                               );
-                              const isReceived = claimed.some(
-                                (c) =>
-                                  c.receivedQuantity > 0 &&
-                                  c.receivedQuantity >= c.quantity,
-                              );
-                              const isOnPO = !isReceived && claimed.length > 0;
-                              const claimLabel = isReceived
-                                ? `Received ${claimed[0].poNumber ?? "On PO"}`
-                                : isOnPO
-                                  ? (claimed[0].poNumber ?? "On PO")
-                                  : null;
-
-                              console.log(
-                                "line",
-                                line.id,
-                                "claimed",
-                                claimed,
-                                "isOnPO",
-                                isOnPO,
-                                "isReceived",
-                                isReceived,
-                              );
+                              const allocated = lineAllocations[line.id] ?? 0;
+                              const isAllocated = allocated >= line.quantity;
+                              const isPartial = allocated > 0 && allocated < line.quantity;
+                              const surplus = allocated - line.quantity;
+                              const isOnPO = allocated === 0 && claimed.length > 0;
+                              const poLink = claimed[0]
+                                ? `/projects/${projectId}/purchase-orders/${claimed[0].po}`
+                                : null;
+                              const statusLabel = isAllocated
+                                ? `Inventory Allocated${claimed[0]?.poNumber ? ` · ${claimed[0].poNumber}` : ""}`
+                                : isPartial
+                                  ? `${allocated}/${line.quantity} received`
+                                  : isOnPO
+                                    ? (claimed[0].poNumber ?? "On PO")
+                                    : null;
+                              const statusColor = isAllocated
+                                ? "bg-green-50 text-green-700"
+                                : isPartial
+                                  ? "bg-amber-50 text-amber-600"
+                                  : "bg-[#F0EEE9] text-[#999]";
                               return (
                                 <tr
                                   key={line.id}
@@ -837,25 +836,18 @@ export default function BOMEditor({
                                       className="w-full text-xs text-[#666] placeholder:text-[#ccc] focus:outline-none border-0 bg-transparent border-b border-transparent focus:border-[#E5E3DE] transition-colors py-0.5"
                                     />
                                   </td>
-                                  {/* Received / PO # */}
-                                  <td className="px-3 py-2 flex flex-col items-center justify-start ">
-                                    {claimLabel && (
-                                      <span
-                                        className={`ml-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded ${
-                                          isReceived
-                                            ? "bg-green-50 text-green-700"
-                                            : "bg-[#F0EEE9] text-[#999]"
-                                        }`}
-                                      >
-                                        <Link
-                                          href={
-                                            isReceived
-                                              ? `/projects/${projectId}/purchase-orders/${claimed[0].po}`
-                                              : `/projects/${projectId}/purchase-orders/${claimed[0].po}`
-                                          }
-                                        >
-                                          {claimLabel}
-                                        </Link>
+                                  {/* Allocation / PO status */}
+                                  <td className="px-3 py-2 flex flex-col items-center justify-start">
+                                    {statusLabel && (
+                                      <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${statusColor}`}>
+                                        {poLink ? (
+                                          <Link href={poLink}>{statusLabel}</Link>
+                                        ) : statusLabel}
+                                      </span>
+                                    )}
+                                    {surplus > 0 && (
+                                      <span className="text-[10px] text-[#bbb] mt-0.5">
+                                        +{surplus} surplus
                                       </span>
                                     )}
                                   </td>

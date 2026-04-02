@@ -510,17 +510,12 @@ export default async function ProjectPage({
                         <span className="text-xs text-[#999]">
                           {new Date(quote.createdAt).toLocaleDateString()}
                         </span>
-                        <Link
-                          href={`/projects/${project.id}/quotes/${quote.id}`}
-                          className="flex items-center gap-1 text-xs font-semibold text-[#111] hover:underline"
-                        >
-                          Edit <ArrowRight size={11} />
-                        </Link>
+
                         <Link
                           href={`/projects/${project.id}/quotes/${quote.id}`}
                           className="flex items-center gap-1 text-xs font-semibold text-[#666] hover:underline"
                         >
-                          View <ArrowRight size={11} />
+                          <ArrowRight size={11} />
                         </Link>
                       </div>
                     </div>

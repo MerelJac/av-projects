@@ -125,24 +125,6 @@ export async function POST(
       },
     });
 
-    // Build inventory movements from the input lines — avoids reading itemId
-    // from the returned DB object before the migration types are available.
-    if (chargeType === InvoiceChargeType.LINE_ITEMS) {
-      const movementData = (lines as InvoiceLineInput[])
-        .filter((l) => l.quoteLineId && quoteLineItemMap.has(l.quoteLineId) && l.quantity > 0)
-        .map((l) => ({
-          itemId: quoteLineItemMap.get(l.quoteLineId!)!,
-          type: "INVOICE" as const,
-          quantityDelta: -Math.round(l.quantity),
-          invoiceId: created.id,
-          notes: `Invoiced on ${invoiceNumber}`,
-        }));
-      if (movementData.length > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (tx as any).inventoryMovement.createMany({ data: movementData });
-      }
-    }
-
     return created;
   });
 

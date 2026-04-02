@@ -7,6 +7,7 @@ import {
   BarChart,
   Boxes,
   Clock,
+  ColumnsSettingsIcon,
   CreditCard,
   FileText,
   FolderKanban,
@@ -41,6 +42,7 @@ const navItems = [
   { href: "/shipments", label: "Shipments", icon: Truck },
   { href: "/time", label: "Time Tracking", icon: Clock },
   { href: "/subscriptions", label: "Subscriptions", icon: Receipt },
+   { href: "/inventory", label: "Inventory", icon: ColumnsSettingsIcon },
   { href: "/reports", label: "Reports", icon: BarChart },
   { href: "/settings", label: "Settings", icon: Settings },
 ];

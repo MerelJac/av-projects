@@ -17,7 +17,8 @@ export default async function InventoryPage() {
           unit: true,
         },
       },
-      shipment: { select: { id: true, createdAt: true } },
+      shipment: { include: { purchaseOrder: true } },
+
       invoice: { select: { id: true, invoiceNumber: true } },
     },
     orderBy: { createdAt: "asc" },
@@ -82,6 +83,7 @@ export default async function InventoryPage() {
       notes: m.notes,
       createdAt: new Date(m.createdAt).toISOString(),
       invoiceNumber: m.invoice?.invoiceNumber ?? null,
+      purchaseOrderNumber: m.shipment?.purchaseOrder?.poNumber ?? null,
     })),
   }));
 
