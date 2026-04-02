@@ -5,7 +5,6 @@ import QuoteEditor from "./QuoteEditor";
 import NotesPanel from "@/app/components/NotesPanel";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth";
-import { Delete } from "lucide-react";
 import DeleteQuoteButton from "@/app/components/projects/DeleteQuoteButton";
 
 
@@ -31,11 +30,11 @@ export default async function QuotePage({
         },
       },
       lines: {
-        include: { item: true, bundle: true },
+        include: { item: { include: { preferredVendor: { select: { name: true } } } }, bundle: true },
         orderBy: { id: "asc" },
       },
       quoteBundles: {
-        include: { lines: { include: { item: true } } },
+        include: { lines: { include: { item: { include: { preferredVendor: { select: { name: true } } } } } } },
         orderBy: { createdAt: "asc" },
       },
       salesOrder: { select: { id: true } },
