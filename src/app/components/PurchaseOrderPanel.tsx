@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { POWithDetailsForClient } from "@/types/purchaseOrder";
 import Link from "next/link";
+import AuditFeed from "./AuditFeed";
 
 type Item = { id: string; itemNumber: string; manufacturer: string | null };
 
@@ -44,7 +45,14 @@ type Shipment = {
 type PO = {
   id: string;
   vendor: string;
-  status: "DRAFT" | "SENT" | "PARTIALLY_RECEIVED" | "RECEIVED" | "CANCELLED";
+  status:
+    | "DRAFT"
+    | "SENT"
+    | "PARTIALLY_RECEIVED"
+    | "RECEIVED"
+    | "PARTIALLY_RETURNED"
+    | "RETURNED"
+    | "CANCELLED";
   notes: string | null;
   createdAt: string;
   lines: POLine[];
@@ -83,10 +91,20 @@ const PO_STATUS: Record<
     color: "text-green-600 bg-green-50",
     icon: <CheckCircle2 size={11} />,
   },
-  CANCELLED: {
-    label: "cancelled",
+  PARTIALLY_RETURNED: {
+    label: "Partially Returned",
+    color: "text-amber-600 bg-amber-50",
+    icon: <AlertCircle size={11} />,
+  },
+  RETURNED: {
+    label: "Returned",
     color: "text-green-600 bg-green-50",
     icon: <CheckCircle2 size={11} />,
+  },
+  CANCELLED: {
+    label: "Cancelled",
+    color: "text-red-600 bg-red-50",
+    icon: <X size={11} />,
   },
 };
 
@@ -376,6 +394,8 @@ function PORow({
               <p className="text-xs text-[#999] italic">{po.notes}</p>
             </div>
           )}
+
+          <AuditFeed documentType="PURCHASE_ORDER" documentId={po.id} />
         </div>
       )}
 

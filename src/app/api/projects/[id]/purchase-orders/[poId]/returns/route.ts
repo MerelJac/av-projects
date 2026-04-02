@@ -1,4 +1,7 @@
 import { prisma } from "@/lib/prisma";
+import { buildAuditLog } from "@/lib/audit";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -53,35 +56,51 @@ export async function POST(
     const available = poLine.receivedQuantity - alreadyInReturn;
     if (l.quantity > available) {
       return NextResponse.json(
-        { error: `Cannot return ${l.quantity} of ${poLine.item.itemNumber} — only ${available} available to return` },
+        { error: `Cannot return ${l.quantity} of ${poLine.itemId} — only ${available} available to return` },
         { status: 400 }
       );
     }
   }
 
+  const session = await getServerSession(authOptions);
+  const userId = session?.user?.id ?? null;
+
   // Generate return number
   const count = await prisma.purchaseOrderReturn.count({ where: { poId } });
   const returnNumber = `RTN-${count + 1}`;
 
-  const created = await prisma.purchaseOrderReturn.create({
-    data: {
-      returnNumber,
-      poId,
-      reason: reason ?? null,
-      rmaNumber: rmaNumber ?? null,
-      notes: notes ?? null,
-      lines: {
-        create: lines.map((l) => ({
-          poLineId: l.poLineId,
-          quantity: l.quantity,
-          creditPerUnit: l.creditPerUnit ?? null,
-        })),
+  const totalQty = lines.reduce((s, l) => s + l.quantity, 0);
+
+  const [created] = await prisma.$transaction([
+    prisma.purchaseOrderReturn.create({
+      data: {
+        returnNumber,
+        poId,
+        reason: reason ?? null,
+        rmaNumber: rmaNumber ?? null,
+        notes: notes ?? null,
+        lines: {
+          create: lines.map((l) => ({
+            poLineId: l.poLineId,
+            quantity: l.quantity,
+            creditPerUnit: l.creditPerUnit ?? null,
+          })),
+        },
       },
-    },
-    include: {
-      lines: { include: { poLine: { include: { item: true } } } },
-    },
-  });
+      include: {
+        lines: { include: { poLine: { include: { item: true } } } },
+      },
+    }),
+    prisma.auditLog.create({
+      data: buildAuditLog(
+        "PURCHASE_ORDER",
+        poId,
+        "CREATE",
+        userId,
+        `Return ${returnNumber} created (${totalQty} unit${totalQty !== 1 ? "s" : ""}${reason ? ` — ${reason}` : ""})`
+      ),
+    }),
+  ]);
 
   return NextResponse.json(created, { status: 201 });
 }

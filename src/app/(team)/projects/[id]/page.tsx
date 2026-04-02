@@ -20,6 +20,7 @@ import ScopesPanel from "@/app/components/ScopesPanel";
 import BillingTermsEditor from "@/app/components/BillingTermsEditor";
 import DeleteProjectButton from "@/app/components/projects/DeleteProjectButton";
 import { calcProjectFinancials } from "@/lib/utils/financials";
+import AuditFeed from "@/app/components/AuditFeed";
 
 const quoteStatusStyles: Record<string, string> = {
   ACCEPTED: "bg-green-100 text-green-700",
@@ -755,6 +756,8 @@ export default async function ProjectPage({
             </div>
           )}
         </div>
+
+        
       </div>
       <DeleteProjectButton id={project.id} />
     </div>

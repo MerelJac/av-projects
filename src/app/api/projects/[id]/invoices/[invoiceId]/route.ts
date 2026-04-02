@@ -1,4 +1,7 @@
 import { prisma } from "@/lib/prisma";
+import { buildAuditLog } from "@/lib/audit";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { InvoiceStatus } from "@prisma/client";
 
@@ -11,12 +14,15 @@ export async function PATCH(
 
   const invoice = await prisma.invoice.findUnique({
     where: { id: invoiceId },
-    select: { projectId: true },
+    select: { projectId: true, status: true },
   });
 
   if (!invoice || invoice.projectId !== projectId) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
+
+  const session = await getServerSession(authOptions);
+  const userId = session?.user?.id ?? null;
 
   const data: Record<string, unknown> = {};
 
@@ -44,11 +50,26 @@ export async function PATCH(
   if (body.issuedAt !== undefined) data.issuedAt = body.issuedAt ? new Date(body.issuedAt) : null;
   if (body.paidAt !== undefined) data.paidAt = body.paidAt ? new Date(body.paidAt) : null;
 
-  const updated = await prisma.invoice.update({
-    where: { id: invoiceId },
-    data,
-    include: { lines: true },
-  });
+  const statusChanged = body.status !== undefined && body.status !== invoice.status;
+
+  const [updated] = await prisma.$transaction([
+    prisma.invoice.update({
+      where: { id: invoiceId },
+      data,
+      include: { lines: true },
+    }),
+    prisma.auditLog.create({
+      data: buildAuditLog(
+        "INVOICE",
+        invoiceId,
+        statusChanged ? "STATUS_CHANGE" : "UPDATE",
+        userId,
+        statusChanged
+          ? `Status changed from ${invoice.status} to ${body.status}`
+          : "Invoice updated"
+      ),
+    }),
+  ]);
 
   return NextResponse.json(updated);
 }

@@ -1,4 +1,7 @@
 import { prisma } from "@/lib/prisma";
+import { buildAuditLog } from "@/lib/audit";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { QuoteBundle, QuoteLine } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -45,11 +48,16 @@ export async function PUT(
     return NextResponse.json({ error: "Quote not found" }, { status: 404 });
   }
 
+  const session = await getServerSession(authOptions);
+  const userId = session?.user?.id ?? null;
+
   const total = (lines as QuoteLine[]).reduce(
     (sum: number, l: QuoteLine) => sum + (l.price ?? 0) * (l.quantity ?? 1),
     0,
   );
   console.log("computed total:", total);
+
+  const statusChanged = status !== quote.status;
 
   await prisma.$transaction(async (tx) => {
     // 1. Null out all bundleIds first
@@ -150,7 +158,7 @@ export async function PUT(
     });
     console.log("deleted", deleted.count, "bundles");
 
-    // 5. Update quote status + total  ← THIS WAS MISSING
+    // 5. Update quote status + total
     console.log("--- Step 5: updating quote status:", status, "total:", total);
     await tx.quote.update({
       where: { id: quoteId },
@@ -163,6 +171,19 @@ export async function PUT(
         termsAndConditions: termsAndConditions ?? null,
         clientResponsibilities: clientResponsibilities ?? null,
       },
+    });
+
+    // 6. Audit log
+    await tx.auditLog.create({
+      data: buildAuditLog(
+        "QUOTE",
+        quoteId,
+        statusChanged ? "STATUS_CHANGE" : "UPDATE",
+        userId,
+        statusChanged
+          ? `Status changed from ${quote.status} to ${status}`
+          : `Quote updated (total: $${total.toFixed(2)})`
+      ),
     });
   });
 

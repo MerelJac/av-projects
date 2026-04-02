@@ -21,6 +21,7 @@ import { QuoteStatus } from "@prisma/client";
 import ConvertToSalesOrderButton from "@/app/components/team/sales-orders/ConvertToSalesOrderButton";
 import CreatePOModal from "@/app/components/team/purchase-orders/CreatePOModal";
 import CreateInvoiceModal from "@/app/components/team/invoices/CreateInvoiceModal";
+import AuditFeed from "@/app/components/AuditFeed";
 
 // Derive types directly from the Prisma payload
 type QuoteLine = QuoteWithDetails["lines"][number];
@@ -764,6 +765,7 @@ export default function QuoteEditor({
               </button>
             </div>
 
+        <AuditFeed documentType="QUOTE" documentId={initialQuote.id} /> 
             {/* PDF Preview Modal */}
             {showPDFPreview && (
               <div className="fixed inset-0 z-50 flex items-center justify-center">
