@@ -168,7 +168,7 @@ export default function ScopesPanel({
     <div className="bg-white border border-[#E5E3DE] rounded-2xl ">
       {/* Header */}
       <div className="px-6 py-4 border-b border-[#F0EEE9] flex items-center justify-between">
-        <div className="flex flex-col items-center gap-1">
+        <div className="flex flex-col items-start gap-1">
           <div className="flex flex-row gap-2.5 items-center">
             <Target size={15} className="text-[#999]" />
             <h3 className="font-semibold text-sm text-[#111]">Scope & Hours</h3>

@@ -547,6 +547,7 @@ model PurchaseOrderReturn {
   poId         String
   po           PurchaseOrder             @relation(fields: [poId], references: [id], onDelete: Cascade)
   status       ReturnStatus              @default(PENDING)
+  disposition  ReturnDisposition         @default(RETURN_TO_VENDOR)
   reason       String?
   rmaNumber    String?
   notes        String?
@@ -698,6 +699,11 @@ enum ReturnStatus {
   SENT
   CREDITED
   CANCELLED
+}
+
+enum ReturnDisposition {
+  RETURN_TO_VENDOR // item leaves — inventory decremented
+  KEEP_IN_INVENTORY // item stays — inventory incremented back
 }
 
 model AuditLog {

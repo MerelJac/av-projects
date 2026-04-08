@@ -13,6 +13,7 @@ import {
   Plus,
   ArrowRight,
   Receipt,
+  Download,
 } from "lucide-react";
 import AllShipments from "@/app/components/shipments/AllShipments";
 import MilestonesPanel from "@/app/components/MilestonesPanel";
@@ -222,10 +223,17 @@ export default async function ProjectPage({
         {/* Financial Summary */}
         {totalContract > 0 && (
           <div className="bg-white border border-[#E5E3DE] rounded-2xl ">
-            <div className="px-6 py-4 border-b border-[#F0EEE9]">
+            <div className="px-6 py-4 border-b border-[#F0EEE9] flex items-center justify-between">
               <h3 className="font-semibold text-sm text-[#111]">
                 Financial Summary
               </h3>
+              <Link
+                href={`/projects/${id}/financial-report`}
+                className="flex items-center gap-1.5 text-xs text-[#666] hover:text-[#111] transition-colors"
+              >
+                <Download size={12} />
+                View report
+              </Link>
             </div>
             <div className="grid grid-cols-4 divide-x divide-[#F0EEE9]">
               {/* Budget */}

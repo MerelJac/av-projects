@@ -25,10 +25,11 @@ export async function POST(
 ) {
   const { poId } = await params;
   const body = await req.json();
-  const { reason, rmaNumber, notes, lines } = body as {
+  const { reason, rmaNumber, notes, disposition, lines } = body as {
     reason?: string;
     rmaNumber?: string;
     notes?: string;
+    disposition?: "RETURN_TO_VENDOR" | "KEEP_IN_INVENTORY";
     lines: { poLineId: string; quantity: number; creditPerUnit?: number }[];
   };
 
@@ -79,6 +80,7 @@ export async function POST(
         reason: reason ?? null,
         rmaNumber: rmaNumber ?? null,
         notes: notes ?? null,
+        disposition: disposition ?? "RETURN_TO_VENDOR",
         lines: {
           create: lines.map((l) => ({
             poLineId: l.poLineId,

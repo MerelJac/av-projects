@@ -49,6 +49,7 @@ type POReturn = {
   id: string;
   returnNumber: string | null;
   status: string;
+  disposition?: string | null;
   reason: string | null;
   rmaNumber: string | null;
   notes: string | null;
@@ -1293,6 +1294,13 @@ export default function POEditor({
                               className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${statusColor}`}
                             >
                               {RETURN_STATUS_LABELS[ret.status] ?? ret.status}
+                            </span>
+                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                              ret.disposition === "KEEP_IN_INVENTORY"
+                                ? "bg-blue-50 text-blue-700 border-blue-200"
+                                : "bg-[#F0EEE9] text-[#666] border-[#E5E3DE]"
+                            }`}>
+                              {ret.disposition === "KEEP_IN_INVENTORY" ? "→ Inventory" : "→ Vendor"}
                             </span>
                             {ret.rmaNumber && (
                               <span className="text-xs text-[#666] bg-[#F0EEE9] px-2 py-0.5 rounded font-mono">

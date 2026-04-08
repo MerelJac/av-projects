@@ -39,6 +39,7 @@ export default function ReturnItemsModal({
   const [credits, setCredits] = useState<Record<string, string>>(() =>
     Object.fromEntries(returnableLines.map((l) => [l.id, String(l.cost)]))
   );
+  const [disposition, setDisposition] = useState<"RETURN_TO_VENDOR" | "KEEP_IN_INVENTORY">("RETURN_TO_VENDOR");
   const [reason, setReason] = useState("");
   const [rmaNumber, setRmaNumber] = useState("");
   const [notes, setNotes] = useState("");
@@ -65,6 +66,7 @@ export default function ReturnItemsModal({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            disposition,
             reason: reason || null,
             rmaNumber: rmaNumber || null,
             notes: notes || null,
@@ -103,6 +105,34 @@ export default function ReturnItemsModal({
         </div>
 
         <div className="px-6 py-4 space-y-4 max-h-[60vh] overflow-y-auto">
+          {/* Disposition toggle */}
+          <div>
+            <p className="text-xs font-semibold text-[#666] uppercase tracking-widest mb-2">
+              What happens to the items?
+            </p>
+            <div className="flex gap-2">
+              {(["RETURN_TO_VENDOR", "KEEP_IN_INVENTORY"] as const).map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setDisposition(d)}
+                  className={`flex-1 text-xs font-semibold px-3 py-2 rounded-xl border transition-all ${
+                    disposition === d
+                      ? "bg-[#111] text-white border-[#111]"
+                      : "bg-white text-[#666] border-[#E5E3DE] hover:bg-[#F7F6F3]"
+                  }`}
+                >
+                  {d === "RETURN_TO_VENDOR" ? "Return to vendor" : "Keep in our inventory"}
+                </button>
+              ))}
+            </div>
+            <p className="text-[11px] text-[#bbb] mt-1.5">
+              {disposition === "KEEP_IN_INVENTORY"
+                ? "Item stays in stock. Customer still gets the cost credit."
+                : "Item leaves the building. Inventory decremented."}
+            </p>
+          </div>
+
           {returnableLines.length === 0 ? (
             <p className="text-sm text-[#999] text-center py-4">
               No received items available to return

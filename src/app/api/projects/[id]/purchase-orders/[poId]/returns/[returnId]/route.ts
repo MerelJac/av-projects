@@ -63,6 +63,45 @@ export async function PATCH(
     }
   }
 
+  // When credited, create inventory movements based on disposition
+  if (status === "CREDITED") {
+    try {
+      const returnWithLines = await prisma.purchaseOrderReturn.findUnique({
+        where: { id: returnId },
+        include: {
+          lines: {
+            include: { poLine: { select: { itemId: true } } },
+          },
+        },
+      });
+      if (returnWithLines) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const disposition = (returnWithLines as any).disposition ?? "RETURN_TO_VENDOR";
+        for (const line of returnWithLines.lines) {
+          const itemId = line.poLine.itemId;
+          if (!itemId) continue;
+          const quantityDelta =
+            disposition === "KEEP_IN_INVENTORY"
+              ? line.quantity   // positive: stock comes back
+              : -line.quantity; // negative: item leaves
+          await prisma.inventoryMovement.create({
+            data: {
+              itemId,
+              type: "RETURN",
+              quantityDelta,
+              notes:
+                disposition === "KEEP_IN_INVENTORY"
+                  ? `Kept in inventory — not returned to vendor (${returnWithLines.returnNumber ?? returnId})`
+                  : `Returned to vendor (${returnWithLines.returnNumber ?? returnId})`,
+            },
+          });
+        }
+      }
+    } catch {
+      // Pre-migration safety — don't fail the status update if inventory write fails
+    }
+  }
+
   return NextResponse.json(updated);
 }
 

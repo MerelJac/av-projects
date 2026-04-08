@@ -88,6 +88,7 @@ export default function BOMEditor({
     type: "success" | "error";
     msg: string;
   } | null>(null);
+  const [allocatingLineId, setAllocatingLineId] = useState<string | null>(null);
   const [addingToSection, setAddingToSection] = useState<string>(() => {
     const s = bom.lines[0]?.section ?? "General";
     return s;
@@ -254,6 +255,28 @@ export default function BOMEditor({
   // Totals
   const { totalHardwareSell, totalServiceSell, totalCostAll, grandTotal, gm } =
     calcBOMTotals(lines, customerPrices, tariff);
+
+  async function handleAllocateFromStock(lineId: string) {
+    setAllocatingLineId(lineId);
+    try {
+      const res = await fetch(
+        `/api/projects/${projectId}/boms/${bom.id}/lines/${lineId}/allocate`,
+        { method: "POST" },
+      );
+      if (!res.ok) {
+        const b = await res.json().catch(() => ({}));
+        showToast("error", b?.error ?? "Failed to allocate");
+        return;
+      }
+      const { allocated } = await res.json();
+      showToast("success", `${allocated} unit${allocated !== 1 ? "s" : ""} allocated from stock`);
+      router.refresh();
+    } catch {
+      showToast("error", "Network error");
+    } finally {
+      setAllocatingLineId(null);
+    }
+  }
 
   async function handleSave() {
     setSaving(true);
@@ -873,6 +896,15 @@ export default function BOMEditor({
                                       <span className="text-[10px] text-[#bbb] mt-0.5">
                                         +{surplus} surplus
                                       </span>
+                                    )}
+                                    {!isAllocated && surplus > 0 && line.quantity > 0 && (
+                                      <button
+                                        onClick={() => handleAllocateFromStock(line.id)}
+                                        disabled={allocatingLineId === line.id}
+                                        className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors disabled:opacity-40 mt-0.5"
+                                      >
+                                        {allocatingLineId === line.id ? "Allocating…" : `Use from stock`}
+                                      </button>
                                     )}
                                   </td>
 
