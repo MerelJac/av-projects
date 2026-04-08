@@ -222,7 +222,7 @@ export default async function ItemPage({
                     : "bg-green-50 text-green-700"
               }`}
             >
-              {onHand} on hand{item.unit ? ` ${item.unit}` : ""}
+              {onHand} on hand
             </span>
           </div>
 

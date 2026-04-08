@@ -11,7 +11,9 @@ function parseFloat_(val: unknown): number | null {
 }
 
 function parseType(val: unknown): ItemType | null {
-  const upper = String(val ?? "").trim().toUpperCase();
+  const upper = String(val ?? "")
+    .trim()
+    .toUpperCase();
   return VALID_TYPES.has(upper as ItemType) ? (upper as ItemType) : null;
 }
 
@@ -22,7 +24,12 @@ export async function uploadCSV(file: File) {
     skipEmptyLines: true,
   });
 
-  const results = { created: 0, updated: 0, skipped: 0, errors: [] as string[] };
+  const results = {
+    created: 0,
+    updated: 0,
+    skipped: 0,
+    errors: [] as string[],
+  };
 
   for (const row of data) {
     const itemNumber = row.itemNumber?.trim();
@@ -33,12 +40,27 @@ export async function uploadCSV(file: File) {
     }
 
     const preferredVendor = row.preferred_vendor?.trim();
-    const findPreferredVendor = preferredVendor      ? await prisma.vendor.findFirst({ where: { name: preferredVendor } })
+    const findPreferredVendor = preferredVendor
+      ? await prisma.vendor.findFirst({ where: { name: preferredVendor } })
       : null;
 
-    const createdVendor = preferredVendor && !findPreferredVendor
-      ? await prisma.vendor.create({ data: { name: preferredVendor } })
-      : findPreferredVendor;
+    const findUnit = row.unit
+      ? await prisma.itemDropdownOption.findFirst({
+          where: { field: "unit", value: row.unit },
+        })
+      : null;
+
+    const createdVendor =
+      preferredVendor && !findPreferredVendor
+        ? await prisma.vendor.create({ data: { name: preferredVendor } })
+        : findPreferredVendor;
+
+    const createdUnit =
+      row.unit && !findUnit
+        ? await prisma.itemDropdownOption.create({
+            data: { field: "unit", value: row.unit },
+          })
+        : findUnit;
     const type = parseType(row.type) ?? ItemType.HARDWARE; // fallback default
     const data_ = {
       manufacturer: row.manufacturer?.trim() || null,
@@ -47,6 +69,7 @@ export async function uploadCSV(file: File) {
       type,
       description: row.description?.trim() || null,
       preferredVendorId: createdVendor?.id || null,
+      unit: createdUnit?.value || null,
     };
 
     try {
@@ -59,7 +82,9 @@ export async function uploadCSV(file: File) {
         results.created++;
       }
     } catch (err) {
-      results.errors.push(`${itemNumber}: ${err instanceof Error ? err.message : "unknown error"}`);
+      results.errors.push(
+        `${itemNumber}: ${err instanceof Error ? err.message : "unknown error"}`,
+      );
       results.skipped++;
     }
   }
