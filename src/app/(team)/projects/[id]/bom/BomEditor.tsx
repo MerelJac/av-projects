@@ -452,44 +452,48 @@ export default function BOMEditor({
             </h1>
             <p className="text-sm text-[#888] mt-1">
               {lines.length} item{lines.length !== 1 ? "s" : ""}
-              {!saved && (
-                <span className="text-amber-600 ml-2">· Unsaved changes</span>
-              )}
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              className="w-9 h-9 flex items-center justify-center rounded-xl border border-[#E5E3DE] bg-white hover:bg-red-50 hover:border-red-200 text-[#ccc] hover:text-red-500 transition-colors"
-              title="Delete BOM"
-            >
-              <Trash2 size={15} />
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving || saved}
-              className="text-sm font-semibold px-4 py-2 rounded-xl border border-[#E5E3DE] bg-white hover:bg-[#F7F6F3] disabled:opacity-40 transition-colors"
-            >
-              {saving ? "Saving…" : saved ? "Saved ✓" : "Save Changes"}
-            </button>
-            <button
-              onClick={() => setShowCreatePO(true)}
-              disabled={lines.length === 0}
-              className="flex items-center gap-2 bg-white border border-[#E5E3DE] text-[#111] text-sm font-semibold px-4 py-2 rounded-xl hover:bg-[#F7F6F3] disabled:opacity-40 transition-colors"
-            >
-              <ShoppingCart size={14} />
-              Create PO
-            </button>
-            <button
-              onClick={() => setShowGenerateModal(true)}
-              disabled={lines.length === 0}
-              className="flex items-center gap-2 bg-[#111] text-white text-sm font-semibold px-5 py-2 rounded-xl hover:bg-[#333] disabled:opacity-40 transition-colors max-w-sm"
-            >
-              <Zap size={14} />
-              {generating
-                ? "Generating…"
-                : "Generate Proposal, Sales Order, or Change Order"}
-            </button>
+          <div className="flex items-end flex-col justify-end gap-2">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="w-9 h-9 flex items-center justify-center rounded-xl border border-[#E5E3DE] bg-white hover:bg-red-50 hover:border-red-200 text-[#ccc] hover:text-red-500 transition-colors"
+                title="Delete BOM"
+              >
+                <Trash2 size={15} />
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving || saved}
+                className="text-sm font-semibold px-4 py-2 rounded-xl border border-[#E5E3DE] bg-white hover:bg-[#F7F6F3] disabled:opacity-40 transition-colors"
+              >
+                {saving ? "Saving…" : saved ? "Saved ✓" : "Save Changes"}
+              </button>
+              <button
+                onClick={() => setShowCreatePO(true)}
+                disabled={lines.length === 0}
+                className="flex items-center gap-2 bg-white border border-[#E5E3DE] text-[#111] text-sm font-semibold px-4 py-2 rounded-xl hover:bg-[#F7F6F3] disabled:opacity-40 transition-colors"
+              >
+                <ShoppingCart size={14} />
+                Create PO
+              </button>
+              <button
+                onClick={() => setShowGenerateModal(true)}
+                disabled={lines.length === 0}
+                className="flex items-center gap-2 bg-[#111] text-white text-sm font-semibold px-5 py-2 rounded-xl hover:bg-[#333] disabled:opacity-40 transition-colors max-w-sm"
+              >
+                <Zap size={14} />
+                {generating
+                  ? "Generating…"
+                  : "Generate Proposal, Sales Order, or Change Order"}
+              </button>
+            </div>
+            <p className="text-sm text-[#888] mt-1">
+              {!saved && (
+                <span className="text-amber-600 ml-2">Unsaved changes</span>
+              )}
+            </p>
           </div>
         </div>
 
