@@ -378,7 +378,7 @@ export default function ImportItemsPage() {
           <div className="mt-6 flex items-center gap-2 text-xs text-[#aaa]">
             <span>Expected columns:</span>
             <code className="bg-white border border-[#E5E3DE] px-2 py-0.5 rounded text-[#666] font-mono">
-              itemNumber, manufacturer, type, description, cost, price, category, active
+              itemNumber, manufacturer, type, description, cost, price, category, unit, active
             </code>
           </div>
         )}

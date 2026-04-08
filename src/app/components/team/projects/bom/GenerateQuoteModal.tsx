@@ -93,7 +93,7 @@ export default function GenerateQuoteModal({
               className="text-sm text-[#111] border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111] transition-colors bg-white"
             >
               <option value="PROPOSAL">Proposal</option>
-              <option value="DIRECT">Direct Sale</option>
+              {/* <option value="DIRECT">Direct Sale</option> */}
               <option value="CHANGE_ORDER">Change Order</option>
             </select>
           </div>

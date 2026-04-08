@@ -59,19 +59,36 @@ export default async function BOMPage({
     customerPrices.map((cp) => [cp.itemId, cp.price]),
   );
 
+
+  const itemIds = [...new Set(bom.lines.map((l) => l.itemId).filter(Boolean))];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const allocationMovements: { bomLineId: string; quantityDelta: number }[] = await (prisma as any).inventoryMovement.findMany({
-    where: {
-      type: "BOM_ALLOCATION",
-      bomLineId: { in: bom.lines.map((l) => l.id) },
-    },
-    select: { bomLineId: true, quantityDelta: true },
-  });
+  const prismaAny = prisma as any;
+  const [allocationMovements, onHandMovements] = await Promise.all([
+    prismaAny.inventoryMovement.findMany({
+      where: {
+        type: "BOM_ALLOCATION",
+        bomLineId: { in: bom.lines.map((l) => l.id) },
+      },
+      select: { bomLineId: true, quantityDelta: true },
+    }) as Promise<{ bomLineId: string; quantityDelta: number }[]>,
+    itemIds.length > 0
+      ? prismaAny.inventoryMovement.findMany({
+          where: { itemId: { in: itemIds } },
+          select: { itemId: true, quantityDelta: true },
+        }) as Promise<{ itemId: string; quantityDelta: number }[]>
+      : Promise.resolve([]),
+  ]);
+
   const lineAllocations: Record<string, number> = {};
   for (const m of allocationMovements) {
     if (m.bomLineId) {
       lineAllocations[m.bomLineId] = (lineAllocations[m.bomLineId] ?? 0) + Math.abs(m.quantityDelta);
     }
+  }
+
+  const itemOnHand: Record<string, number> = {};
+  for (const m of onHandMovements as { itemId: string; quantityDelta: number }[]) {
+    itemOnHand[m.itemId] = (itemOnHand[m.itemId] ?? 0) + m.quantityDelta;
   }
 
   const [projectBoms, allProjects] = await Promise.all([
@@ -99,6 +116,7 @@ export default async function BOMPage({
         customerPrices={customerPricesRecord}
         projectId={id}
         lineAllocations={lineAllocations}
+        itemOnHand={itemOnHand}
         projectBoms={projectBoms.map((b) => {
           const { grandTotal } = calcBOMTotals(
             b.lines as BOMLine[],

@@ -138,11 +138,7 @@ export default async function ProjectPage({
   } catch {
     // Pre-migration
   }
-
-  // Find shipments, purchase order lines. inventoryAllocatedCost = quantity * cost for each line, sum it up, show as separate line item in project financials, not included in COGS.
-
-  
-
+  console;
 
   const projectForFinancials = {
     ...project,
@@ -208,7 +204,7 @@ export default async function ProjectPage({
           </div>
           {totalContract > 0 && (
             <div className="text-right">
-              <p className="text-xs text-[#999] mb-0.5">Contract</p>
+              <p className="text-xs text-[#999] mb-0.5">Budget</p>
               <p className="text-xl font-bold text-[#111]">
                 $
                 {totalContract.toLocaleString(undefined, {
@@ -219,22 +215,12 @@ export default async function ProjectPage({
               <p className="text-xs text-[#999] italic mt-0.5">
                 from approved proposals
               </p>
-              {invoiced > 0 && (
-                <p className="text-xs text-[#999] mt-0.5">
-                  $
-                  {invoiced.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}{" "}
-        Budget    invoiced
-                </p>
-              )}
             </div>
           )}
         </div>
 
         {/* Financial Summary */}
-        {(totalContract > 0 || cogs > 0 || inventoryAllocatedCost > 0) && (
+        {totalContract > 0 && (
           <div className="bg-white border border-[#E5E3DE] rounded-2xl ">
             <div className="px-6 py-4 border-b border-[#F0EEE9]">
               <h3 className="font-semibold text-sm text-[#111]">
@@ -488,8 +474,8 @@ export default async function ProjectPage({
                       {bom.lines.length} item{bom.lines.length !== 1 ? "s" : ""}{" "}
                       ·{" "}
                       {bom.quotes.length > 0
-                        ? `${bom.quotes.length} quote${bom.quotes.length !== 1 ? "s" : ""} generated`
-                        : "No quotes yet"}
+                        ? `${bom.quotes.length} proposal${bom.quotes.length !== 1 ? "s" : ""} generated`
+                        : "No proposals yet"}
                     </p>
                   </div>
                   <ArrowRight

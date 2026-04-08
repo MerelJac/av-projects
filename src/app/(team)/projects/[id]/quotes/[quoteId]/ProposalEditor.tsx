@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -53,7 +53,7 @@ const STATUS_CONFIG: Record<
   },
 };
 
-export default function QuoteEditor({
+export default function ProposalEditor({
   quote: initialQuote,
   projectId,
 }: {
@@ -106,6 +106,24 @@ export default function QuoteEditor({
   const [clientResponsibilities, setClientResponsibilities] = useState(
     initialQuote.clientResponsibilities ?? "",
   );
+  const isMounted = useRef(false);
+  const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!isMounted.current) {
+      isMounted.current = true;
+      return;
+    }
+    if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+    autosaveTimer.current = setTimeout(() => {
+      handleSave(true);
+    }, 1500);
+    return () => {
+      if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lines, bundles, status, isDirect, isChangeOrder, scopeOfWork, termsAndConditions, clientResponsibilities]);
+
   const showToast = (type: "success" | "error", msg: string) => {
     setToast({ type, msg });
     setTimeout(() => setToast(null), 3500);
@@ -204,12 +222,8 @@ export default function QuoteEditor({
     setSaved(false);
   }
 
-  async function handleSave() {
+  async function handleSave(quiet = false) {
     setSaving(true);
-    console.log("Saving lines: ", lines);
-    console.log("Saving bundles: ", bundles);
-    console.log("Saving status: ", status);
-    console.log("Saving for quote it: ", initialQuote.id);
     try {
       const res = await fetch(
         `/api/projects/${projectId}/quotes/${initialQuote.id}`,
@@ -230,7 +244,7 @@ export default function QuoteEditor({
       );
       if (!res.ok) throw new Error();
       setSaved(true);
-      showToast("success", "Quote saved");
+      if (!quiet) showToast("success", "Proposal saved");
       router.refresh();
     } catch {
       showToast("error", "Failed to save");
@@ -321,7 +335,7 @@ export default function QuoteEditor({
 
           <div className="flex items-center gap-3">
             <button
-              onClick={handleSave}
+              onClick={() => handleSave()}
               disabled={saving || saved}
               className="text-sm font-semibold px-4 py-2 rounded-xl border border-[#E5E3DE] bg-white hover:bg-[#F7F6F3] disabled:opacity-40 transition-colors"
             >
@@ -644,15 +658,15 @@ export default function QuoteEditor({
                       setSaved(false);
                     },
                   },
-                  {
-                    label: "Direct Sale",
-                    active: isDirect && !isChangeOrder,
-                    onClick: () => {
-                      setIsDirect(true);
-                      setIsChangeOrder(false);
-                      setSaved(false);
-                    },
-                  },
+                  // {
+                  //   label: "Direct Sale",
+                  //   active: isDirect && !isChangeOrder,
+                  //   onClick: () => {
+                  //     setIsDirect(true);
+                  //     setIsChangeOrder(false);
+                  //     setSaved(false);
+                  //   },
+                  // },
                   {
                     label: "Change Order",
                     active: isChangeOrder,

@@ -37,6 +37,7 @@ export default function BOMEditor({
   customerPrices,
   projectBoms,
   lineAllocations = {},
+  itemOnHand = {},
 }: {
   bom: BOM;
   items: Item[];
@@ -44,6 +45,7 @@ export default function BOMEditor({
   customerPrices: Record<string, number>;
   projectBoms: { id: string; name: string; lineCount: number; total: number }[];
   lineAllocations?: Record<string, number>;
+  itemOnHand?: Record<string, number>;
 }) {
   const router = useRouter();
   const [lines, setLines] = useState<BOMLine[]>(() =>
@@ -486,7 +488,7 @@ export default function BOMEditor({
                 <Zap size={14} />
                 {generating
                   ? "Generating…"
-                  : "Generate Proposal, Sales Order, or Change Order"}
+                  : "Generate Proposal or Change Order"}
               </button>
             </div>
             <p className="text-sm text-[#888] mt-1">
@@ -779,10 +781,10 @@ export default function BOMEditor({
                                 (c) => c.itemId === line.itemId,
                               );
                               const allocated = lineAllocations[line.id] ?? 0;
-                              const isAllocated = allocated >= line.quantity;
+                              const isAllocated = allocated >= line.quantity && line.quantity > 0;
                               const isPartial =
                                 allocated > 0 && allocated < line.quantity;
-                              const surplus = allocated - line.quantity;
+                              const surplus = (itemOnHand[line.itemId ?? ""] ?? 0) - line.quantity;
                               const isOnPO =
                                 allocated === 0 && claimed.length > 0;
                               const poLink = claimed[0]
@@ -857,7 +859,7 @@ export default function BOMEditor({
                                         )}
                                       </span>
                                     )}
-                                    {surplus > 0 && (
+                                    {surplus > 0 && line.quantity > 0 && (
                                       <span className="text-[10px] text-[#bbb] mt-0.5">
                                         +{surplus} surplus
                                       </span>
@@ -882,7 +884,7 @@ export default function BOMEditor({
                                               Number.isNaN(v) ? 0 : v,
                                             );
                                           }}
-                                          disabled={isAllocated}
+                              
                                           className="w-12 text-right text-xs bg-transparent focus:outline-none tabular-nums"
                                         />
                                         {line.unit && (

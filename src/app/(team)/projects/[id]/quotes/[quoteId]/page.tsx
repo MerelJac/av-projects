@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
-import QuoteEditor from "./QuoteEditor";
+import ProposalEditor from "./ProposalEditor";
 
 import NotesPanel from "@/app/components/NotesPanel";
 import { authOptions } from "@/lib/auth";
@@ -45,7 +45,7 @@ export default async function QuotePage({
 
   return (
     <div className="bg-[#F7F6F3]">
-      <QuoteEditor quote={quote} projectId={id} />
+      <ProposalEditor quote={quote} projectId={id} />
       <div className="max-w-5xl mx-auto px-6 pb-10">
         <NotesPanel
           documentType="QUOTE"
