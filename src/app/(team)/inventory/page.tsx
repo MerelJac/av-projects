@@ -15,11 +15,20 @@ export default async function InventoryPage() {
           manufacturer: true,
           type: true,
           unit: true,
+          cost: true,
         },
       },
       shipment: { include: { purchaseOrder: true } },
-
       invoice: { select: { id: true, invoiceNumber: true } },
+      bomLine: {
+        include: {
+          bom: {
+            include: {
+              project: { select: { id: true, name: true } },
+            },
+          },
+        },
+      },
     },
     orderBy: { createdAt: "asc" },
   });
@@ -32,9 +41,10 @@ export default async function InventoryPage() {
     manufacturer: string | null;
     type: string;
     unit: string | null;
+    unitCost: number | null;
     onHand: number;
     totalReceived: number;
-    totalInvoiced: number;
+    totalAllocated: number;
     lastMovementAt: Date;
     movements: typeof movements;
   };
@@ -51,9 +61,10 @@ export default async function InventoryPage() {
         manufacturer: m.item.manufacturer,
         type: m.item.type,
         unit: m.item.unit,
+        unitCost: m.item.cost ?? null,
         onHand: 0,
         totalReceived: 0,
-        totalInvoiced: 0,
+        totalAllocated: 0,
         lastMovementAt: m.createdAt,
         movements: [],
       });
@@ -61,7 +72,7 @@ export default async function InventoryPage() {
     const entry = byItem.get(m.itemId)!;
     entry.onHand += m.quantityDelta;
     if (m.type === "RECEIPT") entry.totalReceived += m.quantityDelta;
-    if (m.type === "INVOICE") entry.totalInvoiced += Math.abs(m.quantityDelta);
+    if (m.type === "BOM_ALLOCATION" || m.type === "INVOICE") entry.totalAllocated += Math.abs(m.quantityDelta);
     if (new Date(m.createdAt) > new Date(entry.lastMovementAt)) {
       entry.lastMovementAt = m.createdAt;
     }
@@ -76,15 +87,22 @@ export default async function InventoryPage() {
   const serialized = rows.map((r) => ({
     ...r,
     lastMovementAt: r.lastMovementAt.toISOString(),
-    movements: r.movements.map((m) => ({
-      id: m.id,
-      type: m.type,
-      quantityDelta: m.quantityDelta,
-      notes: m.notes,
-      createdAt: new Date(m.createdAt).toISOString(),
-      invoiceNumber: m.invoice?.invoiceNumber ?? null,
-      purchaseOrderNumber: m.shipment?.purchaseOrder?.poNumber ?? null,
-    })),
+    movements: r.movements.map((m) => {
+      const qty = Math.abs(m.quantityDelta);
+      const costAmount = r.unitCost != null ? r.unitCost * qty : null;
+      return {
+        id: m.id,
+        type: m.type,
+        quantityDelta: m.quantityDelta,
+        notes: m.notes,
+        createdAt: new Date(m.createdAt).toISOString(),
+        invoiceNumber: m.invoice?.invoiceNumber ?? null,
+        purchaseOrderNumber: m.shipment?.purchaseOrder?.poNumber ?? null,
+        projectId: m.bomLine?.bom?.project?.id ?? null,
+        projectName: m.bomLine?.bom?.project?.name ?? null,
+        costAmount,
+      };
+    }),
   }));
 
   return <InventoryReport rows={serialized} />;

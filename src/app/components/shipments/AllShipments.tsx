@@ -25,12 +25,6 @@ export default async function AllShipments({
                 Date
               </th>
               <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">
-                Item
-              </th>
-              <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">
-                Customer
-              </th>
-              <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">
                 Project
               </th>
               <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">
@@ -43,7 +37,7 @@ export default async function AllShipments({
                 Tracking
               </th>
               <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">
-                Cost
+                Shipping Cost
               </th>
               <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">
                 Qty
@@ -75,25 +69,6 @@ export default async function AllShipments({
                         minute: "2-digit",
                       })}
                     </p>
-                  </td>
-                  <td className="px-3 py-3.5">
-                    {s.item ? (
-                      <>
-                        <p className="text-xs font-mono font-semibold text-[#111]">
-                          {s.item.itemNumber}
-                        </p>
-                        {s.item.manufacturer && (
-                          <p className="text-[10px] text-[#999]">
-                            {s.item.manufacturer}
-                          </p>
-                        )}
-                      </>
-                    ) : (
-                      <span className="text-xs text-[#bbb]">—</span>
-                    )}
-                  </td>
-                  <td className="px-3 py-3.5 text-sm text-[#666]">
-                    {s.salesOrder?.customer.name ?? "—"}
                   </td>
                   <td className="px-3 py-3.5">
                     <Link

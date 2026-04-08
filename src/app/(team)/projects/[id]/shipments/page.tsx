@@ -29,6 +29,7 @@ export default async function ProjectShipmentsPage({
     orderBy: { createdAt: "desc" },
   });
 
+  console.log("Shipments for project", id, shipments);
   const received = shipments.filter((s) => s.receivedAt).length;
   const inTransit = shipments.filter((s) => !s.receivedAt).length;
 
@@ -111,7 +112,7 @@ export default async function ProjectShipmentsPage({
                     Qty
                   </th>
                   <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">
-                    Cost
+                    Shipping Cost
                   </th>
                   <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-5 py-3">
                     Status

@@ -117,6 +117,29 @@ export default async function ProjectPage({
     // Pre-migration: return lines table doesn't exist yet; returnedQuantity defaults to 0
   }
 
+  // Inventory cost allocated to this project via BOM_ALLOCATION movements.
+  // Shown separately — not folded into COGS.
+  let inventoryAllocatedCost = 0;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const allocations = await (prisma as any).inventoryMovement.findMany({
+      where: { type: "BOM_ALLOCATION", bomLine: { bom: { projectId: id } } },
+      select: { quantityDelta: true, item: { select: { cost: true } } },
+    });
+    inventoryAllocatedCost = (
+      allocations as {
+        quantityDelta: number;
+        item: { cost: number | null } | null;
+      }[]
+    ).reduce(
+      (sum, m) => sum + (m.item?.cost ?? 0) * Math.abs(m.quantityDelta),
+      0,
+    );
+  } catch {
+    // Pre-migration
+  }
+  console
+
   const projectForFinancials = {
     ...project,
     purchaseOrders: project.purchaseOrders.map((po) => ({
@@ -131,7 +154,6 @@ export default async function ProjectPage({
   const financials = calcProjectFinancials(projectForFinancials);
 
   const changeOrders = project.quotes.filter((q) => q.isChangeOrder);
-
   const contractBase = financials.contractBase;
   const changeOrderTotal = financials.changeOrderTotal;
   const totalContract = financials.totalContract;
@@ -144,17 +166,18 @@ export default async function ProjectPage({
   // Labor cost: actual logged hours × cost rate per scope
   const laborCost = financials.laborCost;
 
+  // Total spent = PO-based cost + inventory allocated to this project via BOM
   const cogs = financials.cogs;
+  const invoiced = financials.invoiced;
+  const collected = financials.collected;
+  const owed = totalContract - invoiced;
 
-  //
-  const grossProfit = totalContract - cogs;
+  const grossProfit = totalContract - (cogs + owed);
   const marginPct =
     totalContract > 0 ? (grossProfit / totalContract) * 100 : null;
 
-  const invoiced = financials.invoiced;
-  const collected = financials.collected;
-
   const shipments = await prisma.shipment.findMany({
+    where: { projectId: id },
     include: {
       project: true,
       item: true,
@@ -199,7 +222,7 @@ export default async function ProjectPage({
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}{" "}
-                  invoiced
+        Budget    invoiced
                 </p>
               )}
             </div>
@@ -215,43 +238,40 @@ export default async function ProjectPage({
               </h3>
             </div>
             <div className="grid grid-cols-4 divide-x divide-[#F0EEE9]">
-              {/* Contract */}
+              {/* Budget */}
               <div className="px-5 py-4">
                 <p className="text-xs text-[#999] uppercase tracking-widest mb-1">
-                  Contract
+                  Budget
                 </p>
                 <p className="text-lg font-bold text-[#111]">
                   $
-                  {contractBase.toLocaleString(undefined, {
+                  {totalContract.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
                 </p>
                 {changeOrderTotal !== 0 && (
-                  <p
-                    className={`text-xs mt-0.5 font-medium ${changeOrderTotal >= 0 ? "text-green-600" : "text-red-500"}`}
-                  >
-                    {changeOrderTotal >= 0 ? "+" : ""}$
+                  <p className="text-xs text-[#999] mt-0.5">
+                    $
+                    {contractBase.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}{" "}
+                    base
+                    {changeOrderTotal >= 0 ? " +" : " "}$
                     {changeOrderTotal.toLocaleString(undefined, {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })}{" "}
                     COs
-                    <span className="text-[#999] font-normal ml-1">
-                      = $
-                      {totalContract.toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </span>
                   </p>
                 )}
               </div>
 
-              {/* Cost */}
+              {/* Spent */}
               <div className="px-5 py-4">
                 <p className="text-xs text-[#999] uppercase tracking-widest mb-1">
-                  Cost
+                  Spent
                 </p>
                 <p className="text-lg font-bold text-[#111]">
                   $
@@ -261,6 +281,7 @@ export default async function ProjectPage({
                   })}
                 </p>
                 {materialCost > 0 && (
+                  // FROM
                   <p className="text-xs text-[#999] mt-0.5">
                     $
                     {materialCost.toLocaleString(undefined, {
@@ -268,6 +289,16 @@ export default async function ProjectPage({
                       maximumFractionDigits: 2,
                     })}{" "}
                     materials
+                  </p>
+                )}
+                {inventoryAllocatedCost > 0 && (
+                  <p className=" pl-2 text-xs text-[#bbb] mt-0.5">
+                    $
+                    {inventoryAllocatedCost.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}{" "}
+                    materials received
                   </p>
                 )}
                 {laborCost > 0 && (
@@ -291,13 +322,57 @@ export default async function ProjectPage({
                   </p>
                 )}
                 {returnCredit > 0 && (
-                  <p className="text-xs text-[#999] mt-0.5">
-                    $
+                  <p className="text-xs text-green-600 mt-0.5">
+                    −$
                     {returnCredit.toLocaleString(undefined, {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })}{" "}
-                    return credits
+                    returns
+                  </p>
+                )}
+              </div>
+
+              {/* Collected */}
+              <div className="px-5 py-4">
+                <p className="text-xs text-[#999] uppercase tracking-widest mb-1">
+                  Collected
+                </p>
+                <p className="text-lg font-bold text-green-600">
+                  $
+                  {collected.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </p>
+                {invoiced > 0 && (
+                  <p className="text-xs text-[#999] mt-0.5">
+                    $
+                    {invoiced.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}{" "}
+                    invoiced
+                  </p>
+                )}
+                {invoiced > collected && (
+                  <p className="text-xs text-amber-600 font-medium mt-0.5">
+                    $
+                    {(invoiced - collected).toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}{" "}
+                    outstanding
+                  </p>
+                )}
+                {totalContract > invoiced && (
+                  <p className="text-xs text-[#bbb] mt-0.5">
+                    $
+                    {owed.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}{" "}
+                    not yet invoiced
                   </p>
                 )}
               </div>
@@ -305,7 +380,7 @@ export default async function ProjectPage({
               {/* Profit */}
               <div className="px-5 py-4">
                 <p className="text-xs text-[#999] uppercase tracking-widest mb-1">
-                  Gross Profit
+                  Profit
                 </p>
                 <p
                   className={`text-lg font-bold ${grossProfit >= 0 ? "text-green-600" : "text-red-500"}`}
@@ -321,38 +396,9 @@ export default async function ProjectPage({
                     {marginPct.toFixed(1)}% margin
                   </p>
                 )}
-              </div>
-
-              {/* Invoicing */}
-              <div className="px-5 py-4">
-                <p className="text-xs text-[#999] uppercase tracking-widest mb-1">
-                  Invoiced / Collected
+                <p className="text-xs text-[#bbb] mt-0.5">
+                  budget − (spent + owed)
                 </p>
-                <p className="text-lg font-bold text-[#111]">
-                  $
-                  {invoiced.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </p>
-                <p className="text-xs text-green-600 font-medium mt-0.5">
-                  $
-                  {collected.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}{" "}
-                  collected
-                </p>
-                {invoiced > collected && (
-                  <p className="text-xs text-amber-600 font-medium">
-                    $
-                    {(invoiced - collected).toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}{" "}
-                    outstanding
-                  </p>
-                )}
               </div>
             </div>
           </div>
@@ -396,17 +442,6 @@ export default async function ProjectPage({
               <p className="text-xs text-[#999]">Purchase Orders</p>
             </Link>
           </div>
-          {/* <div className="bg-white border border-[#E5E3DE] rounded-2xl p-5 flex items-center gap-4 hover:border-[#111] hover:shadow-sm hover:bg-[#FAFAF9] transition-all duration-150">
-            <div className="w-10 h-10 rounded-xl bg-[#F0EEE9] flex items-center justify-center flex-shrink-0">
-              <FileText size={16} className="text-[#666]" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-[#111]">
-                ${totalContract.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-              </p>
-              <p className="text-xs text-[#999]">Project Budget</p>
-            </div>
-          </div> */}
         </div>
 
         {/* BOMs */}
@@ -524,15 +559,6 @@ export default async function ProjectPage({
             </div>
           )}
         </div>
-
-        {/* Milestones */}
-        <MilestonesPanel
-          projectId={project.id}
-          initialMilestones={project.milestones.map((m) => ({
-            ...m,
-            dueDate: m.dueDate?.toISOString() ?? null,
-          }))}
-        />
 
         <ScopesPanel
           projectId={project.id}
@@ -751,8 +777,14 @@ export default async function ProjectPage({
             </div>
           )}
         </div>
-
-        
+        {/* Milestones */}
+        <MilestonesPanel
+          projectId={project.id}
+          initialMilestones={project.milestones.map((m) => ({
+            ...m,
+            dueDate: m.dueDate?.toISOString() ?? null,
+          }))}
+        />
       </div>
       <DeleteProjectButton id={project.id} />
     </div>

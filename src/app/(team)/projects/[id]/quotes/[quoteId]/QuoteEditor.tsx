@@ -693,32 +693,6 @@ export default function QuoteEditor({
               </div>
             )}
 
-            <button
-              onClick={() => setShowPOModal(true)}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-[#111] border border-[#E5E3DE] hover:bg-[#F7F6F3] transition-colors"
-            >
-              <Package size={14} />
-              <span className="flex flex-col items-start">
-                <span>Create Purchase Order</span>
-                <span className="text-xs font-normal text-[#999]">
-                  Start buying!
-                </span>
-              </span>
-            </button>
-
-            <button
-              onClick={() => setShowInvoiceModal(true)}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-[#111] border border-[#E5E3DE] hover:bg-[#F7F6F3] transition-colors"
-            >
-              <Package size={14} className="shrink-0" />
-              <span className="flex flex-col items-start">
-                <span>Create Customer Invoice</span>
-                <span className="text-xs font-normal text-[#999]">
-                  Start progress or item invoicing
-                </span>
-              </span>
-            </button>
-
             {showPOModal && (
               <CreatePOModal
                 projectId={projectId}
@@ -745,6 +719,9 @@ export default function QuoteEditor({
               <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-4">
                 Actions
               </p>
+              <p className="text-xs tracking-widest text-[#888] mb-4">
+                Save changes before completing actions.
+              </p>
               <button
                 onClick={() => setShowPDFPreview(true)}
                 className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-[#111] border border-[#E5E3DE] hover:bg-[#F7F6F3] transition-colors"
@@ -763,6 +740,30 @@ export default function QuoteEditor({
                 <Send size={14} />
                 Send to Customer
               </button>
+              <button
+                onClick={() => setShowInvoiceModal(true)}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-[#111] border border-[#E5E3DE] hover:bg-[#F7F6F3] transition-colors"
+              >
+                <Package size={14} className="shrink-0" />
+                <span className="flex flex-col items-start">
+                  <span>Create Customer Invoice</span>
+                  <span className="text-xs font-normal text-[#999]">
+                    Start progress or item invoicing
+                  </span>
+                </span>
+              </button>
+              <button
+                onClick={() => setShowPOModal(true)}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-[#111] border border-[#E5E3DE] hover:bg-[#F7F6F3] transition-colors"
+              >
+                <Package size={14} />
+                <span className="flex flex-col items-start">
+                  <span>Create Purchase Order</span>
+                  <span className="text-xs font-normal text-[#999]">
+                    Start buying!
+                  </span>
+                </span>
+              </button>
             </div>
 
             <AuditFeed documentType="QUOTE" documentId={initialQuote.id} />
@@ -776,7 +777,7 @@ export default function QuoteEditor({
                 <div className="relative bg-white rounded-2xl shadow-2xl border border-[#E5E3DE] w-[800px] h-[90vh] mx-4 flex flex-col overflow-hidden">
                   <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#F0EEE9]">
                     <p className="text-sm font-semibold text-[#111]">
-                      Quote #{initialQuote.id.toUpperCase()}
+                      Proposal #{initialQuote.id.toUpperCase()}
                     </p>
                     <div className="flex items-center gap-2">
                       <a
@@ -898,8 +899,7 @@ function LineRow({
           </div>
         </td>
         <td className="px-5 py-3 text-right text-sm font-semibold text-[#111]">
-          $
-          {(line.price * line.quantity).toFixed(2)}
+          ${(line.price * line.quantity).toFixed(2)}
         </td>
         <td className="pr-3">
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">

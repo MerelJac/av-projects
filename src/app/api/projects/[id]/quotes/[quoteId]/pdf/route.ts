@@ -51,7 +51,7 @@ export async function GET(
       "Content-Type": "application/pdf",
       "Content-Disposition": preview
         ? "inline"
-        : `attachment; filename="quote-${quote.id.slice(0, 8)}.pdf"`,
+        : `attachment; filename="quote-${quote.id}.pdf"`,
     },
   });
 }

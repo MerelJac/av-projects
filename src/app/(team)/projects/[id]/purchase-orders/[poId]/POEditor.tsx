@@ -458,7 +458,7 @@ export default function POEditor({
   async function handleReturnSaved() {
     setShowReturnModal(false);
     const res = await fetch(
-      `/api/projects/${projectId}/purchase-orders/${po.id}/returns`
+      `/api/projects/${projectId}/purchase-orders/${po.id}/returns`,
     );
     if (res.ok) {
       const data = await res.json();
@@ -478,11 +478,11 @@ export default function POEditor({
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status: newStatus }),
-        }
+        },
       );
       if (!res.ok) throw new Error();
       setReturns((prev) =>
-        prev.map((r) => (r.id === returnId ? { ...r, status: newStatus } : r))
+        prev.map((r) => (r.id === returnId ? { ...r, status: newStatus } : r)),
       );
       if (newStatus === "CREDITED") {
         showToast("success", "Return credited — costs updated");
@@ -499,7 +499,7 @@ export default function POEditor({
     try {
       const res = await fetch(
         `/api/projects/${projectId}/purchase-orders/${po.id}/returns/${returnId}`,
-        { method: "DELETE" }
+        { method: "DELETE" },
       );
       if (!res.ok) throw new Error();
       setReturns((prev) => prev.filter((r) => r.id !== returnId));
@@ -613,7 +613,7 @@ export default function POEditor({
                     href={`/projects/${projectId}/quotes/${po.quote.id}`}
                     className="hover:text-[#111] transition-colors"
                   >
-                    Quote #{po.quote.id.toUpperCase()}
+                    Proposal #{po.quote.id.toUpperCase()}
                   </a>
                 </>
               )}
@@ -687,12 +687,20 @@ export default function POEditor({
                 </button>
               )}
             </div>
+            <p className="text-xs italic text-green-600 mt-0.5">
+              This page autosaves
+            </p>
           </div>
         </div>
 
         {/* ONLY show if status is not CANCELLED */}
 
-        {status === "CANCELLED" && <p className="text-xs font-semibold px-3 py-1.5 rounded-xl border transition-colors bg-red-100 text-red-600 border-current text-center my-4">This PO has been cancelled. You cannot edit it or add shipments while it is cancelled.</p>}
+        {status === "CANCELLED" && (
+          <p className="text-xs font-semibold px-3 py-1.5 rounded-xl border transition-colors bg-red-100 text-red-600 border-current text-center my-4">
+            This PO has been cancelled. You cannot edit it or add shipments
+            while it is cancelled.
+          </p>
+        )}
 
         {/* PO Info Card */}
         <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden mb-6">
@@ -952,6 +960,9 @@ export default function POEditor({
                   <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-6 py-3 w-32">
                     Cost
                   </th>
+                  <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-6 py-3 w-32">
+                    Total
+                  </th>
                   {canEdit && <th className="w-16" />}
                 </tr>
               </thead>
@@ -1050,6 +1061,19 @@ export default function POEditor({
                           </div>
                         )}
                       </td>
+
+                      <td className="px-6 py-3 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <span className="text-sm text-[#666]">
+                            $
+                            {(line.cost * line.quantity).toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                            })}
+                          </span>
+                       
+                        </div>
+                      </td>
+
                       {canEdit && (
                         <td className="px-2 py-3">
                           {isEditing ? (
@@ -1222,36 +1246,43 @@ export default function POEditor({
                   <span className="text-xs text-[#bbb]">{returns.length}</span>
                 )}
               </div>
-              {lines.some((l) => l.receivedQuantity > 0) && status !== "CANCELLED" && (
-                <button
-                  onClick={() => setShowReturnModal(true)}
-                  className="flex items-center gap-1.5 text-xs font-semibold border border-[#E5E3DE] text-[#444] px-3 py-1.5 rounded-lg hover:bg-[#F0EEE9] transition-colors"
-                >
-                  <RotateCcw size={12} />
-                  Return Items
-                </button>
-              )}
+              {lines.some((l) => l.receivedQuantity > 0) &&
+                status !== "CANCELLED" && (
+                  <button
+                    onClick={() => setShowReturnModal(true)}
+                    className="flex items-center gap-1.5 text-xs font-semibold border border-[#E5E3DE] text-[#444] px-3 py-1.5 rounded-lg hover:bg-[#F0EEE9] transition-colors"
+                  >
+                    <RotateCcw size={12} />
+                    Return Items
+                  </button>
+                )}
             </div>
 
             {returns.length === 0 ? (
               <div className="px-6 py-8 text-center">
-                <p className="text-sm text-[#bbb]">No returns on this PO. You can start returns when items have been received.</p>
+                <p className="text-sm text-[#bbb]">
+                  No returns on this PO. You can start returns when items have
+                  been received.
+                </p>
               </div>
             ) : (
               <div className="divide-y divide-[#F0EEE9]">
                 {returns.map((ret) => {
                   const totalCredit = ret.lines.reduce(
                     (s, l) => s + l.quantity * (l.creditPerUnit ?? 0),
-                    0
+                    0,
                   );
-                  const statusColor = RETURN_STATUS_COLORS[ret.status] ?? "bg-gray-100 text-gray-500 border-gray-200";
+                  const statusColor =
+                    RETURN_STATUS_COLORS[ret.status] ??
+                    "bg-gray-100 text-gray-500 border-gray-200";
                   return (
                     <div key={ret.id} className="px-6 py-4">
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
                             <span className="text-sm font-mono font-semibold text-[#111]">
-                              {ret.returnNumber ?? ret.id.slice(0, 8).toUpperCase()}
+                              {ret.returnNumber ??
+                                ret.id.slice(0, 8).toUpperCase()}
                             </span>
                             <span
                               className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${statusColor}`}
@@ -1266,34 +1297,52 @@ export default function POEditor({
                           </div>
                           <div className="space-y-1">
                             {ret.lines.map((rl) => (
-                              <div key={rl.id} className="flex items-center gap-2 text-xs text-[#666]">
-                                <RotateCcw size={10} className="text-[#bbb] flex-shrink-0" />
+                              <div
+                                key={rl.id}
+                                className="flex items-center gap-2 text-xs text-[#666]"
+                              >
+                                <RotateCcw
+                                  size={10}
+                                  className="text-[#bbb] flex-shrink-0"
+                                />
                                 <span className="font-mono text-[#444]">
                                   {rl.poLine.item?.itemNumber ?? "—"}
                                 </span>
                                 <span>×{rl.quantity}</span>
                                 {rl.creditPerUnit != null && (
                                   <span className="text-green-700">
-                                    ${(rl.quantity * rl.creditPerUnit).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    $
+                                    {(
+                                      rl.quantity * rl.creditPerUnit
+                                    ).toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                    })}
                                   </span>
                                 )}
                               </div>
                             ))}
                           </div>
                           {ret.reason && (
-                            <p className="text-xs text-[#999] mt-1.5">Reason: {ret.reason}</p>
+                            <p className="text-xs text-[#999] mt-1.5">
+                              Reason: {ret.reason}
+                            </p>
                           )}
                         </div>
                         <div className="flex flex-col items-end gap-2 flex-shrink-0">
                           {totalCredit > 0 && (
                             <span className="text-sm font-semibold text-green-700">
-                              +${totalCredit.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                              +$
+                              {totalCredit.toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                              })}
                             </span>
                           )}
                           {ret.status === "PENDING" && (
                             <div className="flex items-center gap-1">
                               <button
-                                onClick={() => handleUpdateReturnStatus(ret.id, "SENT")}
+                                onClick={() =>
+                                  handleUpdateReturnStatus(ret.id, "SENT")
+                                }
                                 disabled={updatingReturnId === ret.id}
                                 className="text-[10px] font-semibold px-2 py-1 rounded-lg border border-[#E5E3DE] hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-colors disabled:opacity-40"
                               >
@@ -1309,11 +1358,15 @@ export default function POEditor({
                           )}
                           {ret.status === "SENT" && (
                             <button
-                              onClick={() => handleUpdateReturnStatus(ret.id, "CREDITED")}
+                              onClick={() =>
+                                handleUpdateReturnStatus(ret.id, "CREDITED")
+                              }
                               disabled={updatingReturnId === ret.id}
                               className="text-[10px] font-semibold px-2 py-1 rounded-lg border border-[#E5E3DE] hover:bg-green-50 hover:border-green-200 hover:text-green-700 transition-colors disabled:opacity-40"
                             >
-                              {updatingReturnId === ret.id ? "Updating…" : "Mark Credited"}
+                              {updatingReturnId === ret.id
+                                ? "Updating…"
+                                : "Mark Credited"}
                             </button>
                           )}
                         </div>
@@ -1569,39 +1622,41 @@ export default function POEditor({
         </div>
       </div>
 
-      {showReturnModal && (() => {
-        // Compute already-returned qty (non-cancelled) per line
-        const returnedByLine: Record<string, number> = {};
-        for (const ret of returns) {
-          if (ret.status === "CANCELLED") continue;
-          for (const rl of ret.lines) {
-            returnedByLine[rl.poLineId] = (returnedByLine[rl.poLineId] ?? 0) + rl.quantity;
+      {showReturnModal &&
+        (() => {
+          // Compute already-returned qty (non-cancelled) per line
+          const returnedByLine: Record<string, number> = {};
+          for (const ret of returns) {
+            if (ret.status === "CANCELLED") continue;
+            for (const rl of ret.lines) {
+              returnedByLine[rl.poLineId] =
+                (returnedByLine[rl.poLineId] ?? 0) + rl.quantity;
+            }
           }
-        }
-        const returnableLines = lines
-          .filter((l) => l.item !== null)
-          .map((l) => ({
-            id: l.id,
-            quantity: l.quantity,
-            receivedQuantity: l.receivedQuantity,
-            cost: l.cost,
-            alreadyReturnedQuantity: returnedByLine[l.id] ?? 0,
-            item: {
-              itemNumber: l.item!.itemNumber,
-              manufacturer: l.item!.manufacturer,
-              description: l.item!.description,
-            },
-          }));
-        return (
-          <ReturnItemsModal
-            projectId={projectId}
-            poId={po.id}
-            lines={returnableLines}
-            onSaved={handleReturnSaved}
-            onCancel={() => setShowReturnModal(false)}
-          />
-        );
-      })()}
+          const returnableLines = lines
+            .filter((l) => l.item !== null)
+            .map((l) => ({
+              id: l.id,
+              quantity: l.quantity,
+              receivedQuantity: l.receivedQuantity,
+              cost: l.cost,
+              alreadyReturnedQuantity: returnedByLine[l.id] ?? 0,
+              item: {
+                itemNumber: l.item!.itemNumber,
+                manufacturer: l.item!.manufacturer,
+                description: l.item!.description,
+              },
+            }));
+          return (
+            <ReturnItemsModal
+              projectId={projectId}
+              poId={po.id}
+              lines={returnableLines}
+              onSaved={handleReturnSaved}
+              onCancel={() => setShowReturnModal(false)}
+            />
+          );
+        })()}
     </div>
   );
 }

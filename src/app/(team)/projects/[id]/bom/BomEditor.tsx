@@ -776,9 +776,11 @@ export default function BOMEditor({
                               );
                               const allocated = lineAllocations[line.id] ?? 0;
                               const isAllocated = allocated >= line.quantity;
-                              const isPartial = allocated > 0 && allocated < line.quantity;
+                              const isPartial =
+                                allocated > 0 && allocated < line.quantity;
                               const surplus = allocated - line.quantity;
-                              const isOnPO = allocated === 0 && claimed.length > 0;
+                              const isOnPO =
+                                allocated === 0 && claimed.length > 0;
                               const poLink = claimed[0]
                                 ? `/projects/${projectId}/purchase-orders/${claimed[0].po}`
                                 : null;
@@ -839,10 +841,16 @@ export default function BOMEditor({
                                   {/* Allocation / PO status */}
                                   <td className="px-3 py-2 flex flex-col items-center justify-start">
                                     {statusLabel && (
-                                      <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${statusColor}`}>
+                                      <span
+                                        className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${statusColor}`}
+                                      >
                                         {poLink ? (
-                                          <Link href={poLink}>{statusLabel}</Link>
-                                        ) : statusLabel}
+                                          <Link href={poLink}>
+                                            {statusLabel}
+                                          </Link>
+                                        ) : (
+                                          statusLabel
+                                        )}
                                       </span>
                                     )}
                                     {surplus > 0 && (
@@ -870,6 +878,7 @@ export default function BOMEditor({
                                               Number.isNaN(v) ? 0 : v,
                                             );
                                           }}
+                                          disabled={isAllocated}
                                           className="w-12 text-right text-xs bg-transparent focus:outline-none tabular-nums"
                                         />
                                         {line.unit && (
@@ -903,6 +912,7 @@ export default function BOMEditor({
                                               : parseFloat(e.target.value),
                                           )
                                         }
+                                        disabled={isAllocated}
                                         placeholder="20"
                                         className="w-16 text-right text-xs border border-[#E5E3DE] rounded-lg pr-5 pl-2 py-1 focus:outline-none focus:border-[#111] text-blue-600 font-medium transition-colors"
                                       />
@@ -936,6 +946,7 @@ export default function BOMEditor({
                                               : parseFloat(e.target.value),
                                           )
                                         }
+                                        disabled={isAllocated}
                                         placeholder="0.00"
                                         className="w-20 text-right text-xs border border-[#E5E3DE] rounded-lg pl-5 pr-2 py-1 focus:outline-none focus:border-[#111] transition-colors"
                                       />
@@ -964,6 +975,7 @@ export default function BOMEditor({
                                             ? ""
                                             : sellEach
                                         }
+                                        disabled={isAllocated}
                                         onChange={(e) =>
                                           updateMarginFromSell(
                                             line.id,
@@ -985,14 +997,16 @@ export default function BOMEditor({
                                     })}
                                   </td>
                                   {/* Delete */}
-                                  <td className="pr-2">
-                                    <button
-                                      onClick={() => removeLine(line.id)}
-                                      className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded-lg hover:bg-red-50 text-[#ccc] hover:text-red-500 transition-all"
-                                    >
-                                      <Trash2 size={12} />
-                                    </button>
-                                  </td>
+                                  {!isAllocated && (
+                                    <td className="pr-2">
+                                      <button
+                                        onClick={() => removeLine(line.id)}
+                                        className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded-lg hover:bg-red-50 text-[#ccc] hover:text-red-500 transition-all"
+                                      >
+                                        <Trash2 size={12} />
+                                      </button>
+                                    </td>
+                                  )}
                                 </tr>
                               );
                             })}
@@ -1144,6 +1158,9 @@ export default function BOMEditor({
             <div className="bg-white border border-[#E5E3DE] rounded-2xl p-5">
               <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-4">
                 Proposals from this BOM
+              </p>
+              <p className="text-xs text-[#999] mb-4">
+                Accepted proposals set the project budget
               </p>
               {bom.quotes.length === 0 ? (
                 <p className="text-sm text-[#bbb]">

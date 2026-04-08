@@ -84,7 +84,7 @@ export default function MilestonesPanel({
             </div>
           )}
           <button
-            onClick={() => { setShowAdd(true); setEditingId(null); }}
+            onClick={() => { setShowAdd(true); setEditingId(null); }} disabled={true} // Disable bc coming soon
             className="flex items-center gap-1.5 text-xs font-semibold bg-[#111] text-white px-3 py-1.5 rounded-lg hover:bg-[#333] transition-colors"
           >
             <Plus size={11} />
@@ -105,7 +105,7 @@ export default function MilestonesPanel({
       {/* List */}
       {milestones.length === 0 && !showAdd ? (
         <div className="px-6 py-10 text-center">
-          <p className="text-sm text-[#bbb]">No milestones yet</p>
+          <p className="text-sm text-[#bbb]">Coming soon.</p>
         </div>
       ) : (
         <div className="divide-y divide-[#F7F6F3]">

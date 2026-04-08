@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getProjectFinancials } from "./data";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, FileText } from "lucide-react";
 
 const fmt = (n: number) =>
   n.toLocaleString(undefined, {
@@ -103,6 +103,25 @@ export default async function ReportsPage() {
                 {wipCount} project{wipCount !== 1 ? "s" : ""} with uninvoiced
                 contract value
               </p>
+            </div>
+            <ArrowRight
+              size={16}
+              className="text-[#999] group-hover:text-[#111] transition-colors"
+            />
+          </Link>
+
+          <Link
+            href="/reports/invoice-lines"
+            className="bg-white border border-[#E5E3DE] rounded-2xl px-6 py-5 hover:border-[#111] transition-colors group flex items-center justify-between"
+          >
+            <div className="flex items-center gap-3">
+              <FileText size={16} className="text-[#999] group-hover:text-[#111] transition-colors" />
+              <div>
+                <p className="text-sm font-bold text-[#111]">POS - Invoice Lines</p>
+                <p className="text-xs text-[#999] mt-0.5">
+                  Sales rep, item, quantity, sales amount, cost, and profit — one row per line
+                </p>
+              </div>
             </div>
             <ArrowRight
               size={16}

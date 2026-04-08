@@ -23,7 +23,7 @@ const reports = [
   {
     href: "/reports/bc/invoices",
     icon: Receipt,
-    label: "Invoice Lines",
+    label: "POS - Invoice Lines",
     description: "Coming soon",
     disabled: true,
   },

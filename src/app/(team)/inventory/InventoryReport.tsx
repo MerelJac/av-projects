@@ -11,12 +11,15 @@ import {
 
 type Movement = {
   id: string;
-  type: "RECEIPT" | "INVOICE" | "ADJUSTMENT" | "RETURN";
+  type: "RECEIPT" | "INVOICE" | "BOM_ALLOCATION" | "ADJUSTMENT" | "RETURN";
   quantityDelta: number;
   notes: string | null;
   createdAt: string;
   invoiceNumber: string | null;
   purchaseOrderNumber: string | null;
+  projectId: string | null;
+  projectName: string | null;
+  costAmount: number | null;
 };
 
 type ItemRow = {
@@ -26,9 +29,10 @@ type ItemRow = {
   manufacturer: string | null;
   type: string;
   unit: string | null;
+  unitCost: number | null;
   onHand: number;
   totalReceived: number;
-  totalInvoiced: number;
+  totalAllocated: number;
   lastMovementAt: string;
   movements: Movement[];
 };
@@ -37,10 +41,11 @@ const MOVEMENT_CONFIG: Record<
   string,
   { label: string; color: string; delta: "+" | "−" | "±" }
 > = {
-  RECEIPT:    { label: "Receipt",    color: "text-green-600",  delta: "+" },
-  INVOICE:    { label: "Invoice",    color: "text-red-500",    delta: "−" },
-  ADJUSTMENT: { label: "Adjustment", color: "text-amber-600",  delta: "±" },
-  RETURN:     { label: "Return",     color: "text-purple-600", delta: "−" },
+  RECEIPT:        { label: "Received",   color: "text-green-600",  delta: "+" },
+  BOM_ALLOCATION: { label: "Allocated",  color: "text-blue-600",   delta: "−" },
+  INVOICE:        { label: "Invoice",    color: "text-red-500",    delta: "−" },
+  ADJUSTMENT:     { label: "Adjustment", color: "text-amber-600",  delta: "±" },
+  RETURN:         { label: "Return",     color: "text-purple-600", delta: "−" },
 };
 
 function formatDate(iso: string) {
@@ -83,9 +88,9 @@ export default function InventoryReport({ rows }: { rows: ItemRow[] }) {
               Inventory
             </h1>
             <p className="text-xs text-[#999] mt-1">
-              On-hand quantities based on receipts and invoices
+              On-hand quantities based on receipts and BOM allocations
             </p>
-            <p className="text-xs text-[#bbb] mt-1">Inventory updates automatically when shipments are received or invoices are created.</p>
+            <p className="text-xs text-[#bbb] mt-1">Inventory updates when shipments are received. Items are allocated to projects automatically via BOM.</p>
           </div>
 
           {/* Summary chips */}
@@ -159,7 +164,7 @@ export default function InventoryReport({ rows }: { rows: ItemRow[] }) {
                     Received
                   </th>
                   <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">
-                    Invoiced
+                    Allocated
                   </th>
                   <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-5 py-3">
                     On Hand
@@ -207,8 +212,8 @@ export default function InventoryReport({ rows }: { rows: ItemRow[] }) {
                           </span>
                         </td>
                         <td className="px-3 py-3 text-right">
-                          <span className="text-xs font-semibold text-red-500">
-                            −{row.totalInvoiced}
+                          <span className="text-xs font-semibold text-blue-600">
+                            −{row.totalAllocated}
                           </span>
                         </td>
                         <td className="px-5 py-3 text-right">
@@ -244,53 +249,65 @@ export default function InventoryReport({ rows }: { rows: ItemRow[] }) {
                             <p className="text-[10px] font-semibold uppercase tracking-widest text-[#bbb] mb-2">
                               Movement History
                             </p>
-                            <div className="space-y-1">
+                            <div className="space-y-1.5">
                               {row.movements.map((m) => {
                                 const cfg =
                                   MOVEMENT_CONFIG[m.type] ??
                                   MOVEMENT_CONFIG.ADJUSTMENT;
                                 const isIn = m.quantityDelta > 0;
+                                const isBomAlloc = m.type === "BOM_ALLOCATION";
                                 return (
                                   <div
                                     key={m.id}
-                                    className="flex items-center gap-3 text-xs"
+                                    className={`flex items-start gap-3 text-xs py-1 px-2 rounded-lg ${isBomAlloc ? "bg-blue-50/60" : ""}`}
                                   >
                                     {isIn ? (
                                       <ArrowDownCircle
                                         size={13}
-                                        className="text-green-500 flex-shrink-0"
+                                        className="text-green-500 flex-shrink-0 mt-0.5"
                                       />
                                     ) : (
                                       <ArrowUpCircle
                                         size={13}
-                                        className="text-red-400 flex-shrink-0"
+                                        className={`flex-shrink-0 mt-0.5 ${isBomAlloc ? "text-blue-500" : "text-red-400"}`}
                                       />
                                     )}
-                                    <span className={`font-semibold w-20 ${cfg.color}`}>
-                                      {cfg.label}
-                                    </span>
-                                    <span className="font-mono font-semibold text-[#111] w-12">
-                                      {cfg.delta}
-                                      {Math.abs(m.quantityDelta)}
-                                    </span>
-                                    {m.invoiceNumber && (
-                                      <span className="text-[#888] font-mono">
-                                        #{m.invoiceNumber}
+                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 min-w-0">
+                                      <span className={`font-semibold ${cfg.color}`}>
+                                        {cfg.label}
                                       </span>
-                                    )}
-                                    <span className="text-[#bbb]">
-                                      {formatDate(m.createdAt)}
-                                    </span>
-                                    {m.notes && (
-                                      <span className="text-[#aaa]">
-                                        — {m.notes}
+                                      <span className="font-mono font-semibold text-[#111]">
+                                        {cfg.delta}{Math.abs(m.quantityDelta)}
                                       </span>
-                                    )}
                                       {m.purchaseOrderNumber && (
-                                      <span className="text-[#aaa]">
-                                        — {m.purchaseOrderNumber}
+                                        <span className="text-[#888] font-mono">
+                                          PO {m.purchaseOrderNumber}
+                                        </span>
+                                      )}
+                                      {isBomAlloc && m.projectName && (
+                                        <span className="font-semibold text-blue-700">
+                                          → {m.projectName}
+                                        </span>
+                                      )}
+                                      {isBomAlloc && m.costAmount != null && (
+                                        <span className="text-blue-600 font-mono">
+                                          ${m.costAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} cost
+                                        </span>
+                                      )}
+                                      {m.invoiceNumber && (
+                                        <span className="text-[#888] font-mono">
+                                          Inv #{m.invoiceNumber}
+                                        </span>
+                                      )}
+                                      <span className="text-[#bbb]">
+                                        {formatDate(m.createdAt)}
                                       </span>
-                                    )}
+                                      {m.notes && (
+                                        <span className="text-[#aaa]">
+                                          — {m.notes}
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
                                 );
                               })}
