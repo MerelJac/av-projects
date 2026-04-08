@@ -780,11 +780,21 @@ export default function BOMEditor({
                               const claimed = claimedPOs.filter(
                                 (c) => c.itemId === line.itemId,
                               );
+                              console.log("claimed for line", line.id, claimed);
                               const allocated = lineAllocations[line.id] ?? 0;
-                              const isAllocated = allocated >= line.quantity && line.quantity > 0;
+                              const isAllocated =
+                                allocated >= line.quantity && line.quantity > 0;
                               const isPartial =
                                 allocated > 0 && allocated < line.quantity;
-                              const surplus = (itemOnHand[line.itemId ?? ""] ?? 0) - line.quantity;
+                              // console.log("Item on hand", itemOnHand);
+
+                              const surplus =
+                                itemOnHand[line.itemId ?? ""] ?? 0;
+                              // console.log(
+                              //   "surplus for line item",
+                              //   line.itemId,
+                              //   surplus,
+                              // );
                               const isOnPO =
                                 allocated === 0 && claimed.length > 0;
                               const poLink = claimed[0]
@@ -884,8 +894,7 @@ export default function BOMEditor({
                                               Number.isNaN(v) ? 0 : v,
                                             );
                                           }}
-                                             disabled={isAllocated}
-                              
+                                          disabled={isAllocated}
                                           className="w-12 text-right text-xs bg-transparent focus:outline-none tabular-nums"
                                         />
                                         {line.unit && (

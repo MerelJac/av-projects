@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
 // Returns itemIds already on a PO line for this project (with quantity)
-// so the modal can disable those checkboxes when qty matches.
+// so the modal can disable those checkboxes when qty matches. 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -23,6 +23,6 @@ export async function GET(
     po: l.poId,
     poNumber: l.purchaseOrder.poNumber,
   }));
-  console.log("claimed lines", claimed);
+  console.log("claimed lines from server", claimed);
   return NextResponse.json(claimed);
 }
