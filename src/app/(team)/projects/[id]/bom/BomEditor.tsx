@@ -884,6 +884,7 @@ export default function BOMEditor({
                                               Number.isNaN(v) ? 0 : v,
                                             );
                                           }}
+                                             disabled={isAllocated}
                               
                                           className="w-12 text-right text-xs bg-transparent focus:outline-none tabular-nums"
                                         />

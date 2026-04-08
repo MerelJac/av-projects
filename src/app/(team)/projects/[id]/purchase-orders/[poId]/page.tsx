@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import POEditor from "./POEditor";
+import { authOptions } from "@/lib/auth";
+import { getServerSession } from "next-auth";
 
 export default async function POPage({
   params,
@@ -9,6 +11,9 @@ export default async function POPage({
 }) {
   const { id, poId } = await params;
 
+
+    const session = await getServerSession(authOptions);
+    const currentUserId = session?.user?.id;
   const [po, users] = await Promise.all([
     prisma.purchaseOrder.findUnique({
       where: { id: poId },
@@ -51,5 +56,5 @@ export default async function POPage({
     returns: po.returns,
   };
 
-  return <POEditor po={poSerialized} projectId={id} users={users} />;
+  return <POEditor po={poSerialized} projectId={id} users={users} currentUserId={currentUserId} />;
 }

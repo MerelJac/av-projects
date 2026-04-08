@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import ReturnItemsModal from "@/app/components/team/purchase-orders/ReturnItemsModal";
+import NotesPanel from "@/app/components/NotesPanel";
 
 type POLine = {
   id: string;
@@ -156,10 +157,12 @@ export default function POEditor({
   po,
   projectId,
   users,
+  currentUserId
 }: {
   po: PO;
   projectId: string;
   users: User[];
+  currentUserId: string | undefined;
 }) {
   const router = useRouter();
   const [status, setStatus] = useState(po.status);
@@ -1066,11 +1069,13 @@ export default function POEditor({
                         <div className="flex items-center justify-end gap-1">
                           <span className="text-sm text-[#666]">
                             $
-                            {(line.cost * line.quantity).toLocaleString(undefined, {
-                              minimumFractionDigits: 2,
-                            })}
+                            {(line.cost * line.quantity).toLocaleString(
+                              undefined,
+                              {
+                                minimumFractionDigits: 2,
+                              },
+                            )}
                           </span>
-                       
                         </div>
                       </td>
 
@@ -1657,6 +1662,14 @@ export default function POEditor({
             />
           );
         })()}
+      {/* Internal Notes */}
+      <div className="max-w-4xl mx-auto px-6 py-10">
+        <NotesPanel
+          documentType="PURCHASE_ORDER"
+          documentId={po.id}
+          currentUserId={currentUserId}
+        />
+      </div>
     </div>
   );
 }

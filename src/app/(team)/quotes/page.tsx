@@ -20,7 +20,7 @@ export default async function QuotesPage() {
   return (
     <div className="max-w-5xl mx-auto px-6 py-10">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold text-[#111] tracking-tight">Quotes</h1>
+        <h1 className="text-2xl font-bold text-[#111] tracking-tight">Proposals</h1>
       </div>
 
       <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
@@ -28,7 +28,7 @@ export default async function QuotesPage() {
           <thead>
             <tr className="border-b border-[#F0EEE9]">
               <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-5 py-3">
-                Quote
+                Proposal
               </th>
               <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">
                 Customer
