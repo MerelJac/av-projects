@@ -199,7 +199,7 @@ async function getReportRows(projectId: string): Promise<ReportRow[]> {
       description: inv.invoiceNumber ?? inv.id,
       itemNumber: "",
       manufacturer: "",
-      vendorOrSource: "Client",
+      vendorOrSource: `${inv.status}`,
       qty: 1,
       unitCost: amt,
       total: amt,
