@@ -251,8 +251,8 @@ export default async function ItemPage({
                       <td className="px-3 py-3">
                         <span className={`text-xs font-semibold ${
                           m.type === "RECEIPT" ? "text-green-600" :
-                          m.type === "INVOICE" ? "text-red-500" :
-                          m.type === "RETURN"  ? "text-purple-600" :
+                          m.type === "RETURN_TO_VENDOR" ? "text-red-500" :
+                          m.type === "RETURN_TO_INVENTORY"  ? "text-purple-600" :
                           "text-amber-600"
                         }`}>
                           {m.type.charAt(0) + m.type.slice(1).toLowerCase()}

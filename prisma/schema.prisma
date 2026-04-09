@@ -736,8 +736,8 @@ enum InventoryMovementType {
   RECEIPT // shipment received — quantity increases
   BOM_ALLOCATION // item consumed by project BOM on receipt — quantity decreases
   ADJUSTMENT // manual correction
-  RETURN // PO return — quantity decreases
-  INVOICE // legacy: kept for history, no longer written
+  RETURN_TO_INVENTORY // PO return to shelf — quantity increases
+  RETURN_TO_VENDOR // PO return to vendor — quantity decreases
 }
 
 /// Append-only ledger. on-hand = SUM(quantityDelta) per item.

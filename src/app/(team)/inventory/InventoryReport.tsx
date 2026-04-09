@@ -11,7 +11,12 @@ import {
 
 type Movement = {
   id: string;
-  type: "RECEIPT" | "INVOICE" | "BOM_ALLOCATION" | "ADJUSTMENT" | "RETURN";
+  type:
+    | "RECEIPT"
+    | "BOM_ALLOCATION"
+    | "ADJUSTMENT"
+    | "RETURN_TO_VENDOR"
+    | "RETURN_TO_INVENTORY";
   quantityDelta: number;
   notes: string | null;
   createdAt: string;
@@ -41,11 +46,19 @@ const MOVEMENT_CONFIG: Record<
   string,
   { label: string; color: string; delta: "+" | "−" | "±" }
 > = {
-  RECEIPT:        { label: "Received",   color: "text-green-600",  delta: "+" },
-  BOM_ALLOCATION: { label: "Allocated",  color: "text-blue-600",   delta: "−" },
-  INVOICE:        { label: "Invoice",    color: "text-red-500",    delta: "−" },
-  ADJUSTMENT:     { label: "Adjustment", color: "text-amber-600",  delta: "±" },
-  RETURN:         { label: "Return",     color: "text-purple-600", delta: "−" },
+  RECEIPT: { label: "Received", color: "text-green-600", delta: "+" },
+  BOM_ALLOCATION: { label: "Allocated", color: "text-blue-600", delta: "−" },
+  ADJUSTMENT: { label: "Adjustment", color: "text-amber-600", delta: "±" },
+  RETURN_TO_INVENTORY: {
+    label: "Return to Inventory",
+    color: "text-purple-600",
+    delta: "−",
+  },
+  RETURN_TO_VENDOR: {
+    label: "Return to Vendor",
+    color: "text-purple-600",
+    delta: "+",
+  },
 };
 
 function formatDate(iso: string) {
@@ -90,7 +103,10 @@ export default function InventoryReport({ rows }: { rows: ItemRow[] }) {
             <p className="text-xs text-[#999] mt-1">
               On-hand quantities based on receipts and BOM allocations
             </p>
-            <p className="text-xs text-[#bbb] mt-1">Inventory updates when shipments are received. Items are allocated to projects automatically via BOM.</p>
+            <p className="text-xs text-[#bbb] mt-1">
+              Inventory updates when shipments are received. Items are allocated
+              to projects automatically via BOM.
+            </p>
           </div>
 
           {/* Summary chips */}
@@ -133,7 +149,11 @@ export default function InventoryReport({ rows }: { rows: ItemRow[] }) {
                   : "bg-white text-[#666] border-[#E5E3DE] hover:bg-[#F7F6F3]"
               }`}
             >
-              {f === "all" ? `All (${rows.length})` : f === "low" ? `Low (${lowCount})` : `Out (${outCount})`}
+              {f === "all"
+                ? `All (${rows.length})`
+                : f === "low"
+                  ? `Low (${lowCount})`
+                  : `Out (${outCount})`}
             </button>
           ))}
         </div>
@@ -187,9 +207,15 @@ export default function InventoryReport({ rows }: { rows: ItemRow[] }) {
                         <td className="px-5 py-3">
                           <div className="flex items-center gap-2">
                             {isExpanded ? (
-                              <ChevronDown size={13} className="text-[#aaa] flex-shrink-0" />
+                              <ChevronDown
+                                size={13}
+                                className="text-[#aaa] flex-shrink-0"
+                              />
                             ) : (
-                              <ChevronRight size={13} className="text-[#aaa] flex-shrink-0" />
+                              <ChevronRight
+                                size={13}
+                                className="text-[#aaa] flex-shrink-0"
+                              />
                             )}
                             <div>
                               <p className="text-xs font-mono font-semibold text-[#111]">
@@ -244,7 +270,10 @@ export default function InventoryReport({ rows }: { rows: ItemRow[] }) {
 
                       {/* Expanded movement history */}
                       {isExpanded && (
-                        <tr key={`${row.id}-history`} className="border-b border-[#F7F6F3] bg-[#FAFAF9]">
+                        <tr
+                          key={`${row.id}-history`}
+                          className="border-b border-[#F7F6F3] bg-[#FAFAF9]"
+                        >
                           <td colSpan={5} className="px-12 pb-4 pt-1">
                             <p className="text-[10px] font-semibold uppercase tracking-widest text-[#bbb] mb-2">
                               Movement History
@@ -273,11 +302,14 @@ export default function InventoryReport({ rows }: { rows: ItemRow[] }) {
                                       />
                                     )}
                                     <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 min-w-0">
-                                      <span className={`font-semibold ${cfg.color}`}>
+                                      <span
+                                        className={`font-semibold ${cfg.color}`}
+                                      >
                                         {cfg.label}
                                       </span>
                                       <span className="font-mono font-semibold text-[#111]">
-                                        {cfg.delta}{Math.abs(m.quantityDelta)}
+                                        {cfg.delta}
+                                        {Math.abs(m.quantityDelta)}
                                       </span>
                                       {m.purchaseOrderNumber && (
                                         <span className="text-[#888] font-mono">
@@ -291,7 +323,15 @@ export default function InventoryReport({ rows }: { rows: ItemRow[] }) {
                                       )}
                                       {isBomAlloc && m.costAmount != null && (
                                         <span className="text-blue-600 font-mono">
-                                          ${m.costAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} cost
+                                          $
+                                          {m.costAmount.toLocaleString(
+                                            undefined,
+                                            {
+                                              minimumFractionDigits: 2,
+                                              maximumFractionDigits: 2,
+                                            },
+                                          )}{" "}
+                                          cost
                                         </span>
                                       )}
                                       {m.invoiceNumber && (

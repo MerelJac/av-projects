@@ -84,10 +84,11 @@ export async function PATCH(
             disposition === "KEEP_IN_INVENTORY"
               ? line.quantity   // positive: stock comes back
               : -line.quantity; // negative: item leaves
+            const type = disposition === "KEEP_IN_INVENTORY" ? "RETURN_TO_INVENTORY" : "RETURN_TO_VENDOR";
           await prisma.inventoryMovement.create({
             data: {
               itemId,
-              type: "RETURN",
+              type, // either RETURN_TO_INVENTORY or RETURN_TO_VENDOR based on disposition
               quantityDelta,
               notes:
                 disposition === "KEEP_IN_INVENTORY"

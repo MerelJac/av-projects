@@ -72,7 +72,7 @@ export default async function InventoryPage() {
     const entry = byItem.get(m.itemId)!;
     entry.onHand += m.quantityDelta;
     if (m.type === "RECEIPT") entry.totalReceived += m.quantityDelta;
-    if (m.type === "BOM_ALLOCATION" || m.type === "INVOICE") entry.totalAllocated += Math.abs(m.quantityDelta);
+    if (m.type === "BOM_ALLOCATION") entry.totalAllocated += Math.abs(m.quantityDelta);
     if (new Date(m.createdAt) > new Date(entry.lastMovementAt)) {
       entry.lastMovementAt = m.createdAt;
     }

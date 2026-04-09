@@ -139,7 +139,6 @@ export default async function ProjectPage({
   } catch {
     // Pre-migration
   }
-  console;
 
   const projectForFinancials = {
     ...project,
