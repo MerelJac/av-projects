@@ -3,7 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string; poId: string; returnId: string }> }
+  {
+    params,
+  }: { params: Promise<{ id: string; poId: string; returnId: string }> },
 ) {
   const { poId, returnId } = await params;
   const body = await req.json();
@@ -17,12 +19,16 @@ export async function PATCH(
   const updated = await prisma.purchaseOrderReturn.update({
     where: { id: returnId, poId },
     data: {
-      ...(status !== undefined && { status: status as "PENDING" | "SENT" | "CREDITED" | "CANCELLED" }),
+      ...(status !== undefined && {
+        status: status as "PENDING" | "SENT" | "CREDITED" | "CANCELLED",
+      }),
       ...(rmaNumber !== undefined && { rmaNumber: rmaNumber ?? null }),
       ...(notes !== undefined && { notes: notes ?? null }),
       ...(reason !== undefined && { reason: reason ?? null }),
     },
   });
+
+  let projectId: string | null = null;
 
   // When a return is credited, auto-update PO status if all received items are returned
   if (status === "CREDITED") {
@@ -40,11 +46,19 @@ export async function PATCH(
       },
     });
 
+    projectId = po?.projectId ?? null;
+    if (!projectId) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    }
+
     if (po && po.status !== "CANCELLED" && po.status !== "DRAFT") {
-      const totalReceived = po.lines.reduce((s, l) => s + l.receivedQuantity, 0);
+      const totalReceived = po.lines.reduce(
+        (s, l) => s + l.receivedQuantity,
+        0,
+      );
       const totalCredited = po.lines.reduce(
         (s, l) => s + l.returnLines.reduce((rs, r) => rs + r.quantity, 0),
-        0
+        0,
       );
 
       let newStatus: "PARTIALLY_RETURNED" | "RETURNED" | null = null;
@@ -70,21 +84,31 @@ export async function PATCH(
         where: { id: returnId },
         include: {
           lines: {
-            include: { poLine: { select: { itemId: true } } },
+            include: {
+              poLine: {
+                select: {
+                  itemId: true,
+                  purchaseOrder: { select: { projectId: true } },
+                },
+              },
+            },
           },
         },
       });
       if (returnWithLines) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const disposition = (returnWithLines as any).disposition ?? "RETURN_TO_VENDOR";
+        const disposition =
+          (returnWithLines.disposition as string) ?? "RETURN_TO_VENDOR";
         for (const line of returnWithLines.lines) {
           const itemId = line.poLine.itemId;
           if (!itemId) continue;
           const quantityDelta =
             disposition === "KEEP_IN_INVENTORY"
-              ? line.quantity   // positive: stock comes back
+              ? line.quantity // positive: stock comes back
               : -line.quantity; // negative: item leaves
-            const type = disposition === "KEEP_IN_INVENTORY" ? "RETURN_TO_INVENTORY" : "RETURN_TO_VENDOR";
+          const type =
+            disposition === "KEEP_IN_INVENTORY"
+              ? "RETURN_TO_INVENTORY"
+              : "RETURN_TO_VENDOR";
           await prisma.inventoryMovement.create({
             data: {
               itemId,
@@ -93,6 +117,24 @@ export async function PATCH(
               notes:
                 disposition === "KEEP_IN_INVENTORY"
                   ? `Kept in inventory — not returned to vendor (${returnWithLines.returnNumber ?? returnId})`
+                  : `Returned to vendor (${returnWithLines.returnNumber ?? returnId})`,
+            },
+          });
+
+          // refund the projectCost
+          await prisma.projectCost.create({
+            data: {
+              poLink: returnWithLines.poId ?? returnId,
+              itemId,
+              costType: "RETURN",
+              projectId: projectId as string,
+              quantity: line.quantity,
+              unitCost: line.creditPerUnit ?? null,
+              amount: -(line.quantity * (line.creditPerUnit ?? 0)),
+              poReturnId: returnId,
+              notes:
+                disposition === "KEEP_IN_INVENTORY"
+                  ? `Return kept in inventory (${returnWithLines.returnNumber ?? returnId})`
                   : `Returned to vendor (${returnWithLines.returnNumber ?? returnId})`,
             },
           });
@@ -108,14 +150,21 @@ export async function PATCH(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: Promise<{ id: string; poId: string; returnId: string }> }
+  {
+    params,
+  }: { params: Promise<{ id: string; poId: string; returnId: string }> },
 ) {
   const { poId, returnId } = await params;
   // Only PENDING returns can be deleted
-  const ret = await prisma.purchaseOrderReturn.findUnique({ where: { id: returnId, poId } });
+  const ret = await prisma.purchaseOrderReturn.findUnique({
+    where: { id: returnId, poId },
+  });
   if (!ret) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (ret.status !== "PENDING") {
-    return NextResponse.json({ error: "Only PENDING returns can be deleted" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Only PENDING returns can be deleted" },
+      { status: 400 },
+    );
   }
   await prisma.purchaseOrderReturn.delete({ where: { id: returnId } });
   return new NextResponse(null, { status: 204 });

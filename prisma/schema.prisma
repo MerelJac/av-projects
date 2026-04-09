@@ -344,6 +344,8 @@ enum ProjectCostType {
   MATERIAL
   LABOR
   FREIGHT
+  RETURN
+  TAX
   OTHER
 }
 
@@ -366,6 +368,9 @@ model ProjectCost {
   createdAt  DateTime         @default(now())
   shipmentId String?
   shipment   Shipment?        @relation(fields: [shipmentId], references: [id])
+
+  poReturnId String?
+  poReturn   PurchaseOrderReturn? @relation(fields: [poReturnId], references: [id])
 
   @@index([projectId])
   @@index([bomId])
@@ -593,6 +598,7 @@ model PurchaseOrderReturn {
   createdAt    DateTime                  @default(now())
   updatedAt    DateTime                  @updatedAt
   lines        PurchaseOrderReturnLine[]
+  projectCosts ProjectCost[]
 }
 
 model PurchaseOrderReturnLine {
