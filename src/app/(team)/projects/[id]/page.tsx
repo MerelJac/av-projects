@@ -43,6 +43,7 @@ export default async function ProjectPage({
     prisma.project.findUnique({
       where: { id },
       include: {
+        costs: true,
         customer: true,
         shipments: true,
         timeEntries: true,
@@ -142,6 +143,7 @@ export default async function ProjectPage({
 
   const projectForFinancials = {
     ...project,
+      projectCosts: project.costs, // projectCosts
     purchaseOrders: project.purchaseOrders.map((po) => ({
       ...po,
       lines: po.lines.map((l) => ({
@@ -152,7 +154,7 @@ export default async function ProjectPage({
   };
 
   const financials = calcProjectFinancials(projectForFinancials);
-
+  console.log('financials', financials);
   const changeOrders = project.quotes.filter((q) => q.isChangeOrder);
   const contractBase = financials.contractBase;
   const changeOrderTotal = financials.changeOrderTotal;
@@ -161,8 +163,8 @@ export default async function ProjectPage({
   const shippingCost = financials.shippingCost;
   const returnCredit = financials.returnCredit;
 
-  const materialCost = financials.materialCost;
-
+  const materialCost = financials.materialCosts;
+  const materialsIncludingReturns = financials.poCostGrossMinusReturns;
   // Labor cost: actual logged hours × cost rate per scope
   const laborCost = financials.laborCost;
 
@@ -277,27 +279,18 @@ export default async function ProjectPage({
                     maximumFractionDigits: 2,
                   })}
                 </p>
-                {materialCost > 0 && (
+                {materialsIncludingReturns > 0 && (
                   // FROM
                   <p className="text-xs text-[#999] mt-0.5">
                     $
-                    {materialCost.toLocaleString(undefined, {
+                    {materialsIncludingReturns.toLocaleString(undefined, {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })}{" "}
                     materials
                   </p>
                 )}
-                {inventoryAllocatedCost > 0 && (
-                  <p className=" pl-2 text-xs text-[#bbb] mt-0.5">
-                    $
-                    {inventoryAllocatedCost.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}{" "}
-                    materials received
-                  </p>
-                )}
+                
                 {laborCost > 0 && (
                   <p className="text-xs text-[#999] mt-0.5">
                     $

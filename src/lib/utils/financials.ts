@@ -1,7 +1,4 @@
 // lib/financials.ts
-// Gloal financial calculations related to projects, quotes, purchase orders, etc.
-// BE CAREFUL CHANGING THIS FILE - it's used in multiple places and changes can have wide impact.
-// Define the minimal shape each calculator needs
 type QuoteSlice = {
   total: number | null;
   status: string;
@@ -20,6 +17,10 @@ type ScopeSlice = {
   timeEntries: { hours: number }[];
 };
 type InvoiceSlice = { amount: number | null; status: string };
+type ProjectCostSlice = {
+  costType: string;
+  amount: number;
+};
 
 export function calcContractValue(quotes: QuoteSlice[]) {
   const contractBase = quotes
@@ -36,27 +37,27 @@ export function calcContractValue(quotes: QuoteSlice[]) {
 }
 
 export function calcMaterialCost(
-  purchaseOrders: POSlice[],
+  projectCosts: ProjectCostSlice[],
   shipments: ShipmentSlice[],
 ) {
-  // Includes draft, partially received, sent, and fully received PO Costs. Excludes Cancelled POs from Total.
-  const activeLines = purchaseOrders
-    .filter((po) => po.status !== "CANCELLED")
-    .flatMap((po) => po.lines);
+  const materialCosts = projectCosts.filter((c) => c.costType === "MATERIAL");
+  const returnCosts = projectCosts.filter((c) => c.costType === "RETURN");
+  const freightCosts = projectCosts.filter((c) => c.costType === "FREIGHT");
 
-  const grossPoCost = activeLines.reduce((s, l) => s + l.cost * l.quantity, 0);
-  const returnCredit = activeLines.reduce((s, l) => {
-    const returned = l.returnedQuantity ?? 0;
-    return s + l.cost * Math.max(0, returned);
-  }, 0);
-  const poCost = grossPoCost - returnCredit;
-  const shippingCost = shipments.reduce((s, sh) => s + Number(sh.cost ?? 0), 0);
+  const grossPoCost = materialCosts.reduce((s, c) => s + c.amount, 0);
+  // RETURN amounts are stored as negative, so we subtract them (double negative = add back credit)
+  const returnCredit = returnCosts.reduce((s, c) => s + Math.abs(c.amount), 0);
+  const poCostGrossMinusReturns = grossPoCost - returnCredit;
+  const shippingCost =
+    shipments.reduce((s, sh) => s + Number(sh.cost ?? 0), 0) +
+    freightCosts.reduce((s, c) => s + c.amount, 0);
+
   return {
     grossPoCost,
     returnCredit,
-    poCost,
+    poCostGrossMinusReturns,
     shippingCost,
-    materialCost: poCost + shippingCost,
+    materialCosts: materialCosts.reduce((s, c) => s + c.amount, 0),
   };
 }
 
@@ -98,6 +99,7 @@ export function calcInvoicing(invoices: InvoiceSlice[]) {
 export function calcProjectFinancials(p: {
   quotes: QuoteSlice[];
   purchaseOrders: POSlice[];
+  projectCosts: ProjectCostSlice[];
   shipments: ShipmentSlice[];
   scopes: ScopeSlice[];
   invoices: InvoiceSlice[];
@@ -105,8 +107,8 @@ export function calcProjectFinancials(p: {
   const { contractBase, changeOrderTotal, totalContract } = calcContractValue(
     p.quotes,
   );
-  const { grossPoCost, returnCredit, poCost, shippingCost, materialCost } =
-    calcMaterialCost(p.purchaseOrders, p.shipments);
+  const { grossPoCost, returnCredit, poCostGrossMinusReturns, shippingCost, materialCosts } =
+    calcMaterialCost(p.projectCosts, p.shipments);
   const {
     laborCost,
     budgetedLaborCost,
@@ -115,7 +117,7 @@ export function calcProjectFinancials(p: {
   } = calcLaborCost(p.scopes);
   const { invoiced, collected, outstanding } = calcInvoicing(p.invoices);
 
-  const cogs = materialCost + laborCost + shippingCost - returnCredit || 0;
+  const cogs = materialCosts + laborCost + shippingCost - returnCredit;
   const grossProfit = totalContract - cogs;
   const marginPct =
     totalContract > 0 ? (grossProfit / totalContract) * 100 : null;
@@ -130,9 +132,9 @@ export function calcProjectFinancials(p: {
     totalContract,
     grossPoCost,
     returnCredit,
-    poCost,
+    poCostGrossMinusReturns,
     shippingCost,
-    materialCost,
+    materialCosts,
     laborCost,
     budgetedLaborCost,
     totalActualHours,
