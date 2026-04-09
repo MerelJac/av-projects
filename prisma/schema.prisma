@@ -358,7 +358,7 @@ model ProjectCost {
   bomLine    BOMLine?         @relation(fields: [bomLineId], references: [id])
   itemId     String?
   costType   ProjectCostType
-  unitCost   Decimal?
+  unitCost   Float?
   quantity   Float?
   amount     Float
   poLink     String? // PO number or ID reference

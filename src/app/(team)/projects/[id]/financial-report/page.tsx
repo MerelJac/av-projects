@@ -19,7 +19,6 @@ type ReportRow = {
 const CATEGORY_STYLES: Record<string, string> = {
   "PO Material": "bg-blue-50 text-blue-700",
   "Return Credit": "bg-green-50 text-green-700",
-  "Inventory Allocation": "bg-purple-50 text-purple-700",
   Labor: "bg-amber-50 text-amber-700",
   Shipping: "bg-gray-100 text-gray-600",
   Invoice: "bg-[#111] text-white",

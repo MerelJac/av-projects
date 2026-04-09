@@ -36,6 +36,8 @@ export async function POST(
   });
   const vendorPriceMap = new Map(vendorPrices.map((p: { itemId: string; cost: number }) => [p.itemId, p.cost]));
 
+  // connect BOM lines to PO
+
   // Generate a human-readable sequential PO number inside a transaction
   const po = await prisma.$transaction(async (tx) => {
     const count = await tx.purchaseOrder.count();

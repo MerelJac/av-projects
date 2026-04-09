@@ -198,6 +198,7 @@ export default function BOMEditor({
     (costsByBomLine[c.bomLineId] ??= []).push(c);
   }
 
+  console.log(" project costs:", projectCosts, costsByBomLine);
   // Build lookup: poNumber or poId → poId for linking
   const poIdByKey: Record<string, string> = {};
   for (const po of projectPOs) {
@@ -820,8 +821,11 @@ export default function BOMEditor({
                               const claimed = claimedPOs.filter(
                                 (c) => c.itemId === line.itemId,
                               );
-                              const allocated = 0;
                               const lineCosts = costsByBomLine[line.id] ?? [];
+                              const allocated = lineCosts.reduce(
+                                (sum, c) => sum + (c.quantity ?? 0),
+                                0,
+                              );
                               const isAllocated =
                                 allocated >= line.quantity && line.quantity > 0;
                               const isPartial =
@@ -890,40 +894,38 @@ export default function BOMEditor({
                                   {/* Allocation / PO status + project costs */}
                                   <td className="px-3 py-2">
                                     <div className="flex flex-col gap-1 items-start">
-                                      {statusLabel && (
-                                        <span
-                                          className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${statusColor}`}
-                                        >
-                                          {poLink ? (
-                                            <Link href={poLink}>{statusLabel}</Link>
-                                          ) : (
-                                            statusLabel
-                                          )}
-                                        </span>
-                                      )}
                                       {lineCosts.map((c) => {
                                         const poId = c.poLink
                                           ? poIdByKey[c.poLink]
                                           : null;
-                                        const totalAmt = Number(c.amount);
-                                        const label = `${c.costType === "FREIGHT" ? "Freight" : "Material"} · $${totalAmt.toLocaleString(undefined, { minimumFractionDigits: 2 })}${c.poLink ? ` · ${c.poLink}` : ""}`;
-                                        const badge = (
-                                          <span
+                                        const content = (
+                                          <div
                                             key={c.id}
-                                            className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${
-                                              c.costType === "FREIGHT"
-                                                ? "bg-blue-50 text-blue-700"
-                                                : "bg-green-50 text-green-700"
-                                            }`}
+                                            className="flex flex-col gap-0.5"
                                           >
-                                            {label}
-                                          </span>
+                                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-green-50 text-green-700 whitespace-nowrap">
+                                              {c.poLink ?? "Received"}
+                                            </span>
+                                            <span className="text-[10px] text-[#999] tabular-nums">
+                                              Actual Cost: $
+                                              {Number(c.amount).toLocaleString(
+                                                undefined,
+                                                { minimumFractionDigits: 2 },
+                                              )}
+                                            </span>
+                                          </div>
                                         );
                                         return poId ? (
-                                          <Link key={c.id} href={`/projects/${projectId}/purchase-orders/${poId}`}>
-                                            {badge}
+                                          <Link
+                                            key={c.id}
+                                            href={`/projects/${projectId}/purchase-orders/${poId}`}
+                                            className="hover:opacity-70 transition-opacity"
+                                          >
+                                            {content}
                                           </Link>
-                                        ) : badge;
+                                        ) : (
+                                          content
+                                        );
                                       })}
                                     </div>
                                   </td>
