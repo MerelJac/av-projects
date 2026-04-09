@@ -203,7 +203,7 @@ export async function GET(
   }
 
   // ── 4. Labor (time entries) ───────────────────────────────────────────────────
-  const scopes = await prisma.scope.findMany({
+  const scopes = await prisma.projectScope.findMany({
     where: { projectId: id },
     include: {
       timeEntries: {
@@ -255,7 +255,7 @@ export async function GET(
       qty: 1,
       unitCost: cost,
       total: cost,
-      reference: sh.trackingNumber ?? sh.id,
+      reference: sh.tracking ?? sh.id,
     });
   }
 

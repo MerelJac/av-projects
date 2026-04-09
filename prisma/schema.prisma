@@ -335,6 +335,40 @@ model Project {
   boms           BillOfMaterials[]
   salesOrders    SalesOrder[]
   scopes         ProjectScope[]
+  costs          ProjectCost[]
+}
+
+// ─── Project Costs ─────────────────────────────────────────────────────────────
+
+enum ProjectCostType {
+  MATERIAL
+  LABOR
+  FREIGHT
+  OTHER
+}
+
+/// Tracks actual costs incurred per project (from BOM lines, POs, etc.)
+model ProjectCost {
+  id         String           @id @default(uuid())
+  projectId  String
+  project    Project          @relation(fields: [projectId], references: [id])
+  bomId      String?
+  bom        BillOfMaterials? @relation(fields: [bomId], references: [id])
+  bomLineId  String?
+  bomLine    BOMLine?         @relation(fields: [bomLineId], references: [id])
+  itemId     String?
+  costType   ProjectCostType
+  unitCost   Decimal?
+  quantity   Float?
+  amount     Float
+  poLink     String? // PO number or ID reference
+  notes      String?
+  createdAt  DateTime         @default(now())
+  shipmentId String?
+  shipment   Shipment?        @relation(fields: [shipmentId], references: [id])
+
+  @@index([projectId])
+  @@index([bomId])
 }
 
 model Subscription {
@@ -440,6 +474,7 @@ model BillOfMaterials {
   quotes QuoteBOM[]
 
   quoteBundles QuoteBundle[]
+  costs        ProjectCost[]
 }
 
 model QuoteBOM {
@@ -464,7 +499,11 @@ model BOMLine {
   sellEach  Float?
   sortOrder Int?
 
+  poLink     String? // Optional PO number/ID entered manually
+  actualCost Float? // Actual cost paid for this line
+
   inventoryMovements InventoryMovement[]
+  projectCosts       ProjectCost[]
 }
 
 enum NoteDocumentType {
@@ -668,6 +707,7 @@ model Shipment {
   createdAt          DateTime            @default(now())
   lines              ShipmentLine[]
   inventoryMovements InventoryMovement[]
+  projectCosts       ProjectCost[]
 }
 
 model ShipmentLine {

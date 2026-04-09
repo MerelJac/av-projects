@@ -1,4 +1,4 @@
-import { QuoteStatus, ItemType} from "@prisma/client";
+import { QuoteStatus, ItemType } from "@prisma/client";
 import { Item } from "./item";
 import { Quote } from "./quote";
 
@@ -19,7 +19,7 @@ export type BOMLineType = {
   item: BOMItem;
   quantity: number;
   notes: string | null;
-    sortOrder?: number; // ← match
+  sortOrder?: number; // ← match
 };
 
 export type BOMType = {
@@ -48,6 +48,8 @@ export type BOMLine = {
   sortOrder?: number;
   section?: string; // grouping label e.g. "Crestron", "Call One"
   marginPct?: number | null;
+  poLink?: string | null; // PO number or ID linked manually
+  actualCost?: number | null; // Actual cost paid for this line
 };
 
 export type BOM = {
@@ -58,4 +60,3 @@ export type BOM = {
   lines: BOMLine[];
   quotes: Quote[];
 };
-

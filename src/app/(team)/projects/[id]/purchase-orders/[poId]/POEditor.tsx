@@ -1359,7 +1359,7 @@ export default function POEditor({
                                 disabled={updatingReturnId === ret.id}
                                 className="text-[10px] font-semibold px-2 py-1 rounded-lg border border-[#E5E3DE] hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-colors disabled:opacity-40"
                               >
-                                Mark Sent to Vendor
+                                Mark Sent
                               </button>
                               <button
                                 onClick={() => handleDeleteReturn(ret.id)}

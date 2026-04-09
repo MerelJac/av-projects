@@ -22,6 +22,7 @@ import { BOM, BOMLine } from "@/types/bom";
 import { Item } from "@/types/item";
 import { calcBOMTotals } from "./actions";
 import Link from "next/link";
+import { ProjectCost } from "@prisma/client";
 
 const quoteStatusColors: Record<string, string> = {
   DRAFT: "bg-gray-100 text-gray-600",
@@ -36,16 +37,15 @@ export default function BOMEditor({
   projectId,
   customerPrices,
   projectBoms,
-  lineAllocations = {},
-  itemOnHand = {},
+  projectCosts = [],
 }: {
   bom: BOM;
   items: Item[];
   projectId: string;
   customerPrices: Record<string, number>;
   projectBoms: { id: string; name: string; lineCount: number; total: number }[];
-  lineAllocations?: Record<string, number>;
-  itemOnHand?: Record<string, number>;
+
+  projectCosts?: ProjectCost[];
 }) {
   const router = useRouter();
   const [lines, setLines] = useState<BOMLine[]>(() =>
@@ -190,6 +190,7 @@ export default function BOMEditor({
     setSaved(false);
   }
 
+  console.log('Project Costs:'  , projectCosts);
   function updateSellFromMargin(lineId: string, margin: number | null) {
     setLines((prev) =>
       prev.map((l) => {
@@ -269,7 +270,10 @@ export default function BOMEditor({
         return;
       }
       const { allocated } = await res.json();
-      showToast("success", `${allocated} unit${allocated !== 1 ? "s" : ""} allocated from stock`);
+      showToast(
+        "success",
+        `${allocated} unit${allocated !== 1 ? "s" : ""} allocated from stock`,
+      );
       router.refresh();
     } catch {
       showToast("error", "Network error");
@@ -804,20 +808,13 @@ export default function BOMEditor({
                                 (c) => c.itemId === line.itemId,
                               );
                               console.log("claimed for line", line.id, claimed);
-                              const allocated = lineAllocations[line.id] ?? 0;
+                              const allocated =  0;
                               const isAllocated =
                                 allocated >= line.quantity && line.quantity > 0;
                               const isPartial =
                                 allocated > 0 && allocated < line.quantity;
                               // console.log("Item on hand", itemOnHand);
 
-                              const surplus =
-                                itemOnHand[line.itemId ?? ""] ?? 0;
-                              // console.log(
-                              //   "surplus for line item",
-                              //   line.itemId,
-                              //   surplus,
-                              // );
                               const isOnPO =
                                 allocated === 0 && claimed.length > 0;
                               const poLink = claimed[0]
@@ -892,20 +889,28 @@ export default function BOMEditor({
                                         )}
                                       </span>
                                     )}
-                                    {surplus > 0 && line.quantity > 0 && (
+                                    {/* {surplus > 0 && line.quantity > 0 && (
                                       <span className="text-[10px] text-[#bbb] mt-0.5">
                                         +{surplus} surplus
                                       </span>
                                     )}
-                                    {!isAllocated && surplus > 0 && line.quantity > 0 && (
-                                      <button
-                                        onClick={() => handleAllocateFromStock(line.id)}
-                                        disabled={allocatingLineId === line.id}
-                                        className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors disabled:opacity-40 mt-0.5"
-                                      >
-                                        {allocatingLineId === line.id ? "Allocating…" : `Use from stock`}
-                                      </button>
-                                    )}
+                                    {!isAllocated &&
+                                      surplus > 0 &&
+                                      line.quantity > 0 && (
+                                        <button
+                                          onClick={() =>
+                                            handleAllocateFromStock(line.id)
+                                          }
+                                          disabled={
+                                            allocatingLineId === line.id
+                                          }
+                                          className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors disabled:opacity-40 mt-0.5"
+                                        >
+                                          {allocatingLineId === line.id
+                                            ? "Allocating…"
+                                            : `Use from stock`}
+                                        </button>
+                                      )} */}
                                   </td>
 
                                   {/* Qty */}
@@ -926,7 +931,6 @@ export default function BOMEditor({
                                               Number.isNaN(v) ? 0 : v,
                                             );
                                           }}
-                                       
                                           className="w-12 text-right text-xs bg-transparent focus:outline-none tabular-nums"
                                         />
                                         {line.unit && (
