@@ -11,6 +11,11 @@ type InvoiceLineInput = {
   isBundleTotal?: boolean;
 };
 
+type AdditionalLineInput = {
+  description: string;
+  amount: number;
+};
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -23,6 +28,7 @@ export async function POST(
     chargeType,
     chargePercent,
     lines,
+    additionalLines,
     customerName,
     customerEmail,
     customerPhone,
@@ -46,25 +52,27 @@ export async function POST(
     }
   }
 
-  if (chargeType === InvoiceChargeType.LINE_ITEMS && (!lines || !lines.length)) {
+  const validAdditional: AdditionalLineInput[] = (additionalLines ?? []).filter(
+    (l: AdditionalLineInput) => l.description && l.amount > 0,
+  );
+
+  if (chargeType === InvoiceChargeType.LINE_ITEMS && (!lines || !lines.length) && !validAdditional.length) {
     return NextResponse.json({ error: "Lines required for line-item invoices" }, { status: 400 });
   }
+
+  const additionalTotal = validAdditional.reduce((s: number, l: AdditionalLineInput) => s + l.amount, 0);
 
   let amount: number;
 
   if (chargeType === InvoiceChargeType.PERCENTAGE) {
-    // Get quote total from its lines
     const quoteLines = await prisma.quoteLine.findMany({
       where: { quoteId },
       select: { price: true, quantity: true },
     });
     const quoteTotal = quoteLines.reduce((s, l) => s + l.price * l.quantity, 0);
-    amount = (chargePercent / 100) * quoteTotal;
+    amount = (chargePercent / 100) * quoteTotal + additionalTotal;
   } else {
-    amount = (lines as InvoiceLineInput[]).reduce(
-      (s, l) => s + l.price * l.quantity,
-      0,
-    );
+    amount = (lines as InvoiceLineInput[]).reduce((s, l) => s + l.price * l.quantity, 0) + additionalTotal;
   }
 
   // Resolve itemId for each line from its quoteLineId so inventory can be tracked
@@ -107,10 +115,10 @@ export async function POST(
         billingTerms: billingTerms ?? null,
         notes: notes ?? null,
         dueDate: dueDate ? new Date(dueDate) : null,
-        lines:
-          chargeType === InvoiceChargeType.LINE_ITEMS
-            ? {
-                create: (lines as InvoiceLineInput[]).map((l) => ({
+        lines: {
+          create: [
+            ...(chargeType === InvoiceChargeType.LINE_ITEMS
+              ? (lines as InvoiceLineInput[]).map((l) => ({
                   description: l.description,
                   quantity: l.quantity,
                   price: l.price,
@@ -119,9 +127,15 @@ export async function POST(
                   isBundleTotal: l.isBundleTotal ?? false,
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   ...(l.quoteLineId && quoteLineItemMap.has(l.quoteLineId) ? { itemId: quoteLineItemMap.get(l.quoteLineId) } : {}),
-                })),
-              }
-            : undefined,
+                }))
+              : []),
+            ...validAdditional.map((l) => ({
+              description: l.description,
+              quantity: 1,
+              price: l.amount,
+            })),
+          ],
+        },
       },
     });
 

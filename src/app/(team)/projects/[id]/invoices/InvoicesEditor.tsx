@@ -276,7 +276,7 @@ export default function InvoicesEditor({
         ) : (
           <div className="grid grid-cols-3 gap-6 items-start">
             {/* Invoice list — left */}
-            <div className="col-span-1 space-y-2">
+            <div className="col-span-1 space-y-2 max-h-[500px] overflow-y-auto pr-1">
               {invoices.map((inv) => {
                 const cfg = STATUS_CONFIG[inv.status] ?? STATUS_CONFIG.DRAFT;
                 const isSelected = inv.id === selectedId;
@@ -491,8 +491,7 @@ export default function InvoicesEditor({
                   )}
 
                   {/* Line items */}
-                  {selected.chargeType === "LINE_ITEMS" &&
-                    selected.lines.length > 0 && (
+                  {selected.lines.length > 0 && (
                       <div className="border-t border-[#F0EEE9] pt-4">
                         <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-3">
                           Line Items

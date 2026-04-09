@@ -207,7 +207,7 @@ export function buildInvoicePDF({
         </View>
 
         {/* Line items */}
-        {chargeType === "LINE_ITEMS" && lines.length > 0 && (
+        {lines.length > 0 && (
           <>
             <View style={styles.tableHeader}>
               <Text style={[styles.tableHeaderText, styles.colDesc]}>Description</Text>

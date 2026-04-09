@@ -1,7 +1,13 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { X, FileText, Percent, List } from "lucide-react";
+import { X, FileText, Percent, List, Plus, Trash2 } from "lucide-react";
+
+type AdditionalLine = {
+  id: string;
+  description: string;
+  amount: string;
+};
 
 type QuoteLine = {
   id: string;
@@ -52,8 +58,23 @@ export default function CreateInvoiceModal({
   const [billingTerms, setBillingTerms] = useState<"NET30" | "PROGRESS" | "PREPAID" | "">("");
   const [notes, setNotes] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [additionalLines, setAdditionalLines] = useState<AdditionalLine[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function addAdditionalLine(description = "") {
+    setAdditionalLines((prev) => [...prev, { id: crypto.randomUUID(), description, amount: "" }]);
+  }
+
+  function updateAdditionalLine(id: string, field: "description" | "amount", value: string) {
+    setAdditionalLines((prev) => prev.map((l) => (l.id === id ? { ...l, [field]: value } : l)));
+  }
+
+  function removeAdditionalLine(id: string) {
+    setAdditionalLines((prev) => prev.filter((l) => l.id !== id));
+  }
+
+  const additionalTotal = additionalLines.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
 
   // Unbundled lines
   const unbundledLines = lines.filter((l) => !l.bundleId);
@@ -131,7 +152,8 @@ export default function CreateInvoiceModal({
       ? buildLines().reduce((s, l) => s + l.price * l.quantity, 0)
       : null;
 
-  const previewAmount = chargeType === "PERCENTAGE" ? pctAmount : lineItemsAmount;
+  const previewAmount =
+    (chargeType === "PERCENTAGE" ? (pctAmount ?? 0) : (lineItemsAmount ?? 0)) + additionalTotal;
 
   async function handleCreate() {
     setError(null);
@@ -142,8 +164,9 @@ export default function CreateInvoiceModal({
         return;
       }
     } else {
-      if (selected.size === 0) {
-        setError("Select at least one line item or bundle.");
+      const validAdditional = additionalLines.filter((l) => l.description && parseFloat(l.amount) > 0);
+      if (selected.size === 0 && validAdditional.length === 0) {
+        setError("Select at least one line item or add an additional charge.");
         return;
       }
     }
@@ -158,6 +181,9 @@ export default function CreateInvoiceModal({
           chargeType,
           chargePercent: chargeType === "PERCENTAGE" ? parseFloat(chargePercent) : undefined,
           lines: chargeType === "LINE_ITEMS" ? buildLines() : undefined,
+          additionalLines: additionalLines
+            .filter((l) => l.description && parseFloat(l.amount) > 0)
+            .map((l) => ({ description: l.description, amount: parseFloat(l.amount) })),
           customerName,
           customerEmail: customerEmail || null,
           customerPhone: customerPhone || null,
@@ -357,6 +383,63 @@ export default function CreateInvoiceModal({
             </div>
           )}
 
+          {/* Additional charges */}
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-3">Additional Charges</p>
+            <div className="space-y-2">
+              {additionalLines.map((line) => (
+                <div key={line.id} className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    placeholder="e.g. Tax, Shipping"
+                    value={line.description}
+                    onChange={(e) => updateAdditionalLine(line.id, "description", e.target.value)}
+                    className="flex-1 text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111]"
+                  />
+                  <div className="relative w-32">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[#999]">$</span>
+                    <input
+                      type="number"
+                      min={0}
+                      step={0.01}
+                      placeholder="0.00"
+                      value={line.amount}
+                      onChange={(e) => updateAdditionalLine(line.id, "amount", e.target.value)}
+                      className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 pl-6 focus:outline-none focus:border-[#111]"
+                    />
+                  </div>
+                  <button
+                    onClick={() => removeAdditionalLine(line.id)}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg text-[#bbb] hover:text-red-500 hover:bg-red-50 transition-colors"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={() => addAdditionalLine("Tax")}
+                  className="text-xs px-3 py-1.5 rounded-lg border border-[#E5E3DE] text-[#666] hover:bg-[#F7F6F3] transition-colors"
+                >
+                  + Tax
+                </button>
+                <button
+                  onClick={() => addAdditionalLine("Shipping")}
+                  className="text-xs px-3 py-1.5 rounded-lg border border-[#E5E3DE] text-[#666] hover:bg-[#F7F6F3] transition-colors"
+                >
+                  + Shipping
+                </button>
+                <button
+                  onClick={() => addAdditionalLine("")}
+                  className="text-xs px-3 py-1.5 rounded-lg border border-[#E5E3DE] text-[#666] hover:bg-[#F7F6F3] transition-colors flex items-center gap-1"
+                >
+                  <Plus size={11} />
+                  Custom
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* Contact info */}
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-3">Bill To</p>
@@ -442,7 +525,7 @@ export default function CreateInvoiceModal({
         {/* Footer */}
         <div className="px-6 py-4 border-t border-[#F0EEE9] flex items-center justify-between gap-4">
           <div className="text-sm">
-            {previewAmount != null && previewAmount > 0 && (
+            {previewAmount > 0 && (
               <span className="text-[#666]">
                 Invoice total:{" "}
                 <span className="font-semibold text-[#111]">${fmt(previewAmount)}</span>
