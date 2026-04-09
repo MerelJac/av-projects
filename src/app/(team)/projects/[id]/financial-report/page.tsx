@@ -128,56 +128,6 @@ async function getReportRows(projectId: string): Promise<ReportRow[]> {
     // returns table not yet migrated
   }
 
-  // ── Inventory allocations ─────────────────────────────────────────────────
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const prismaAny = prisma as any;
-    const allocations = await prismaAny.inventoryMovement.findMany({
-      where: { type: "BOM_ALLOCATION", bomLine: { bom: { projectId } } },
-      include: {
-        item: {
-          select: {
-            itemNumber: true,
-            manufacturer: true,
-            description: true,
-            cost: true,
-          },
-        },
-        bomLine: { include: { bom: { select: { name: true } } } },
-      },
-      orderBy: { createdAt: "asc" },
-    });
-
-    for (const m of allocations as {
-      createdAt: Date;
-      quantityDelta: number;
-      item: {
-        itemNumber: string;
-        manufacturer: string | null;
-        description: string | null;
-        cost: number | null;
-      } | null;
-      bomLine: { bom: { name: string } } | null;
-    }[]) {
-      const qty = Math.abs(m.quantityDelta);
-      const unitCost = m.item?.cost ?? 0;
-      rows.push({
-        date: m.createdAt.toISOString().slice(0, 10),
-        category: "Inventory Allocation",
-        description: m.item?.description ?? "",
-        itemNumber: m.item?.itemNumber ?? "",
-        manufacturer: m.item?.manufacturer ?? "",
-        vendorOrSource: "Inventory",
-        qty,
-        unitCost,
-        total: qty * unitCost,
-        reference: m.bomLine?.bom.name ?? "",
-      });
-    }
-  } catch {
-    // pre-migration
-  }
-
   // ── Labor ─────────────────────────────────────────────────────────────────
   const scopes = await prisma.projectScope.findMany({
     where: { projectId },
@@ -232,7 +182,7 @@ async function getReportRows(projectId: string): Promise<ReportRow[]> {
       qty: 1,
       unitCost: cost,
       total: cost,
-      reference: sh.trackingNumber ?? sh.id,
+      reference: sh.tracking ?? sh.id,
     });
   }
 
@@ -262,7 +212,6 @@ async function getReportRows(projectId: string): Promise<ReportRow[]> {
   const order = [
     "PO Material",
     "Return Credit",
-    "Inventory Allocation",
     "Labor",
     "Shipping",
     "Invoice",

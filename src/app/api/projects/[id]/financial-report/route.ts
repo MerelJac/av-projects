@@ -39,7 +39,7 @@ function csvRow(row: Row): string {
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
 
@@ -47,52 +47,112 @@ export async function GET(
     where: { id },
     select: { name: true },
   });
-  if (!project) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!project)
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const rows: Row[] = [];
 
-  // ── 1. PO lines ──────────────────────────────────────────────────────────────
-  const pos = await prisma.purchaseOrder.findMany({
-    where: { projectId: id, status: { not: "CANCELLED" } },
+  // ── 1 & 2. ProjectCost: MATERIAL + FREIGHT ────────────────────────────────
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = prisma as any;
+
+  const costs = await db.projectCost.findMany({
+    where: { projectId: id, costType: { in: ["MATERIAL", "FREIGHT"] } },
     include: {
-      vendor: { select: { name: true } },
-      lines: {
-        include: {
-          item: {
+      item: {
+        select: { itemNumber: true, manufacturer: true, description: true },
+      },
+      shipment: {
+        select: {
+          tracking: true,
+          carrier: true,
+          createdAt: true,
+          purchaseOrder: {
             select: {
-              itemNumber: true,
-              manufacturer: true,
-              description: true,
+              poNumber: true,
+              vendor: { select: { name: true } },
             },
           },
         },
       },
+      bomLine: {
+        select: { bom: { select: { name: true } } },
+      },
     },
     orderBy: { createdAt: "asc" },
-  });
+  }) as {
+    id: string;
+    costType: string;
+    amount: number;
+    notes: string | null;
+    poLink: string | null;
+    createdAt: Date;
+    item: {
+      itemNumber: string;
+      manufacturer: string | null;
+      description: string | null;
+    } | null;
+    shipment: {
+      tracking: string | null;
+      carrier: string | null;
+      createdAt: Date;
+      purchaseOrder: {
+        poNumber: string | null;
+        vendor: { name: string } | null;
+      } | null;
+    } | null;
+    bomLine: { bom: { name: string } } | null;
+  }[];
 
-  for (const po of pos) {
-    for (const line of po.lines) {
+  for (const c of costs) {
+    const amount = Number(c.amount);
+    const vendor =
+      c.shipment?.purchaseOrder?.vendor?.name ??
+      c.shipment?.carrier ??
+      "";
+    const reference =
+      c.shipment?.purchaseOrder?.poNumber ??
+      c.poLink ??
+      c.shipment?.tracking ??
+      "";
+    const date = (c.shipment?.createdAt ?? c.createdAt)
+      .toISOString()
+      .slice(0, 10);
+
+    if (c.costType === "MATERIAL") {
       rows.push({
-        date: po.createdAt.toISOString().slice(0, 10),
-        category: "PO Material",
-        description: line.item?.description ?? "",
-        itemNumber: line.item?.itemNumber ?? "",
-        manufacturer: line.item?.manufacturer ?? "",
-        vendorOrSource: po.vendor?.name ?? "",
-        qty: line.quantity,
-        unitCost: line.cost,
-        total: line.quantity * line.cost,
-        reference: po.poNumber ?? po.id,
+        date,
+        category: "Material",
+        description:
+          c.item?.description ?? c.bomLine?.bom.name ?? c.notes ?? "",
+        itemNumber: c.item?.itemNumber ?? "",
+        manufacturer: c.item?.manufacturer ?? "",
+        vendorOrSource: vendor,
+        qty: "",
+        unitCost: "",
+        total: amount,
+        reference,
+      });
+    } else {
+      // FREIGHT
+      rows.push({
+        date,
+        category: "Freight",
+        description: c.notes ?? c.shipment?.carrier ?? "Shipping",
+        itemNumber: "",
+        manufacturer: "",
+        vendorOrSource: vendor || (c.shipment?.carrier ?? ""),
+        qty: 1,
+        unitCost: amount,
+        total: amount,
+        reference: c.shipment?.tracking ?? reference,
       });
     }
   }
 
-  // ── 2. PO return credits ──────────────────────────────────────────────────────
+  // ── 3. Return credits ─────────────────────────────────────────────────────
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const prismaAny = prisma as any;
-    const returns = await prismaAny.purchaseOrderReturn.findMany({
+    const returns = await db.purchaseOrderReturn.findMany({
       where: { status: "CREDITED", po: { projectId: id } },
       include: {
         po: { include: { vendor: { select: { name: true } } } },
@@ -118,7 +178,6 @@ export async function GET(
     for (const ret of returns as {
       returnNumber: string | null;
       updatedAt: Date;
-      disposition?: string | null;
       po: { vendor: { name: string } | null };
       lines: {
         quantity: number;
@@ -152,64 +211,12 @@ export async function GET(
     // returns table not yet migrated — skip
   }
 
-  // ── 3. Inventory allocations (BOM stock pulls) ────────────────────────────────
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const prismaAny = prisma as any;
-    const allocations = await prismaAny.inventoryMovement.findMany({
-      where: { type: "BOM_ALLOCATION", bomLine: { bom: { projectId: id } } },
-      include: {
-        item: {
-          select: {
-            itemNumber: true,
-            manufacturer: true,
-            description: true,
-            cost: true,
-          },
-        },
-        bomLine: { include: { bom: { select: { name: true } } } },
-      },
-      orderBy: { createdAt: "asc" },
-    });
-
-    for (const m of allocations as {
-      createdAt: Date;
-      quantityDelta: number;
-      item: {
-        itemNumber: string;
-        manufacturer: string | null;
-        description: string | null;
-        cost: number | null;
-      } | null;
-      bomLine: { bom: { name: string } } | null;
-    }[]) {
-      const qty = Math.abs(m.quantityDelta);
-      const unitCost = m.item?.cost ?? 0;
-      rows.push({
-        date: m.createdAt.toISOString().slice(0, 10),
-        category: "Inventory Allocation",
-        description: m.item?.description ?? "",
-        itemNumber: m.item?.itemNumber ?? "",
-        manufacturer: m.item?.manufacturer ?? "",
-        vendorOrSource: "Inventory",
-        qty,
-        unitCost,
-        total: qty * unitCost,
-        reference: m.bomLine?.bom.name ?? "",
-      });
-    }
-  } catch {
-    // pre-migration
-  }
-
-  // ── 4. Labor (time entries) ───────────────────────────────────────────────────
+  // ── 4. Labor (time entries) ───────────────────────────────────────────────
   const scopes = await prisma.projectScope.findMany({
     where: { projectId: id },
     include: {
       timeEntries: {
-        include: {
-          user: { select: { email: true, profile: true } },
-        },
+        include: { user: { select: { email: true, profile: true } } },
         orderBy: { date: "asc" },
       },
     },
@@ -219,8 +226,11 @@ export async function GET(
     if (!scope.costPerHour) continue;
     for (const entry of scope.timeEntries) {
       const name =
-        (entry.user.profile as { firstName?: string; lastName?: string } | null)
-          ?.firstName ?? entry.user.email;
+        (
+          entry.user.profile as
+            | { firstName?: string; lastName?: string }
+            | null
+        )?.firstName ?? entry.user.email;
       rows.push({
         date: entry.date.toISOString().slice(0, 10),
         category: "Labor",
@@ -236,30 +246,7 @@ export async function GET(
     }
   }
 
-  // ── 5. Shipment costs ─────────────────────────────────────────────────────────
-  const shipments = await prisma.shipment.findMany({
-    where: { projectId: id, cost: { gt: 0 } },
-    orderBy: { createdAt: "asc" },
-  });
-
-  for (const sh of shipments) {
-    const cost = Number(sh.cost ?? 0);
-    if (!cost) continue;
-    rows.push({
-      date: sh.createdAt.toISOString().slice(0, 10),
-      category: "Shipping",
-      description: sh.carrier ?? "Shipment",
-      itemNumber: "",
-      manufacturer: "",
-      vendorOrSource: sh.carrier ?? "",
-      qty: 1,
-      unitCost: cost,
-      total: cost,
-      reference: sh.tracking ?? sh.id,
-    });
-  }
-
-  // ── 6. Invoices ───────────────────────────────────────────────────────────────
+  // ── 5. Invoices ───────────────────────────────────────────────────────────
   const invoices = await prisma.invoice.findMany({
     where: { projectId: id, status: { not: "VOID" } },
     orderBy: { createdAt: "asc" },
@@ -281,26 +268,24 @@ export async function GET(
     });
   }
 
-  // ── Sort by date, then category ───────────────────────────────────────────────
-  const order = [
-    "PO Material",
+  // ── Sort by date, then category ───────────────────────────────────────────
+  const categoryOrder = [
+    "Material",
+    "Freight",
     "Return Credit",
-    "Inventory Allocation",
     "Labor",
-    "Shipping",
     "Invoice",
   ];
   rows.sort((a, b) => {
     const dateDiff = a.date.localeCompare(b.date);
     if (dateDiff !== 0) return dateDiff;
-    return order.indexOf(a.category) - order.indexOf(b.category);
+    return categoryOrder.indexOf(a.category) - categoryOrder.indexOf(b.category);
   });
 
-  // ── Build CSV ─────────────────────────────────────────────────────────────────
+  // ── Build CSV ─────────────────────────────────────────────────────────────
   const header =
     "Date,Category,Description,Item #,Manufacturer,Vendor / Source,Qty,Unit Cost,Total,Reference";
-  const csvLines = [header, ...rows.map(csvRow)];
-  const csv = csvLines.join("\n");
+  const csv = [header, ...rows.map(csvRow)].join("\n");
 
   const filename = `${project.name.replace(/[^a-z0-9]/gi, "_")}_financial_report.csv`;
 

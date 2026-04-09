@@ -64,11 +64,8 @@ export default async function BOMPage({
   );
 
 
-  const projectCosts = await prisma.projectCost.findMany({
-    where: { projectId: id },
-  });
 
-  const [projectBoms, allProjects] = await Promise.all([
+  const [projectBoms, allProjects, projectPOs, projectCosts] = await Promise.all([
     prisma.billOfMaterials.findMany({
       where: { projectId: id },
       include: { lines: { include: { item: true } } },
@@ -77,6 +74,15 @@ export default async function BOMPage({
       where: { id: { not: id } },
       orderBy: { name: "asc" },
       select: { id: true, name: true },
+    }),
+    prisma.purchaseOrder.findMany({
+      where: { projectId: id },
+      select: { id: true, poNumber: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.projectCost.findMany({
+      where: { projectId: id },
+      orderBy: { createdAt: "desc" },
     }),
   ]);
 
@@ -106,6 +112,7 @@ export default async function BOMPage({
           };
         })}
         projectCosts={projectCosts}
+        projectPOs={projectPOs}
       />
       <div className="max-w-5xl mx-auto px-6 pb-10">
         <NotesPanel

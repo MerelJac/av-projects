@@ -38,14 +38,15 @@ export default function BOMEditor({
   customerPrices,
   projectBoms,
   projectCosts = [],
+  projectPOs = [],
 }: {
   bom: BOM;
   items: Item[];
   projectId: string;
   customerPrices: Record<string, number>;
   projectBoms: { id: string; name: string; lineCount: number; total: number }[];
-
   projectCosts?: ProjectCost[];
+  projectPOs?: { id: string; poNumber: string | null }[];
 }) {
   const router = useRouter();
   const [lines, setLines] = useState<BOMLine[]>(() =>
@@ -190,7 +191,19 @@ export default function BOMEditor({
     setSaved(false);
   }
 
-  console.log('Project Costs:'  , projectCosts);
+  // Build lookup: bomLineId → costs
+  const costsByBomLine: Record<string, ProjectCost[]> = {};
+  for (const c of projectCosts) {
+    if (!c.bomLineId) continue;
+    (costsByBomLine[c.bomLineId] ??= []).push(c);
+  }
+
+  // Build lookup: poNumber or poId → poId for linking
+  const poIdByKey: Record<string, string> = {};
+  for (const po of projectPOs) {
+    poIdByKey[po.id] = po.id;
+    if (po.poNumber) poIdByKey[po.poNumber] = po.id;
+  }
   function updateSellFromMargin(lineId: string, margin: number | null) {
     setLines((prev) =>
       prev.map((l) => {
@@ -807,8 +820,8 @@ export default function BOMEditor({
                               const claimed = claimedPOs.filter(
                                 (c) => c.itemId === line.itemId,
                               );
-                              console.log("claimed for line", line.id, claimed);
-                              const allocated =  0;
+                              const allocated = 0;
+                              const lineCosts = costsByBomLine[line.id] ?? [];
                               const isAllocated =
                                 allocated >= line.quantity && line.quantity > 0;
                               const isPartial =
@@ -874,43 +887,45 @@ export default function BOMEditor({
                                       className="w-full text-xs text-[#666] placeholder:text-[#ccc] focus:outline-none border-0 bg-transparent border-b border-transparent focus:border-[#E5E3DE] transition-colors py-0.5"
                                     />
                                   </td>
-                                  {/* Allocation / PO status */}
-                                  <td className="px-3 py-2 flex flex-col items-center justify-start">
-                                    {statusLabel && (
-                                      <span
-                                        className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${statusColor}`}
-                                      >
-                                        {poLink ? (
-                                          <Link href={poLink}>
-                                            {statusLabel}
-                                          </Link>
-                                        ) : (
-                                          statusLabel
-                                        )}
-                                      </span>
-                                    )}
-                                    {/* {surplus > 0 && line.quantity > 0 && (
-                                      <span className="text-[10px] text-[#bbb] mt-0.5">
-                                        +{surplus} surplus
-                                      </span>
-                                    )}
-                                    {!isAllocated &&
-                                      surplus > 0 &&
-                                      line.quantity > 0 && (
-                                        <button
-                                          onClick={() =>
-                                            handleAllocateFromStock(line.id)
-                                          }
-                                          disabled={
-                                            allocatingLineId === line.id
-                                          }
-                                          className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors disabled:opacity-40 mt-0.5"
+                                  {/* Allocation / PO status + project costs */}
+                                  <td className="px-3 py-2">
+                                    <div className="flex flex-col gap-1 items-start">
+                                      {statusLabel && (
+                                        <span
+                                          className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${statusColor}`}
                                         >
-                                          {allocatingLineId === line.id
-                                            ? "Allocating…"
-                                            : `Use from stock`}
-                                        </button>
-                                      )} */}
+                                          {poLink ? (
+                                            <Link href={poLink}>{statusLabel}</Link>
+                                          ) : (
+                                            statusLabel
+                                          )}
+                                        </span>
+                                      )}
+                                      {lineCosts.map((c) => {
+                                        const poId = c.poLink
+                                          ? poIdByKey[c.poLink]
+                                          : null;
+                                        const totalAmt = Number(c.amount);
+                                        const label = `${c.costType === "FREIGHT" ? "Freight" : "Material"} · $${totalAmt.toLocaleString(undefined, { minimumFractionDigits: 2 })}${c.poLink ? ` · ${c.poLink}` : ""}`;
+                                        const badge = (
+                                          <span
+                                            key={c.id}
+                                            className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${
+                                              c.costType === "FREIGHT"
+                                                ? "bg-blue-50 text-blue-700"
+                                                : "bg-green-50 text-green-700"
+                                            }`}
+                                          >
+                                            {label}
+                                          </span>
+                                        );
+                                        return poId ? (
+                                          <Link key={c.id} href={`/projects/${projectId}/purchase-orders/${poId}`}>
+                                            {badge}
+                                          </Link>
+                                        ) : badge;
+                                      })}
+                                    </div>
                                   </td>
 
                                   {/* Qty */}

@@ -594,17 +594,21 @@ export default async function ProjectPage({
                 const statusLabel =
                   po.status === "RECEIVED"
                     ? "Received"
-                    : po.status === "PARTIALLY_RECEIVED" 
+                    : po.status === "PARTIALLY_RECEIVED"
                       ? "Partial"
-                      :  po.status === "PARTIALLY_RETURNED" ? "Partially Returned"
-                      :  po.status === "RETURNED" ? "Returned"
-                      : po.status === "SENT"
-                        ? "Sent"
-                        : "Draft";
+                      : po.status === "PARTIALLY_RETURNED"
+                        ? "Partially Returned"
+                        : po.status === "RETURNED"
+                          ? "Returned"
+                          : po.status === "SENT"
+                            ? "Sent"
+                            : "Draft";
                 const statusColor =
                   po.status === "RECEIVED"
                     ? "bg-green-100 text-green-700"
-                    : (po.status === "PARTIALLY_RECEIVED" || po.status === "PARTIALLY_RETURNED" || po.status === "RETURNED")
+                    : po.status === "PARTIALLY_RECEIVED" ||
+                        po.status === "PARTIALLY_RETURNED" ||
+                        po.status === "RETURNED"
                       ? "bg-amber-100 text-amber-700"
                       : po.status === "SENT"
                         ? "bg-blue-100 text-blue-700"
@@ -717,6 +721,8 @@ export default async function ProjectPage({
             </div>
           )}
         </div>
+
+       
 
         <AllShipments shipments={shipments} />
         {/* Change Orders */}
