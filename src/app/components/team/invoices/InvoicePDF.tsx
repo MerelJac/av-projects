@@ -305,7 +305,7 @@ export function buildInvoicePDF({
                   </Text>
                 )}
                 <Text style={styles.colTotal}>
-                  {fmt(line.price * line.quantity)}
+                  {fmt((line.price * line.quantity + line.taxAmount!))}
                 </Text>
               </View>
             ))}
