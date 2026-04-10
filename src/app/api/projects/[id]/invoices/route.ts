@@ -76,7 +76,7 @@ export async function POST(
   }
 
   // Resolve itemId for each line from its quoteLineId so inventory can be tracked
-  let quoteLineItemMap: Map<string, string> = new Map();
+  const quoteLineItemMap: Map<string, string> = new Map();
   if (chargeType === InvoiceChargeType.LINE_ITEMS) {
     const quoteLineIds = (lines as InvoiceLineInput[])
       .map((l) => l.quoteLineId)

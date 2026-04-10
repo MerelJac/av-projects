@@ -31,6 +31,16 @@ const quoteStatusColors: Record<string, string> = {
   REJECTED: "bg-red-100 text-red-600",
 };
 
+const poStatusColors: Record<string, string> = {
+  DRAFT: "bg-gray-100 text-gray-600",
+  SENT: "bg-blue-100 text-blue-700",
+  RECEIVED: "bg-green-100 text-green-700",
+  CANCELLED: "bg-red-100 text-red-600",
+  RETURNED: "bg-red-100 text-red-600",
+  PARTIALLY_RECEIVED: "bg-gray-100 text-gray-600",
+  PARTIALLY_RETURNED: "bg-gray-100 text-gray-600",
+};
+
 export default function BOMEditor({
   bom,
   items,
@@ -1293,10 +1303,17 @@ export default function BOMEditor({
                           <p className="text-xs font-mono font-semibold text-[#111]">
                             {po.poNumber}
                           </p>
-                          <p className="text-[10px] text-[#999] mt-0.5">
-                            {poItems.length} line
-                            {poItems.length !== 1 ? "s" : ""}
-                          </p>
+                          <div className="flex flex-row gap-2">
+                            <p className="text-[10px] text-[#999] mt-0.5">
+                              {poItems.length} line
+                              {poItems.length !== 1 ? "s" : ""}
+                            </p>
+                            <span
+                              className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${poStatusColors[po.poStatus]}`}
+                            >
+                              {po.poStatus}
+                            </span>
+                          </div>
                         </div>
                         <ShoppingCart size={13} className="text-[#bbb]" />
                       </a>
