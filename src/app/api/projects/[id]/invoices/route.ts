@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { InvoiceChargeType } from "@prisma/client";
+import { calculateVertexTax } from "@/lib/utils/vertex";
 
 type InvoiceLineInput = {
   description: string;
@@ -45,10 +46,16 @@ export async function POST(
 
   if (chargeType === InvoiceChargeType.PERCENTAGE) {
     if (!chargePercent || chargePercent <= 0 || chargePercent > 100) {
-      return NextResponse.json({ error: "Valid chargePercent required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Valid chargePercent required" },
+        { status: 400 },
+      );
     }
     if (!quoteId) {
-      return NextResponse.json({ error: "quoteId required for percentage invoices" }, { status: 400 });
+      return NextResponse.json(
+        { error: "quoteId required for percentage invoices" },
+        { status: 400 },
+      );
     }
   }
 
@@ -56,11 +63,21 @@ export async function POST(
     (l: AdditionalLineInput) => l.description && l.amount > 0,
   );
 
-  if (chargeType === InvoiceChargeType.LINE_ITEMS && (!lines || !lines.length) && !validAdditional.length) {
-    return NextResponse.json({ error: "Lines required for line-item invoices" }, { status: 400 });
+  if (
+    chargeType === InvoiceChargeType.LINE_ITEMS &&
+    (!lines || !lines.length) &&
+    !validAdditional.length
+  ) {
+    return NextResponse.json(
+      { error: "Lines required for line-item invoices" },
+      { status: 400 },
+    );
   }
 
-  const additionalTotal = validAdditional.reduce((s: number, l: AdditionalLineInput) => s + l.amount, 0);
+  const additionalTotal = validAdditional.reduce(
+    (s: number, l: AdditionalLineInput) => s + l.amount,
+    0,
+  );
 
   let amount: number;
 
@@ -72,7 +89,11 @@ export async function POST(
     const quoteTotal = quoteLines.reduce((s, l) => s + l.price * l.quantity, 0);
     amount = (chargePercent / 100) * quoteTotal + additionalTotal;
   } else {
-    amount = (lines as InvoiceLineInput[]).reduce((s, l) => s + l.price * l.quantity, 0) + additionalTotal;
+    amount =
+      (lines as InvoiceLineInput[]).reduce(
+        (s, l) => s + l.price * l.quantity,
+        0,
+      ) + additionalTotal;
   }
 
   // Resolve itemId for each line from its quoteLineId so inventory can be tracked
@@ -104,7 +125,8 @@ export async function POST(
         quoteId: quoteId ?? null,
         invoiceNumber,
         chargeType,
-        chargePercent: chargeType === InvoiceChargeType.PERCENTAGE ? chargePercent : null,
+        chargePercent:
+          chargeType === InvoiceChargeType.PERCENTAGE ? chargePercent : null,
         amount,
         status: "DRAFT",
         customerName: customerName ?? null,
@@ -126,7 +148,9 @@ export async function POST(
                   quoteBundleId: l.quoteBundleId ?? null,
                   isBundleTotal: l.isBundleTotal ?? false,
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  ...(l.quoteLineId && quoteLineItemMap.has(l.quoteLineId) ? { itemId: quoteLineItemMap.get(l.quoteLineId) } : {}),
+                  ...(l.quoteLineId && quoteLineItemMap.has(l.quoteLineId)
+                    ? { itemId: quoteLineItemMap.get(l.quoteLineId) }
+                    : {}),
                 }))
               : []),
             ...validAdditional.map((l) => ({
@@ -142,7 +166,52 @@ export async function POST(
     return created;
   });
 
-  return NextResponse.json({ invoiceId: invoice.id, invoiceNumber: invoice.invoiceNumber });
+  // Calculate tax after invoice is created
+  if (invoice.shipToAddress) {
+    const taxableLines = await prisma.invoiceLine.findMany({
+      where: { invoiceId: invoice.id, taxable: true },
+      include: { item: { select: { id: true, itemNumber: true } } },
+    });
+
+    const vertexResult = await calculateVertexTax({
+      documentNumber: invoice.invoiceNumber ?? undefined,
+      destination: invoice.shipToAddress,
+      lines: taxableLines.map((line, i) => ({
+        lineItemNumber: (i + 1) * 10000,
+        productCode: line.item?.itemNumber ?? line.description,
+        quantity: line.quantity,
+        unitPrice: line.price,
+      })),
+    });
+
+    if (vertexResult) {
+      // Update invoice with tax totals
+      await prisma.invoice.update({
+        where: { id: invoice.id },
+        data: {
+          taxAmount: vertexResult.totalTax,
+          amount: vertexResult.totalWithTax,
+        },
+      });
+
+      // Update each line with its tax
+      await Promise.all(
+        vertexResult.lineTaxes.map((lt, i) => {
+          const line = taxableLines[i];
+          if (!line) return;
+          return prisma.invoiceLine.update({
+            where: { id: line.id },
+            data: { taxAmount: lt.taxAmount },
+          });
+        }),
+      );
+    }
+  }
+
+  return NextResponse.json({
+    invoiceId: invoice.id,
+    invoiceNumber: invoice.invoiceNumber,
+  });
 }
 
 export async function GET(

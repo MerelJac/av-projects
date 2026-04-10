@@ -12,13 +12,15 @@ export async function POST(req: NextRequest) {
     );
   }
 
+
+  
   const result = await calculateVertexTax({
     documentNumber,
     customerCode,
     destination,
     lines,
   });
-
+  
   if (!result) {
     return NextResponse.json({ error: "Vertex request failed" }, { status: 502 });
   }

@@ -1,3 +1,5 @@
+import { prisma } from "../prisma";
+
 const VERTEX_ENDPOINT =
   process.env.VERTEX_ENDPOINT ??
   "https://axconnect.vertexsmb.com/vertex-ws/services/CalculateTax70";
@@ -32,7 +34,12 @@ function parseAddressString(raw: string): VertexDestination {
   const lastLine = lines[lines.length - 1] ?? "";
   const match = lastLine.match(/^(.+?),?\s+([A-Z]{2})\s+(\S+)$/);
   if (match) {
-    return { street, city: match[1].trim(), state: match[2], postalCode: match[3] };
+    return {
+      street,
+      city: match[1].trim(),
+      state: match[2],
+      postalCode: match[3],
+    };
   }
   return { street };
 }
@@ -59,7 +66,9 @@ function buildLineItemXml({
   unitPrice: number;
 }) {
   const extendedPrice = (quantity * unitPrice).toFixed(2);
-  const locationAttr = locationCode ? ` locationCode="${escapeXml(locationCode)}"` : "";
+  const locationAttr = locationCode
+    ? ` locationCode="${escapeXml(locationCode)}"`
+    : "";
   return `        <urn:LineItem taxDate="${escapeXml(taxDate)}" lineItemNumber="${lineItemNumber}"${locationAttr}>
           <urn:Seller>
             <urn:Company>${escapeXml(SELLER_COMPANY)}</urn:Company>
@@ -106,7 +115,9 @@ function buildEnvelope({
   documentDate: string;
   lineItemsXml: string;
 }) {
-  const docNumAttr = documentNumber ? ` documentNumber="${escapeXml(documentNumber)}"` : "";
+  const docNumAttr = documentNumber
+    ? ` documentNumber="${escapeXml(documentNumber)}"`
+    : "";
   return `<?xml version="1.0" encoding="utf-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:vertexinc:o-series:tps:7:0">
   <soapenv:Header />
@@ -234,6 +245,15 @@ export async function calculateVertexTax(
     lineItemsXml,
   });
 
+  // 👇 Log the request before sending
+  const log = await prisma.vertexLog.create({
+    data: {
+      documentNumber: input.documentNumber ?? null,
+      requestXml: envelope,
+      success: false, // will update after response
+    },
+  });
+
   console.log("calculateVertexTax: sending envelope\n", envelope);
 
   try {
@@ -252,6 +272,16 @@ export async function calculateVertexTax(
         res.status,
         await res.text(),
       );
+
+      // 👇 Log failure
+      await prisma.vertexLog.update({
+        where: { id: log.id },
+        data: {
+          res,
+          success: false,
+          errorMessage: `HTTP ${res.status}`,
+        },
+      });
       return null;
     }
 
@@ -264,9 +294,29 @@ export async function calculateVertexTax(
       0,
     );
 
+    // 👇 Log success
+    await prisma.vertexLog.update({
+      where: { id: log.id },
+      data: {
+        responseXml,
+        success: true,
+        totalTax,
+      },
+    });
+
     return { totalTax, totalWithTax: totalAmount + totalTax, lineTaxes };
   } catch (err) {
     console.error("calculateVertexTax: request failed", err);
+
+    // 👇 Log exception
+    await prisma.vertexLog.update({
+      where: { id: log.id },
+      data: {
+        success: false,
+        errorMessage: err instanceof Error ? err.message : "Unknown error",
+      },
+    });
+
     return null;
   }
 }

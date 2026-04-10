@@ -52,8 +52,9 @@ model Invoice {
   chargeType    InvoiceChargeType @default(LINE_ITEMS)
   chargePercent Float? // e.g. 50.0 — used when chargeType = PERCENTAGE
 
-  amount Float?
-  status InvoiceStatus @default(DRAFT)
+  amount    Float?
+  taxAmount Float? // null until Vertex is called
+  status    InvoiceStatus @default(DRAFT)
 
   // Contact info snapshot — copied from customer at creation, editable per invoice
   customerName  String?
@@ -83,6 +84,10 @@ model InvoiceLine {
   description String
   quantity    Float
   price       Float
+
+  taxAmount    Float? // populated from Vertex response
+  taxable      Boolean @default(true)
+  productClass String? // "TAXABLE", "EXEMPT", etc — maps to Vertex productClass
 
   // Source reference (optional)
   quoteLineId   String?
@@ -809,4 +814,16 @@ model InventoryMovement {
 
   @@index([itemId])
   @@index([type])
+}
+
+model VertexLog {
+  id             String   @id @default(cuid())
+  createdAt      DateTime @default(now())
+  invoiceId      String?
+  documentNumber String?
+  requestXml     String   @db.Text
+  responseXml    String?  @db.Text
+  success        Boolean
+  totalTax       Float?
+  errorMessage   String?
 }

@@ -24,6 +24,7 @@ type InvoiceLine = {
   description: string;
   quantity: number;
   price: number;
+  taxAmount: number | null;
   isBundleTotal: boolean;
 };
 
@@ -38,10 +39,12 @@ type Invoice = {
   customerEmail: string | null;
   customerPhone: string | null;
   billToAddress: string | null;
+  shipToAddress: string | null;
   billingTerms: "NET30" | "PROGRESS" | "PREPAID" | null;
   notes: string | null;
   issuedAt: Date | null;
   dueDate: Date | null;
+  taxAmount: number | null;
   paidAt: Date | null;
   createdAt: Date;
   quote: { id: string } | null;
@@ -142,8 +145,41 @@ export default function InvoicesEditor({
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   const [sendingEmail, setSendingEmail] = useState(false);
 
+async function handleRecalculateTax(invoiceId: string) {
+  const res = await fetch(
+    `/api/projects/${project.id}/invoices/${invoiceId}/recalculate-tax`,
+    { method: "POST" },
+  );
+  if (res.ok) {
+    const updated = await res.json();
+    setInvoices((prev) =>
+      prev.map((inv) => {
+        if (inv.id !== invoiceId) return inv;
+        return {
+          ...inv,
+          taxAmount: updated.taxAmount,
+          amount: updated.amount,
+          lines: inv.lines.map((line, i) => {
+            const lineItemNumber = (i + 1) * 10000;
+            const lt = updated.lineTaxes?.find(
+              (t: { lineItemNumber: number; taxAmount: number }) =>
+                t.lineItemNumber === lineItemNumber,
+            );
+            return lt ? { ...line, taxAmount: lt.taxAmount } : line;
+          }),
+        };
+      }),
+    );
+    showToast("success", "Tax recalculated");
+  } else {
+    showToast("error", "Failed to recalculate tax");
+  }
+}
   function handlePreviewPDF(invoiceId: string) {
-    window.open(`/api/projects/${project.id}/invoices/${invoiceId}/pdf?preview=true`, "_blank");
+    window.open(
+      `/api/projects/${project.id}/invoices/${invoiceId}/pdf?preview=true`,
+      "_blank",
+    );
   }
 
   async function handleSendEmail(invoiceId: string) {
@@ -464,6 +500,15 @@ export default function InvoicesEditor({
                   </div>
 
                   {/* Bill to */}
+                  {selected.shipToAddress &&
+                    selected.shipToAddress !== selected.billToAddress && (
+                      <div className="border-t border-[#F0EEE9] pt-4 mb-5">
+                        <p className="text-xs text-[#999] mb-1">Ship To</p>
+                        <p className="text-sm text-[#666] whitespace-pre-wrap">
+                          {selected.shipToAddress}
+                        </p>
+                      </div>
+                    )}
                   {(selected.customerName || selected.billToAddress) && (
                     <div className="border-t border-[#F0EEE9] pt-4 mb-5">
                       <p className="text-xs text-[#999] mb-1">Bill To</p>
@@ -492,56 +537,114 @@ export default function InvoicesEditor({
 
                   {/* Line items */}
                   {selected.lines.length > 0 && (
-                      <div className="border-t border-[#F0EEE9] pt-4">
-                        <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-3">
-                          Line Items
-                        </p>
-                        <table className="w-full">
-                          <thead>
-                            <tr className="border-b border-[#F0EEE9]">
-                              <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] pb-2">
-                                Description
-                              </th>
-                              <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] pb-2 w-12">
-                                Qty
-                              </th>
-                              <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] pb-2 w-24">
-                                Price
-                              </th>
-                              <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] pb-2 w-24">
-                                Total
-                              </th>
+                    <div className="border-t border-[#F0EEE9] pt-4">
+                      <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-3">
+                        Line Items
+                      </p>
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b border-[#F0EEE9]">
+                            <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] pb-2">
+                              Description
+                            </th>
+                            <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] pb-2 w-12">
+                              Qty
+                            </th>
+                            <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] pb-2 w-24">
+                              Price
+                            </th>
+                            <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] pb-2 w-20">
+                              Tax
+                            </th>
+                            <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] pb-2 w-24">
+                              Total
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selected.lines.map((l) => (
+                            <tr
+                              key={l.id}
+                              className="border-b border-[#F7F6F3] last:border-0"
+                            >
+                              <td className="py-2 text-sm text-[#111]">
+                                {l.description}
+                                {l.isBundleTotal && (
+                                  <span className="ml-1.5 text-[10px] text-[#bbb] font-medium">
+                                    bundle
+                                  </span>
+                                )}
+                              </td>
+                              <td className="py-2 text-sm text-[#666] text-right">
+                                {l.quantity}
+                              </td>
+                              <td className="py-2 text-sm text-[#666] text-right">
+                                ${fmt(l.price)}
+                              </td>
+                              <td className="py-2 text-sm text-[#666] text-right">
+                                {l.taxAmount != null
+                                  ? `$${fmt(l.taxAmount)}`
+                                  : "—"}
+                              </td>
+                              <td className="py-2 text-sm font-semibold text-[#111] text-right">
+                                ${fmt(l.price * l.quantity)}
+                              </td>
                             </tr>
-                          </thead>
-                          <tbody>
-                            {selected.lines.map((l) => (
-                              <tr
-                                key={l.id}
-                                className="border-b border-[#F7F6F3] last:border-0"
+                          ))}
+                        </tbody>
+                        <tfoot>
+                          <tr className="border-t border-[#E5E3DE]">
+                            <td
+                              colSpan={4}
+                              className="pt-3 text-right text-xs text-[#999]"
+                            >
+                              Subtotal
+                            </td>
+                            <td className="pt-3 text-right text-sm text-[#111]">
+                              $
+                              {fmt(
+                                selected.lines.reduce(
+                                  (s, l) => s + l.price * l.quantity,
+                                  0,
+                                ),
+                              )}
+                            </td>
+                          </tr>
+                          {selected.taxAmount != null && (
+                            <tr>
+                              <td
+                                colSpan={4}
+                                className="text-right text-xs text-[#999]"
                               >
-                                <td className="py-2 text-sm text-[#111]">
-                                  {l.description}
-                                  {l.isBundleTotal && (
-                                    <span className="ml-1.5 text-[10px] text-[#bbb] font-medium">
-                                      bundle
-                                    </span>
-                                  )}
-                                </td>
-                                <td className="py-2 text-sm text-[#666] text-right">
-                                  {l.quantity}
-                                </td>
-                                <td className="py-2 text-sm text-[#666] text-right">
-                                  ${fmt(l.price)}
-                                </td>
-                                <td className="py-2 text-sm font-semibold text-[#111] text-right">
-                                  ${fmt(l.price * l.quantity)}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
+                                Tax
+                              </td>
+                              <td className="text-right text-sm text-[#111]">
+                                ${fmt(selected.taxAmount)}
+                              </td>
+                            </tr>
+                          )}
+                          <tr>
+                            <td
+                              colSpan={4}
+                              className="text-right text-xs font-semibold text-[#111] pt-1"
+                            >
+                              Total
+                            </td>
+                            <td className="text-right text-sm font-bold text-[#111] pt-1">
+                              ${fmt(selected.amount ?? 0)}
+                            </td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                      <button
+                        onClick={() => handleRecalculateTax(selected.id)}
+                        className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border border-[#E5E3DE] text-[#666] hover:bg-[#F7F6F3] transition-all"
+                      >
+                        <RefreshCw size={13} />
+                        Recalculate Tax
+                      </button>
+                    </div>
+                  )}
 
                   {/* Invoice notes (from creation) */}
                   {selected.notes && (
