@@ -1,4 +1,11 @@
-import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  StyleSheet,
+  Image,
+} from "@react-pdf/renderer";
 
 const styles = StyleSheet.create({
   page: { padding: 48, fontSize: 10, fontFamily: "Helvetica", color: "#111" },
@@ -15,6 +22,15 @@ const styles = StyleSheet.create({
     fontFamily: "Helvetica-Bold",
     textAlign: "right",
     marginTop: 2,
+  },
+  addressBlock: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 32,
+    marginBottom: 24,
+    borderTopWidth: 0.5,
+    borderTopColor: "#E5E3DE",
+    paddingTop: 12,
   },
   billToBlock: { marginBottom: 28 },
   billToLabel: {
@@ -35,7 +51,13 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   metaItem: { flex: 1 },
-  metaLabel: { fontSize: 8, color: "#888", marginBottom: 2, textTransform: "uppercase", letterSpacing: 0.8 },
+  metaLabel: {
+    fontSize: 8,
+    color: "#888",
+    marginBottom: 2,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+  },
   metaValue: { fontSize: 10, fontFamily: "Helvetica-Bold" },
   tableHeader: {
     flexDirection: "row",
@@ -123,11 +145,19 @@ const BILLING_TERMS_LABELS: Record<string, string> = {
 };
 
 const fmt = (n: number) =>
-  "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  "$" +
+  n.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
 function formatDate(d: Date | null | string | undefined) {
   if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  return new Date(d).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 export function buildInvoicePDF({
@@ -167,8 +197,7 @@ export function buildInvoicePDF({
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.companyName}>Call One, Inc</Text>
-            <Text style={styles.companyTagline}>Audio Visual Solutions</Text>
+            <Image src="public/c1-hd-logo.png" style={{ width: 120 }} />
           </View>
           <View>
             <Text style={styles.invoiceLabel}>INVOICE</Text>
@@ -179,14 +208,56 @@ export function buildInvoicePDF({
           </View>
         </View>
 
-        {/* Bill To */}
+        {/* Call One To */}
         <View style={styles.billToBlock}>
-          <Text style={styles.billToLabel}>Bill To</Text>
-          {customerName && <Text style={styles.billToName}>{customerName}</Text>}
-          {customerEmail && <Text style={styles.billToDetail}>{customerEmail}</Text>}
-          {customerPhone && <Text style={styles.billToDetail}>{customerPhone}</Text>}
-          {billToAddress && <Text style={styles.billToDetail}>{billToAddress}</Text>}
+          {customerName && (
+            <Text style={styles.billToDetail}>Call One, Inc.</Text>
+          )}
+          {customerEmail && (
+            <Text style={styles.billToDetail}>PO Box 9002</Text>
+          )}
+          {customerPhone && (
+            <Text style={styles.billToDetail}>Cape Canaveral, FL 32920</Text>
+          )}
+          {billToAddress && <Text style={styles.billToDetail}>US</Text>}
         </View>
+
+        <View style={styles.addressBlock}>
+          {/* Bill To */}
+          <View style={styles.billToBlock}>
+            <Text style={styles.billToLabel}>Bill To</Text>
+            {customerName && (
+              <Text style={styles.billToName}>{customerName}</Text>
+            )}
+            {customerEmail && (
+              <Text style={styles.billToDetail}>{customerEmail}</Text>
+            )}
+            {customerPhone && (
+              <Text style={styles.billToDetail}>{customerPhone}</Text>
+            )}
+            {billToAddress && (
+              <Text style={styles.billToDetail}>{billToAddress}</Text>
+            )}
+          </View>
+
+          {/* ship To */}
+          <View style={styles.billToBlock}>
+            <Text style={styles.billToLabel}>Ship To</Text>
+            {customerName && (
+              <Text style={styles.billToName}>{customerName}</Text>
+            )}
+            {customerEmail && (
+              <Text style={styles.billToDetail}>{customerEmail}</Text>
+            )}
+            {customerPhone && (
+              <Text style={styles.billToDetail}>{customerPhone}</Text>
+            )}
+            {billToAddress && (
+              <Text style={styles.billToDetail}>{billToAddress}</Text>
+            )}
+          </View>
+        </View>
+
 
         {/* Meta grid */}
         <View style={styles.metaGrid}>
@@ -201,7 +272,9 @@ export function buildInvoicePDF({
           {billingTerms && (
             <View style={styles.metaItem}>
               <Text style={styles.metaLabel}>Terms</Text>
-              <Text style={styles.metaValue}>{BILLING_TERMS_LABELS[billingTerms] ?? billingTerms}</Text>
+              <Text style={styles.metaValue}>
+                {BILLING_TERMS_LABELS[billingTerms] ?? billingTerms}
+              </Text>
             </View>
           )}
         </View>
@@ -210,19 +283,28 @@ export function buildInvoicePDF({
         {lines.length > 0 && (
           <>
             <View style={styles.tableHeader}>
-              <Text style={[styles.tableHeaderText, styles.colDesc]}>Description</Text>
+              <Text style={[styles.tableHeaderText, styles.colDesc]}>
+                Description
+              </Text>
               <Text style={[styles.tableHeaderText, styles.colQty]}>Qty</Text>
-              <Text style={[styles.tableHeaderText, styles.colPrice]}>Unit Price</Text>
-              <Text style={[styles.tableHeaderText, styles.colTotal]}>Total</Text>
+              <Text style={[styles.tableHeaderText, styles.colPrice]}>
+                Unit Price
+              </Text>
+              <Text style={[styles.tableHeaderText, styles.colTotal]}>
+                Total
+              </Text>
             </View>
             {lines.map((line) => (
               <View key={line.id} style={styles.row}>
                 <Text style={styles.colDesc}>
-                  {line.description}{line.isBundleTotal ? "  (bundle)" : ""}
+                  {line.description}
+                  {line.isBundleTotal ? "  (bundle)" : ""}
                 </Text>
                 <Text style={styles.colQty}>{line.quantity}</Text>
                 <Text style={styles.colPrice}>{fmt(line.price)}</Text>
-                <Text style={styles.colTotal}>{fmt(line.price * line.quantity)}</Text>
+                <Text style={styles.colTotal}>
+                  {fmt(line.price * line.quantity)}
+                </Text>
               </View>
             ))}
           </>
@@ -231,7 +313,9 @@ export function buildInvoicePDF({
         {/* Percentage charge */}
         {chargeType === "PERCENTAGE" && chargePercent && (
           <View style={styles.percentBlock}>
-            <Text style={styles.percentText}>{chargePercent}% of quoted amount</Text>
+            <Text style={styles.percentText}>
+              {chargePercent}% of quoted amount
+            </Text>
           </View>
         )}
 
@@ -253,8 +337,15 @@ export function buildInvoicePDF({
         )}
 
         <View style={styles.footer} fixed>
-          <Text>Thank you for your business. Please reference the invoice number when making payment.</Text>
-          <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
+          <Text>
+            Thank you for your business. Please reference the invoice number
+            when making payment.
+          </Text>
+          <Text
+            render={({ pageNumber, totalPages }) =>
+              `Page ${pageNumber} / ${totalPages}`
+            }
+          />
         </View>
       </Page>
     </Document>
