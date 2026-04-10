@@ -70,8 +70,8 @@ export default async function PLReportPage() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-right text-[#666]">
-                      {r.materialCost > 0 ? (
-                        `$${fmt(r.materialCost)}`
+                      {r.materialCosts > 0 ? (
+                        `$${fmt(r.materialCosts)}`
                       ) : (
                         <span className="text-[#ccc]">—</span>
                       )}

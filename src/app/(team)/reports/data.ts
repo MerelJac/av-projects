@@ -11,6 +11,7 @@ export async function getProjectFinancials() {
         purchaseOrders: {
           include: { lines: { select: { cost: true, quantity: true, id: true } } },
         },
+        costs: { select: { costType: true, amount: true } },
         shipments: { select: { cost: true } },
         scopes: {
           select: {
@@ -46,6 +47,7 @@ export async function getProjectFinancials() {
     customer: p.customer.name,
     ...calcProjectFinancials({
       ...p,
+      projectCosts: p.costs,
       purchaseOrders: p.purchaseOrders.map((po) => ({
         ...po,
         lines: po.lines.map((l) => ({
@@ -60,7 +62,7 @@ export async function getProjectFinancials() {
     (acc, r) => ({
       totalContract: acc.totalContract + r.totalContract,
       cogs: acc.cogs + r.cogs,
-      materialCost: acc.materialCost + r.materialCost,
+      materialCost: acc.materialCost + r.materialCosts,
       shippingCost: acc.shippingCost + r.shippingCost,
       laborCost: acc.laborCost + r.laborCost,
       grossProfit: acc.grossProfit + r.grossProfit,
