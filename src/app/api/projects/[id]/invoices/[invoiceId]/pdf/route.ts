@@ -14,7 +14,8 @@ export async function GET(
     include: { lines: { orderBy: { id: "asc" } } },
   });
 
-  if (!invoice) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!invoice)
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const buffer = await renderToBuffer(
     buildInvoicePDF({
@@ -23,18 +24,25 @@ export async function GET(
       customerEmail: invoice.customerEmail,
       customerPhone: invoice.customerPhone,
       billToAddress: invoice.billToAddress,
-      billingTerms: invoice.billingTerms as "NET30" | "PROGRESS" | "PREPAID" | null,
+      shipToAddress: invoice.shipToAddress,
+      billingTerms: invoice.billingTerms as
+        | "NET30"
+        | "PROGRESS"
+        | "PREPAID"
+        | null,
       chargeType: invoice.chargeType as "LINE_ITEMS" | "PERCENTAGE",
       chargePercent: invoice.chargePercent,
       lines: invoice.lines.map((l) => ({
         id: l.id,
         description: l.description,
         quantity: l.quantity,
+        taxAmount: l.taxAmount,
         price: l.price,
         isBundleTotal: l.isBundleTotal,
       })),
       amount: invoice.amount,
       issuedAt: invoice.issuedAt,
+      taxAmount: invoice.taxAmount,
       dueDate: invoice.dueDate,
       notes: invoice.notes,
     }),
@@ -46,7 +54,9 @@ export async function GET(
   return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": preview ? "inline" : `attachment; filename="${filename}"`,
+      "Content-Disposition": preview
+        ? "inline"
+        : `attachment; filename="${filename}"`,
     },
   });
 }

@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
     borderTopColor: "#E5E3DE",
     paddingTop: 12,
   },
-  billToBlock: { marginBottom: 28 },
+  billToBlock: { flex: 1 },
   billToLabel: {
     fontSize: 8,
     color: "#888",
@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 1,
   },
-  billToName: { fontSize: 13, fontFamily: "Helvetica-Bold" },
+  billToName: { fontSize: 11, fontFamily: "Helvetica-Bold" },
   billToDetail: { fontSize: 9, color: "#555", marginTop: 2 },
   metaGrid: {
     flexDirection: "row",
@@ -74,30 +74,31 @@ const styles = StyleSheet.create({
     borderBottomColor: "#F0EEE9",
   },
   colDesc: { flex: 1 },
-  colQty: { width: 40, textAlign: "right" },
-  colPrice: { width: 64, textAlign: "right" },
-  colTotal: { width: 72, textAlign: "right", fontFamily: "Helvetica-Bold" },
-  totalBlock: { marginTop: 24, alignItems: "flex-end" },
-  divider: {
-    borderTopWidth: 1,
-    borderTopColor: "#111",
-    marginTop: 4,
-    marginBottom: 4,
-    width: 156,
+  colQty: { width: 36, textAlign: "right" },
+  colPrice: { width: 60, textAlign: "right" },
+  colTax: { width: 56, textAlign: "right" },
+  colTotal: { width: 68, textAlign: "right", fontFamily: "Helvetica-Bold" },
+  totalsBlock: { marginTop: 20, alignItems: "flex-end" },
+  totalsTable: { width: 200 },
+  totalsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 3,
   },
-  totalRow: { flexDirection: "row", gap: 24, marginTop: 4 },
-  grandTotalLabel: {
-    fontSize: 12,
-    fontFamily: "Helvetica-Bold",
-    width: 80,
-    textAlign: "right",
+  totalsLabel: { fontSize: 9, color: "#666" },
+  totalsValue: { fontSize: 9, color: "#111" },
+  totalsDivider: {
+    borderTopWidth: 0.5,
+    borderTopColor: "#E5E3DE",
+    marginVertical: 4,
   },
-  grandTotalValue: {
-    fontSize: 12,
-    fontFamily: "Helvetica-Bold",
-    width: 72,
-    textAlign: "right",
+  grandTotalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingTop: 4,
   },
+  grandTotalLabel: { fontSize: 11, fontFamily: "Helvetica-Bold" },
+  grandTotalValue: { fontSize: 11, fontFamily: "Helvetica-Bold" },
   percentBlock: {
     marginTop: 12,
     alignItems: "flex-end",
@@ -135,6 +136,7 @@ type InvoiceLine = {
   description: string;
   quantity: number;
   price: number;
+  taxAmount: number | null;
   isBundleTotal: boolean;
 };
 
@@ -166,11 +168,13 @@ export function buildInvoicePDF({
   customerEmail,
   customerPhone,
   billToAddress,
+  shipToAddress,
   billingTerms,
   chargeType,
   chargePercent,
   lines,
   amount,
+  taxAmount,
   issuedAt,
   dueDate,
   notes,
@@ -180,16 +184,21 @@ export function buildInvoicePDF({
   customerEmail: string | null;
   customerPhone: string | null;
   billToAddress: string | null;
+  shipToAddress: string | null;
   billingTerms: "NET30" | "PROGRESS" | "PREPAID" | null;
   chargeType: "LINE_ITEMS" | "PERCENTAGE";
   chargePercent: number | null;
   lines: InvoiceLine[];
   amount: number | null;
+  taxAmount: number | null;
   issuedAt: Date | null;
   dueDate: Date | null;
   notes: string | null;
 }) {
   const total = amount ?? 0;
+  const subtotal = taxAmount != null ? total - taxAmount : total;
+  const hasTax = taxAmount != null && taxAmount > 0;
+  const hasLineTax = lines.some((l) => l.taxAmount != null);
 
   return (
     <Document>
@@ -208,22 +217,18 @@ export function buildInvoicePDF({
           </View>
         </View>
 
-        {/* Call One To */}
-        <View style={styles.billToBlock}>
-          {customerName && (
-            <Text style={styles.billToDetail}>Call One, Inc.</Text>
-          )}
-          {customerEmail && (
-            <Text style={styles.billToDetail}>PO Box 9002</Text>
-          )}
-          {customerPhone && (
-            <Text style={styles.billToDetail}>Cape Canaveral, FL 32920</Text>
-          )}
-          {billToAddress && <Text style={styles.billToDetail}>US</Text>}
+        {/* Seller block */}
+        <View style={{ marginBottom: 20 }}>
+          <Text style={[styles.billToDetail, { fontFamily: "Helvetica-Bold" }]}>
+            Call One, Inc.
+          </Text>
+          <Text style={styles.billToDetail}>PO Box 9002</Text>
+          <Text style={styles.billToDetail}>Cape Canaveral, FL 32920</Text>
+          <Text style={styles.billToDetail}>US</Text>
         </View>
 
+        {/* Address block — Bill To + Ship To side by side */}
         <View style={styles.addressBlock}>
-          {/* Bill To */}
           <View style={styles.billToBlock}>
             <Text style={styles.billToLabel}>Bill To</Text>
             {customerName && (
@@ -240,24 +245,13 @@ export function buildInvoicePDF({
             )}
           </View>
 
-          {/* ship To */}
-          <View style={styles.billToBlock}>
-            <Text style={styles.billToLabel}>Ship To</Text>
-            {customerName && (
-              <Text style={styles.billToName}>{customerName}</Text>
-            )}
-            {customerEmail && (
-              <Text style={styles.billToDetail}>{customerEmail}</Text>
-            )}
-            {customerPhone && (
-              <Text style={styles.billToDetail}>{customerPhone}</Text>
-            )}
-            {billToAddress && (
-              <Text style={styles.billToDetail}>{billToAddress}</Text>
-            )}
-          </View>
+          {shipToAddress && (
+            <View style={styles.billToBlock}>
+              <Text style={styles.billToLabel}>Ship To</Text>
+              <Text style={styles.billToDetail}>{shipToAddress}</Text>
+            </View>
+          )}
         </View>
-
 
         {/* Meta grid */}
         <View style={styles.metaGrid}>
@@ -290,6 +284,9 @@ export function buildInvoicePDF({
               <Text style={[styles.tableHeaderText, styles.colPrice]}>
                 Unit Price
               </Text>
+              {hasLineTax && (
+                <Text style={[styles.tableHeaderText, styles.colTax]}>Tax</Text>
+              )}
               <Text style={[styles.tableHeaderText, styles.colTotal]}>
                 Total
               </Text>
@@ -302,6 +299,11 @@ export function buildInvoicePDF({
                 </Text>
                 <Text style={styles.colQty}>{line.quantity}</Text>
                 <Text style={styles.colPrice}>{fmt(line.price)}</Text>
+                {hasLineTax && (
+                  <Text style={styles.colTax}>
+                    {line.taxAmount != null ? fmt(line.taxAmount) : "—"}
+                  </Text>
+                )}
                 <Text style={styles.colTotal}>
                   {fmt(line.price * line.quantity)}
                 </Text>
@@ -319,12 +321,26 @@ export function buildInvoicePDF({
           </View>
         )}
 
-        {/* Total */}
-        <View style={styles.totalBlock}>
-          <View style={styles.divider} />
-          <View style={styles.totalRow}>
-            <Text style={styles.grandTotalLabel}>Total Due</Text>
-            <Text style={styles.grandTotalValue}>{fmt(total)}</Text>
+        {/* Totals */}
+        <View style={styles.totalsBlock}>
+          <View style={styles.totalsTable}>
+            {hasTax && (
+              <>
+                <View style={styles.totalsRow}>
+                  <Text style={styles.totalsLabel}>Subtotal</Text>
+                  <Text style={styles.totalsValue}>{fmt(subtotal)}</Text>
+                </View>
+                <View style={styles.totalsRow}>
+                  <Text style={styles.totalsLabel}>Tax</Text>
+                  <Text style={styles.totalsValue}>{fmt(taxAmount!)}</Text>
+                </View>
+              </>
+            )}
+            <View style={styles.totalsDivider} />
+            <View style={styles.grandTotalRow}>
+              <Text style={styles.grandTotalLabel}>Total Due</Text>
+              <Text style={styles.grandTotalValue}>{fmt(total)}</Text>
+            </View>
           </View>
         </View>
 
