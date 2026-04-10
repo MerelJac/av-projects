@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, Mail, Phone, Tag } from "lucide-react";
 import DeleteCustomerButton from "./DeleteCustomerButton";
+import EditCustomerButton from "./EditCustomerButton";
 import CustomerSubscriptionsPanel from "../../subscriptions/CustomerSubscriptionPanel";
 
 const quoteStatusStyles: Record<string, string> = {
@@ -71,6 +72,15 @@ export default async function CustomerPage({
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <EditCustomerButton
+              customer={{
+                id: customer.id,
+                name: customer.name,
+                email: customer.email,
+                phone: customer.phone,
+                billingTerm: customer.billingTerm,
+              }}
+            />
             <Link
               href={`/customers/${customer.id}/pricing`}
               className="flex items-center gap-1.5 text-sm font-semibold border border-[#E5E3DE] bg-white px-4 py-2 rounded-xl hover:bg-[#F7F6F3] transition-colors"

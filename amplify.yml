@@ -18,6 +18,9 @@ frontend:
         - echo "APP_URL=$APP_URL" >> .env
         - echo "INVITE_PASS=$INVITE_PASS" >> .env
         - echo "CRON_SECRET=$CRON_SECRET" >> .env
+        - echo "VERTEX_TRUSTED_ID=$VERTEX_TRUSTED_ID" >> .env
+        - echo "VERTEX_COMPANY_CODE=$VERTEX_COMPANY_CODE" >> .env
+        - echo "VERTEX_ENDPOINT=$VERTEX_ENDPOINT" >> .env
 
   artifacts:
     baseDirectory: .next

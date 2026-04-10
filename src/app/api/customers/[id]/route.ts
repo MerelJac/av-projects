@@ -1,8 +1,29 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function DELETE(
+export async function PATCH(
   req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const body = await req.json();
+  const { name, email, phone, billingTerm } = body;
+
+  const customer = await prisma.customer.update({
+    where: { id },
+    data: {
+      name: name || undefined,
+      email: email ?? null,
+      phone: phone ?? null,
+      billingTerm: billingTerm ?? null,
+    },
+  });
+
+  return NextResponse.json(customer);
+}
+
+export async function DELETE(
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
