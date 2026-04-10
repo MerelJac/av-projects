@@ -89,6 +89,7 @@ export async function POST(
       customerEmail: invoice.customerEmail,
       customerPhone: invoice.customerPhone,
       billToAddress: invoice.billToAddress,
+      shipToAddress: invoice.shipToAddress,
       billingTerms: invoice.billingTerms as
         | "NET30"
         | "PROGRESS"
@@ -101,12 +102,14 @@ export async function POST(
         description: l.description,
         quantity: l.quantity,
         price: l.price,
+        taxAmount: l.taxAmount,
         isBundleTotal: l.isBundleTotal,
       })),
       amount: invoice.amount,
       issuedAt: invoice.issuedAt,
       dueDate: invoice.dueDate,
       notes: invoice.notes,
+      taxAmount: invoice.taxAmount
     }),
   );
 

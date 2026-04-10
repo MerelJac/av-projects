@@ -277,7 +277,6 @@ export async function calculateVertexTax(
       await prisma.vertexLog.update({
         where: { id: log.id },
         data: {
-          res,
           success: false,
           errorMessage: `HTTP ${res.status}`,
         },
