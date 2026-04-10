@@ -2,13 +2,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { X, FileText, Percent, List, Plus, Trash2 } from "lucide-react";
-
 type AdditionalLine = {
   id: string;
   description: string;
   amount: string;
 };
-
 type QuoteLine = {
   id: string;
   description: string;
@@ -16,20 +14,17 @@ type QuoteLine = {
   price: number;
   bundleId: string | null;
 };
-
 type Bundle = {
   id: string;
   name: string;
   showToCustomer: boolean;
   lines: QuoteLine[];
 };
-
 type Customer = {
   name: string;
   email?: string | null;
   phone?: string | null;
 };
-
 export default function CreateInvoiceModal({
   projectId,
   quoteId,
@@ -55,30 +50,26 @@ export default function CreateInvoiceModal({
   const [customerEmail, setCustomerEmail] = useState(customer.email ?? "");
   const [customerPhone, setCustomerPhone] = useState(customer.phone ?? "");
   const [billToAddress, setBillToAddress] = useState("");
+  const [shipToAddress, setShipToAddress] = useState("");
+  const [sameAsBilling, setSameAsBilling] = useState(false);
   const [billingTerms, setBillingTerms] = useState<"NET30" | "PROGRESS" | "PREPAID" | "">("");
   const [notes, setNotes] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [additionalLines, setAdditionalLines] = useState<AdditionalLine[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   function addAdditionalLine(description = "") {
     setAdditionalLines((prev) => [...prev, { id: crypto.randomUUID(), description, amount: "" }]);
   }
-
   function updateAdditionalLine(id: string, field: "description" | "amount", value: string) {
     setAdditionalLines((prev) => prev.map((l) => (l.id === id ? { ...l, [field]: value } : l)));
   }
-
   function removeAdditionalLine(id: string) {
     setAdditionalLines((prev) => prev.filter((l) => l.id !== id));
   }
-
   const additionalTotal = additionalLines.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
-
   // Unbundled lines
   const unbundledLines = lines.filter((l) => !l.bundleId);
-
   function toggleLine(id: string) {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -87,7 +78,6 @@ export default function CreateInvoiceModal({
       return next;
     });
   }
-
   function toggleBundle(bundleId: string) {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -99,11 +89,9 @@ export default function CreateInvoiceModal({
       return next;
     });
   }
-
   function toggleBundleLine(lineId: string) {
     toggleLine(lineId);
   }
-
   // Build invoice lines from selections
   function buildLines() {
     const result: {
@@ -114,46 +102,39 @@ export default function CreateInvoiceModal({
       quoteBundleId?: string;
       isBundleTotal?: boolean;
     }[] = [];
-
-    // Unbundled lines
     for (const l of unbundledLines) {
       if (selected.has(l.id)) {
         result.push({ description: l.description, quantity: l.quantity, price: l.price, quoteLineId: l.id });
       }
     }
-
     for (const bundle of bundles) {
       if (bundle.showToCustomer) {
-        // Individual lines selectable
         for (const l of bundle.lines) {
           if (selected.has(l.id)) {
             result.push({ description: l.description, quantity: l.quantity, price: l.price, quoteLineId: l.id, quoteBundleId: bundle.id });
           }
         }
       } else {
-        // Bundle selected as a single total
         if (selected.has(`bundle:${bundle.id}`)) {
           const total = bundle.lines.reduce((s, l) => s + l.price * l.quantity, 0);
           result.push({ description: bundle.name, quantity: 1, price: total, quoteBundleId: bundle.id, isBundleTotal: true });
         }
       }
     }
-
     return result;
   }
-
   const pctAmount =
     chargeType === "PERCENTAGE" && chargePercent
       ? (parseFloat(chargePercent) / 100) * quoteSubtotal
       : null;
-
   const lineItemsAmount =
     chargeType === "LINE_ITEMS"
       ? buildLines().reduce((s, l) => s + l.price * l.quantity, 0)
       : null;
-
   const previewAmount =
     (chargeType === "PERCENTAGE" ? (pctAmount ?? 0) : (lineItemsAmount ?? 0)) + additionalTotal;
+
+  const resolvedShipTo = sameAsBilling ? billToAddress : shipToAddress;
 
   async function handleCreate() {
     setError(null);
@@ -170,7 +151,6 @@ export default function CreateInvoiceModal({
         return;
       }
     }
-
     setSaving(true);
     try {
       const res = await fetch(`/api/projects/${projectId}/invoices`, {
@@ -188,6 +168,7 @@ export default function CreateInvoiceModal({
           customerEmail: customerEmail || null,
           customerPhone: customerPhone || null,
           billToAddress: billToAddress || null,
+          shipToAddress: resolvedShipTo || null,
           billingTerms: billingTerms || null,
           notes: notes || null,
           dueDate: dueDate || null,
@@ -206,10 +187,8 @@ export default function CreateInvoiceModal({
       setSaving(false);
     }
   }
-
   const fmt = (n: number) =>
     n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
@@ -224,7 +203,6 @@ export default function CreateInvoiceModal({
             <X size={14} />
           </button>
         </div>
-
         <div className="overflow-y-auto flex-1 px-6 py-5 space-y-6">
           {/* Charge type */}
           <div>
@@ -254,7 +232,6 @@ export default function CreateInvoiceModal({
               </button>
             </div>
           </div>
-
           {/* Percentage input */}
           {chargeType === "PERCENTAGE" && (
             <div>
@@ -282,13 +259,11 @@ export default function CreateInvoiceModal({
               </div>
             </div>
           )}
-
           {/* Line item selection */}
           {chargeType === "LINE_ITEMS" && (
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-3">Select Items to Invoice</p>
               <div className="space-y-3">
-                {/* Unbundled lines */}
                 {unbundledLines.length > 0 && (
                   <div className="border border-[#E5E3DE] rounded-xl overflow-hidden">
                     <div className="px-4 py-2.5 bg-[#FAFAF9] border-b border-[#F0EEE9]">
@@ -317,13 +292,9 @@ export default function CreateInvoiceModal({
                     })}
                   </div>
                 )}
-
-                {/* Bundles */}
                 {bundles.map((bundle) => {
                   const bundleTotal = bundle.lines.reduce((s, l) => s + l.price * l.quantity, 0);
-
                   if (!bundle.showToCustomer) {
-                    // Hidden bundle — selectable as a single total
                     const checked = selected.has(`bundle:${bundle.id}`);
                     return (
                       <div key={bundle.id} className="border border-[#E5E3DE] rounded-xl overflow-hidden">
@@ -336,9 +307,7 @@ export default function CreateInvoiceModal({
                           />
                           <div className="flex-1">
                             <p className="text-sm font-medium text-[#111]">{bundle.name}</p>
-                            <p className="text-xs text-[#999] mt-0.5">
-                              Hidden bundle · billed as total
-                            </p>
+                            <p className="text-xs text-[#999] mt-0.5">Hidden bundle · billed as total</p>
                           </div>
                           <span className="text-sm font-medium text-[#111] w-20 text-right">
                             ${fmt(bundleTotal)}
@@ -347,8 +316,6 @@ export default function CreateInvoiceModal({
                       </div>
                     );
                   }
-
-                  // Visible bundle — individual lines
                   return (
                     <div key={bundle.id} className="border border-[#E5E3DE] rounded-xl overflow-hidden">
                       <div className="px-4 py-2.5 bg-[#FAFAF9] border-b border-[#F0EEE9] flex items-center justify-between">
@@ -382,7 +349,6 @@ export default function CreateInvoiceModal({
               </div>
             </div>
           )}
-
           {/* Additional charges */}
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-3">Additional Charges</p>
@@ -421,7 +387,7 @@ export default function CreateInvoiceModal({
                   onClick={() => addAdditionalLine("Tax")}
                   className="text-xs px-3 py-1.5 rounded-lg border border-[#E5E3DE] text-[#666] hover:bg-[#F7F6F3] transition-colors"
                 >
-                  + Tax
+                  + Tax (not from vertex auto-pop)
                 </button>
                 <button
                   onClick={() => addAdditionalLine("Shipping")}
@@ -434,12 +400,11 @@ export default function CreateInvoiceModal({
                   className="text-xs px-3 py-1.5 rounded-lg border border-[#E5E3DE] text-[#666] hover:bg-[#F7F6F3] transition-colors flex items-center gap-1"
                 >
                   <Plus size={11} />
-                  Custom
+                  Other
                 </button>
               </div>
             </div>
           </div>
-
           {/* Contact info */}
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-3">Bill To</p>
@@ -477,6 +442,35 @@ export default function CreateInvoiceModal({
             </div>
           </div>
 
+          {/* Ship To */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-semibold uppercase tracking-widest text-[#888]">Ship To</p>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={sameAsBilling}
+                  onChange={(e) => setSameAsBilling(e.target.checked)}
+                  className="rounded"
+                />
+                <span className="text-xs text-[#666]">Same as billing</span>
+              </label>
+            </div>
+            {sameAsBilling ? (
+              <div className="px-3 py-2 rounded-xl border border-[#E5E3DE] bg-[#FAFAF9] text-sm text-[#999] min-h-[60px] whitespace-pre-wrap">
+                {billToAddress || <span className="italic">Fill in billing address above</span>}
+              </div>
+            ) : (
+              <textarea
+                placeholder="Shipping address (used for tax calculation)"
+                value={shipToAddress}
+                onChange={(e) => setShipToAddress(e.target.value)}
+                rows={2}
+                className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111] resize-none"
+              />
+            )}
+          </div>
+
           {/* Terms & due date */}
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -506,7 +500,6 @@ export default function CreateInvoiceModal({
               />
             </div>
           </div>
-
           {/* Notes */}
           <div>
             <label className="text-xs font-semibold uppercase tracking-widest text-[#888] block mb-1.5">
@@ -521,7 +514,6 @@ export default function CreateInvoiceModal({
             />
           </div>
         </div>
-
         {/* Footer */}
         <div className="px-6 py-4 border-t border-[#F0EEE9] flex items-center justify-between gap-4">
           <div className="text-sm">

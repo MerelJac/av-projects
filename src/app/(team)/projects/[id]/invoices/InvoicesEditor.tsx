@@ -145,36 +145,37 @@ export default function InvoicesEditor({
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   const [sendingEmail, setSendingEmail] = useState(false);
 
-async function handleRecalculateTax(invoiceId: string) {
-  const res = await fetch(
-    `/api/projects/${project.id}/invoices/${invoiceId}/recalculate-tax`,
-    { method: "POST" },
-  );
-  if (res.ok) {
-    const updated = await res.json();
-    setInvoices((prev) =>
-      prev.map((inv) => {
-        if (inv.id !== invoiceId) return inv;
-        return {
-          ...inv,
-          taxAmount: updated.taxAmount,
-          amount: updated.amount,
-          lines: inv.lines.map((line, i) => {
-            const lineItemNumber = (i + 1) * 10000;
-            const lt = updated.lineTaxes?.find(
-              (t: { lineItemNumber: number; taxAmount: number }) =>
-                t.lineItemNumber === lineItemNumber,
-            );
-            return lt ? { ...line, taxAmount: lt.taxAmount } : line;
-          }),
-        };
-      }),
+  async function handleRecalculateTax(invoiceId: string) {
+    const res = await fetch(
+      `/api/projects/${project.id}/invoices/${invoiceId}/recalculate-tax`,
+      { method: "POST" },
     );
-    showToast("success", "Tax recalculated");
-  } else {
-    showToast("error", "Failed to recalculate tax");
+    if (res.ok) {
+      const updated = await res.json();
+      setInvoices((prev) =>
+        prev.map((inv) => {
+          if (inv.id !== invoiceId) return inv;
+          return {
+            ...inv,
+            taxAmount: updated.taxAmount,
+            amount: updated.amount,
+            lines: inv.lines.map((line, i) => {
+              const lineItemNumber = (i + 1) * 10000;
+              const lt = updated.lineTaxes?.find(
+                (t: { lineItemNumber: number; taxAmount: number }) =>
+                  t.lineItemNumber === lineItemNumber,
+              );
+              return lt ? { ...line, taxAmount: lt.taxAmount } : line;
+            }),
+          };
+        }),
+      );
+      showToast("success", "Tax recalculated");
+    } else {
+      showToast("error", "Failed to recalculate tax");
+    }
   }
-}
+
   function handlePreviewPDF(invoiceId: string) {
     window.open(
       `/api/projects/${project.id}/invoices/${invoiceId}/pdf?preview=true`,
@@ -200,6 +201,7 @@ async function handleRecalculateTax(invoiceId: string) {
   }
 
   const selected = invoices.find((i) => i.id === selectedId) ?? null;
+  console.log("ship to address", selected?.shipToAddress);
 
   function showToast(type: "success" | "error", msg: string) {
     setToast({ type, msg });
@@ -499,42 +501,54 @@ async function handleRecalculateTax(invoiceId: string) {
                     )}
                   </div>
 
-                  {/* Bill to */}
-                  {selected.shipToAddress &&
-                    selected.shipToAddress !== selected.billToAddress && (
-                      <div className="border-t border-[#F0EEE9] pt-4 mb-5">
-                        <p className="text-xs text-[#999] mb-1">Ship To</p>
-                        <p className="text-sm text-[#666] whitespace-pre-wrap">
-                          {selected.shipToAddress}
-                        </p>
-                      </div>
-                    )}
-                  {(selected.customerName || selected.billToAddress) && (
+                  {(selected.customerName ||
+                    selected.billToAddress ||
+                    selected.shipToAddress) && (
                     <div className="border-t border-[#F0EEE9] pt-4 mb-5">
-                      <p className="text-xs text-[#999] mb-1">Bill To</p>
-                      {selected.customerName && (
-                        <p className="text-sm font-semibold text-[#111]">
-                          {selected.customerName}
-                        </p>
-                      )}
-                      {selected.customerEmail && (
-                        <p className="text-sm text-[#666]">
-                          {selected.customerEmail}
-                        </p>
-                      )}
-                      {selected.customerPhone && (
-                        <p className="text-sm text-[#666]">
-                          {selected.customerPhone}
-                        </p>
-                      )}
-                      {selected.billToAddress && (
-                        <p className="text-sm text-[#666] whitespace-pre-wrap mt-0.5">
-                          {selected.billToAddress}
-                        </p>
-                      )}
+                      <div className="grid grid-cols-2 gap-6">
+                        {/* Bill To */}
+                        {(selected.customerName || selected.billToAddress) && (
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-widest text-[#999] mb-2">
+                              Bill To
+                            </p>
+                            {selected.customerName && (
+                              <p className="text-sm font-semibold text-[#111]">
+                                {selected.customerName}
+                              </p>
+                            )}
+                            {selected.customerEmail && (
+                              <p className="text-sm text-[#666]">
+                                {selected.customerEmail}
+                              </p>
+                            )}
+                            {selected.customerPhone && (
+                              <p className="text-sm text-[#666]">
+                                {selected.customerPhone}
+                              </p>
+                            )}
+                            {selected.billToAddress && (
+                              <p className="text-sm text-[#666] whitespace-pre-wrap mt-1">
+                                {selected.billToAddress}
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Ship To */}
+                        {selected.shipToAddress && (
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-widest text-[#999] mb-2">
+                              Ship To
+                            </p>
+                            <p className="text-sm text-[#666] whitespace-pre-wrap">
+                              {selected.shipToAddress}
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
-
                   {/* Line items */}
                   {selected.lines.length > 0 && (
                     <div className="border-t border-[#F0EEE9] pt-4">
