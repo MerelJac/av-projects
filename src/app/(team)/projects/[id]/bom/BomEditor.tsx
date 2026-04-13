@@ -23,6 +23,7 @@ import { Item } from "@/types/item";
 import { calcBOMTotals } from "./actions";
 import Link from "next/link";
 import { ProjectCost } from "@prisma/client";
+import BomExportButton from "./BomExportButton";
 
 const quoteStatusColors: Record<string, string> = {
   DRAFT: "bg-gray-100 text-gray-600",
@@ -1303,6 +1304,11 @@ export default function BOMEditor({
                 </div>
               )}
             </div>
+            <BomExportButton
+              lines={lines}
+              bomName={bom.name}
+              projectName={bom.project.name}
+            />
           </div>
         </div>
       </div>
