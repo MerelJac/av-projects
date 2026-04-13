@@ -10,7 +10,11 @@ export default function DeleteQuoteButton({ id }: { id: string }) {
   const [error, setError] = useState<string | null>(null);
 
   async function handleDeleteQuote() {
-    if (!confirm("Are you sure you want to delete this proposal? This action cannot be undone.")) {
+    if (
+      !confirm(
+        "Are you sure you want to delete this proposal? This action cannot be undone.",
+      )
+    ) {
       return;
     }
 
@@ -29,28 +33,33 @@ export default function DeleteQuoteButton({ id }: { id: string }) {
 
       router.push("/quotes");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unknown error occurred");
+      setError(
+        err instanceof Error ? err.message : "An unknown error occurred",
+      );
       setDeleting(false);
     }
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-6 pb-10 border border-danger/20 bg-danger/5 rounded-2xl p-5 space-y-3">
-      <h2 className="text-[10px] font-semibold tracking-widest uppercase text-danger">
-        Danger Zone
-      </h2>
-      <p className="text-sm text-muted pt-2">
-        Deleting a proposal will permanently remove all associated data, including quotes, boms, and more.
-      </p>
-      <button
-        onClick={handleDeleteQuote}
-        disabled={deleting}
-        className="inline-flex items-center gap-2 rounded-xl bg-danger/10 border border-danger/20 px-4 py-2.5 text-sm font-semibold text-danger hover:bg-danger/20 transition active:scale-[0.98] disabled:opacity-50"
-      >
-        <Trash size={14} />
-        {deleting ? "Deleting…" : "Delete proposal"}
-      </button>
-      {error && <p className="text-danger text-sm">{error}</p>}
+    <div className="max-w-5xl mx-auto px-6 pb-10">
+      <div className="border border-danger/20 bg-danger/5 rounded-2xl p-5 space-y-3">
+        <h2 className="text-[10px] font-semibold tracking-widest uppercase text-danger">
+          Danger Zone
+        </h2>
+        <p className="text-sm text-muted pt-2">
+          Deleting a proposal will permanently remove all associated data,
+          including quotes, boms, and more.
+        </p>
+        <button
+          onClick={handleDeleteQuote}
+          disabled={deleting}
+          className="inline-flex items-center gap-2 rounded-xl bg-danger/10 border border-danger/20 px-4 py-2.5 text-sm font-semibold text-danger hover:bg-danger/20 transition active:scale-[0.98] disabled:opacity-50"
+        >
+          <Trash size={14} />
+          {deleting ? "Deleting…" : "Delete proposal"}
+        </button>
+        {error && <p className="text-danger text-sm">{error}</p>}
+      </div>
     </div>
   );
 }

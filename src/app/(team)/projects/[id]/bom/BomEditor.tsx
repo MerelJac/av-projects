@@ -278,9 +278,11 @@ export default function BOMEditor({
   );
 
   // Totals
-  const { totalHardwareSell, totalServiceSell, grandTotal, gm } =
-    calcBOMTotals(lines, customerPrices, tariff);
-
+  const { totalHardwareSell, totalServiceSell, grandTotal, gm } = calcBOMTotals(
+    lines,
+    customerPrices,
+    tariff,
+  );
 
   async function handleSave() {
     setSaving(true);
@@ -492,13 +494,7 @@ export default function BOMEditor({
               >
                 <Trash2 size={15} />
               </button>
-              <button
-                onClick={handleSave}
-                disabled={saving || saved}
-                className="text-sm font-semibold px-4 py-2 rounded-xl border border-[#E5E3DE] bg-white hover:bg-[#F7F6F3] disabled:opacity-40 transition-colors"
-              >
-                {saving ? "Saving…" : saved ? "Saved ✓" : "Save Changes"}
-              </button>
+
               <button
                 onClick={() => setShowCreatePO(true)}
                 disabled={lines.length === 0}
@@ -518,11 +514,20 @@ export default function BOMEditor({
                   : "Generate Proposal or Change Order"}
               </button>
             </div>
-            <p className="text-sm text-[#888] mt-1">
-              {!saved && (
-                <span className="text-amber-600 ml-2">Unsaved changes</span>
-              )}
-            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleSave}
+                disabled={saving || saved}
+                className="text-sm font-semibold px-4 py-2 rounded-xl border border-[#E5E3DE] bg-white hover:bg-[#F7F6F3] disabled:opacity-40 transition-colors"
+              >
+                {saving ? "Saving…" : saved ? "Saved ✓" : "Save Changes"}
+              </button>
+              <p className="text-sm text-[#888] mt-1">
+                {!saved && (
+                  <span className="text-amber-600 ml-2">Unsaved changes</span>
+                )}
+              </p>
+            </div>
           </div>
         </div>
 
