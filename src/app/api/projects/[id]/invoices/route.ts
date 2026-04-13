@@ -163,6 +163,15 @@ export async function POST(
                     : {}),
                 }))
               : []),
+            ...(chargeType === InvoiceChargeType.PERCENTAGE
+              ? [
+                  {
+                    description: `Progress billing — ${chargePercent}% of proposal total`,
+                    quantity: 1,
+                    price: amount - additionalTotal, // just the percentage portion, not additional charges
+                  },
+                ]
+              : []),
             ...validAdditional.map((l) => ({
               description: l.description,
               quantity: 1,

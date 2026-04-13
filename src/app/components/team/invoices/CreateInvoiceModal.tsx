@@ -43,7 +43,9 @@ export default function CreateInvoiceModal({
   onClose: () => void;
 }) {
   const router = useRouter();
-  const [chargeType, setChargeType] = useState<"LINE_ITEMS" | "PERCENTAGE">("LINE_ITEMS");
+  const [chargeType, setChargeType] = useState<"LINE_ITEMS" | "PERCENTAGE">(
+    "LINE_ITEMS",
+  );
   const [chargePercent, setChargePercent] = useState<string>("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [customerName, setCustomerName] = useState(customer.name);
@@ -52,22 +54,36 @@ export default function CreateInvoiceModal({
   const [billToAddress, setBillToAddress] = useState("");
   const [shipToAddress, setShipToAddress] = useState("");
   const [sameAsBilling, setSameAsBilling] = useState(false);
-  const [billingTerms, setBillingTerms] = useState<"NET30" | "PROGRESS" | "PREPAID" | "">("");
+  const [billingTerms, setBillingTerms] = useState<
+    "NET30" | "PROGRESS" | "PREPAID" | ""
+  >("");
   const [notes, setNotes] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [additionalLines, setAdditionalLines] = useState<AdditionalLine[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   function addAdditionalLine(description = "") {
-    setAdditionalLines((prev) => [...prev, { id: crypto.randomUUID(), description, amount: "" }]);
+    setAdditionalLines((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), description, amount: "" },
+    ]);
   }
-  function updateAdditionalLine(id: string, field: "description" | "amount", value: string) {
-    setAdditionalLines((prev) => prev.map((l) => (l.id === id ? { ...l, [field]: value } : l)));
+  function updateAdditionalLine(
+    id: string,
+    field: "description" | "amount",
+    value: string,
+  ) {
+    setAdditionalLines((prev) =>
+      prev.map((l) => (l.id === id ? { ...l, [field]: value } : l)),
+    );
   }
   function removeAdditionalLine(id: string) {
     setAdditionalLines((prev) => prev.filter((l) => l.id !== id));
   }
-  const additionalTotal = additionalLines.reduce((s, l) => s + (parseFloat(l.amount) || 0), 0);
+  const additionalTotal = additionalLines.reduce(
+    (s, l) => s + (parseFloat(l.amount) || 0),
+    0,
+  );
   // Unbundled lines
   const unbundledLines = lines.filter((l) => !l.bundleId);
   function toggleLine(id: string) {
@@ -104,20 +120,40 @@ export default function CreateInvoiceModal({
     }[] = [];
     for (const l of unbundledLines) {
       if (selected.has(l.id)) {
-        result.push({ description: l.description, quantity: l.quantity, price: l.price, quoteLineId: l.id });
+        result.push({
+          description: l.description,
+          quantity: l.quantity,
+          price: l.price,
+          quoteLineId: l.id,
+        });
       }
     }
     for (const bundle of bundles) {
       if (bundle.showToCustomer) {
         for (const l of bundle.lines) {
           if (selected.has(l.id)) {
-            result.push({ description: l.description, quantity: l.quantity, price: l.price, quoteLineId: l.id, quoteBundleId: bundle.id });
+            result.push({
+              description: l.description,
+              quantity: l.quantity,
+              price: l.price,
+              quoteLineId: l.id,
+              quoteBundleId: bundle.id,
+            });
           }
         }
       } else {
         if (selected.has(`bundle:${bundle.id}`)) {
-          const total = bundle.lines.reduce((s, l) => s + l.price * l.quantity, 0);
-          result.push({ description: bundle.name, quantity: 1, price: total, quoteBundleId: bundle.id, isBundleTotal: true });
+          const total = bundle.lines.reduce(
+            (s, l) => s + l.price * l.quantity,
+            0,
+          );
+          result.push({
+            description: bundle.name,
+            quantity: 1,
+            price: total,
+            quoteBundleId: bundle.id,
+            isBundleTotal: true,
+          });
         }
       }
     }
@@ -132,7 +168,8 @@ export default function CreateInvoiceModal({
       ? buildLines().reduce((s, l) => s + l.price * l.quantity, 0)
       : null;
   const previewAmount =
-    (chargeType === "PERCENTAGE" ? (pctAmount ?? 0) : (lineItemsAmount ?? 0)) + additionalTotal;
+    (chargeType === "PERCENTAGE" ? (pctAmount ?? 0) : (lineItemsAmount ?? 0)) +
+    additionalTotal;
 
   const resolvedShipTo = sameAsBilling ? billToAddress : shipToAddress;
 
@@ -145,7 +182,9 @@ export default function CreateInvoiceModal({
         return;
       }
     } else {
-      const validAdditional = additionalLines.filter((l) => l.description && parseFloat(l.amount) > 0);
+      const validAdditional = additionalLines.filter(
+        (l) => l.description && parseFloat(l.amount) > 0,
+      );
       if (selected.size === 0 && validAdditional.length === 0) {
         setError("Select at least one line item or add an additional charge.");
         return;
@@ -159,11 +198,15 @@ export default function CreateInvoiceModal({
         body: JSON.stringify({
           quoteId,
           chargeType,
-          chargePercent: chargeType === "PERCENTAGE" ? parseFloat(chargePercent) : undefined,
+          chargePercent:
+            chargeType === "PERCENTAGE" ? parseFloat(chargePercent) : undefined,
           lines: chargeType === "LINE_ITEMS" ? buildLines() : undefined,
           additionalLines: additionalLines
             .filter((l) => l.description && parseFloat(l.amount) > 0)
-            .map((l) => ({ description: l.description, amount: parseFloat(l.amount) })),
+            .map((l) => ({
+              description: l.description,
+              amount: parseFloat(l.amount),
+            })),
           customerName,
           customerEmail: customerEmail || null,
           customerPhone: customerPhone || null,
@@ -188,10 +231,16 @@ export default function CreateInvoiceModal({
     }
   }
   const fmt = (n: number) =>
-    n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    n.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
       <div className="relative bg-white rounded-2xl shadow-2xl border border-[#E5E3DE] w-[680px] max-h-[90vh] mx-4 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#F0EEE9]">
@@ -199,14 +248,19 @@ export default function CreateInvoiceModal({
             <FileText size={16} className="text-[#888]" />
             <p className="text-sm font-semibold text-[#111]">Create Invoice</p>
           </div>
-          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-[#F7F6F3] text-[#999] hover:text-[#111] transition-colors">
+          <button
+            onClick={onClose}
+            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-[#F7F6F3] text-[#999] hover:text-[#111] transition-colors"
+          >
             <X size={14} />
           </button>
         </div>
         <div className="overflow-y-auto flex-1 px-6 py-5 space-y-6">
           {/* Charge type */}
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-3">Charge Type</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-3">
+              Charge Type
+            </p>
             <div className="flex gap-2">
               <button
                 onClick={() => setChargeType("LINE_ITEMS")}
@@ -235,7 +289,9 @@ export default function CreateInvoiceModal({
           {/* Percentage input */}
           {chargeType === "PERCENTAGE" && (
             <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-3">Percentage of Quote</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-3">
+                Percentage of Quote
+              </p>
               <div className="flex items-center gap-3">
                 <div className="relative w-40">
                   <input
@@ -248,12 +304,19 @@ export default function CreateInvoiceModal({
                     placeholder="50"
                     className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 pr-7 focus:outline-none focus:border-[#111]"
                   />
-                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[#999]">%</span>
+                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-[#999]">
+                    %
+                  </span>
                 </div>
                 {pctAmount != null && (
                   <p className="text-sm text-[#666]">
-                    = <span className="font-semibold text-[#111]">${fmt(pctAmount)}</span>
-                    <span className="text-[#bbb] ml-1">of ${fmt(quoteSubtotal)}</span>
+                    ={" "}
+                    <span className="font-semibold text-[#111]">
+                      ${fmt(pctAmount)}
+                    </span>
+                    <span className="text-[#bbb] ml-1">
+                      of ${fmt(quoteSubtotal)}
+                    </span>
                   </p>
                 )}
               </div>
@@ -262,12 +325,16 @@ export default function CreateInvoiceModal({
           {/* Line item selection */}
           {chargeType === "LINE_ITEMS" && (
             <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-3">Select Items to Invoice</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-3">
+                Select Items to Invoice
+              </p>
               <div className="space-y-3">
                 {unbundledLines.length > 0 && (
                   <div className="border border-[#E5E3DE] rounded-xl overflow-hidden">
                     <div className="px-4 py-2.5 bg-[#FAFAF9] border-b border-[#F0EEE9]">
-                      <p className="text-xs font-semibold text-[#888]">Unbundled Items</p>
+                      <p className="text-xs font-semibold text-[#888]">
+                        Unbundled Items
+                      </p>
                     </div>
                     {unbundledLines.map((l) => {
                       const checked = selected.has(l.id);
@@ -282,8 +349,12 @@ export default function CreateInvoiceModal({
                             onChange={() => toggleLine(l.id)}
                             className="rounded"
                           />
-                          <span className="flex-1 text-sm text-[#111]">{l.description}</span>
-                          <span className="text-xs text-[#888]">×{l.quantity}</span>
+                          <span className="flex-1 text-sm text-[#111]">
+                            {l.description}
+                          </span>
+                          <span className="text-xs text-[#888]">
+                            ×{l.quantity}
+                          </span>
                           <span className="text-sm font-medium text-[#111] w-20 text-right">
                             ${fmt(l.price * l.quantity)}
                           </span>
@@ -293,11 +364,17 @@ export default function CreateInvoiceModal({
                   </div>
                 )}
                 {bundles.map((bundle) => {
-                  const bundleTotal = bundle.lines.reduce((s, l) => s + l.price * l.quantity, 0);
+                  const bundleTotal = bundle.lines.reduce(
+                    (s, l) => s + l.price * l.quantity,
+                    0,
+                  );
                   if (!bundle.showToCustomer) {
                     const checked = selected.has(`bundle:${bundle.id}`);
                     return (
-                      <div key={bundle.id} className="border border-[#E5E3DE] rounded-xl overflow-hidden">
+                      <div
+                        key={bundle.id}
+                        className="border border-[#E5E3DE] rounded-xl overflow-hidden"
+                      >
                         <label className="flex items-center gap-3 px-4 py-3 hover:bg-[#FAFAF9] cursor-pointer">
                           <input
                             type="checkbox"
@@ -306,8 +383,12 @@ export default function CreateInvoiceModal({
                             className="rounded"
                           />
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-[#111]">{bundle.name}</p>
-                            <p className="text-xs text-[#999] mt-0.5">Hidden bundle · billed as total</p>
+                            <p className="text-sm font-medium text-[#111]">
+                              {bundle.name}
+                            </p>
+                            <p className="text-xs text-[#999] mt-0.5">
+                              Hidden bundle · billed as total
+                            </p>
                           </div>
                           <span className="text-sm font-medium text-[#111] w-20 text-right">
                             ${fmt(bundleTotal)}
@@ -317,10 +398,17 @@ export default function CreateInvoiceModal({
                     );
                   }
                   return (
-                    <div key={bundle.id} className="border border-[#E5E3DE] rounded-xl overflow-hidden">
+                    <div
+                      key={bundle.id}
+                      className="border border-[#E5E3DE] rounded-xl overflow-hidden"
+                    >
                       <div className="px-4 py-2.5 bg-[#FAFAF9] border-b border-[#F0EEE9] flex items-center justify-between">
-                        <p className="text-xs font-semibold text-[#888]">{bundle.name}</p>
-                        <span className="text-xs text-[#bbb]">${fmt(bundleTotal)}</span>
+                        <p className="text-xs font-semibold text-[#888]">
+                          {bundle.name}
+                        </p>
+                        <span className="text-xs text-[#bbb]">
+                          ${fmt(bundleTotal)}
+                        </span>
                       </div>
                       {bundle.lines.map((l) => {
                         const checked = selected.has(l.id);
@@ -335,8 +423,12 @@ export default function CreateInvoiceModal({
                               onChange={() => toggleBundleLine(l.id)}
                               className="rounded"
                             />
-                            <span className="flex-1 text-sm text-[#111]">{l.description}</span>
-                            <span className="text-xs text-[#888]">×{l.quantity}</span>
+                            <span className="flex-1 text-sm text-[#111]">
+                              {l.description}
+                            </span>
+                            <span className="text-xs text-[#888]">
+                              ×{l.quantity}
+                            </span>
                             <span className="text-sm font-medium text-[#111] w-20 text-right">
                               ${fmt(l.price * l.quantity)}
                             </span>
@@ -351,7 +443,9 @@ export default function CreateInvoiceModal({
           )}
           {/* Additional charges */}
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-3">Additional Charges</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-3">
+              Additional Charges
+            </p>
             <div className="space-y-2">
               {additionalLines.map((line) => (
                 <div key={line.id} className="flex items-center gap-2">
@@ -359,18 +453,28 @@ export default function CreateInvoiceModal({
                     type="text"
                     placeholder="e.g. Tax, Shipping"
                     value={line.description}
-                    onChange={(e) => updateAdditionalLine(line.id, "description", e.target.value)}
+                    onChange={(e) =>
+                      updateAdditionalLine(
+                        line.id,
+                        "description",
+                        e.target.value,
+                      )
+                    }
                     className="flex-1 text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111]"
                   />
                   <div className="relative w-32">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[#999]">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[#999]">
+                      $
+                    </span>
                     <input
                       type="number"
                       min={0}
                       step={0.01}
                       placeholder="0.00"
                       value={line.amount}
-                      onChange={(e) => updateAdditionalLine(line.id, "amount", e.target.value)}
+                      onChange={(e) =>
+                        updateAdditionalLine(line.id, "amount", e.target.value)
+                      }
                       className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 pl-6 focus:outline-none focus:border-[#111]"
                     />
                   </div>
@@ -384,30 +488,19 @@ export default function CreateInvoiceModal({
               ))}
               <div className="flex gap-2 pt-1">
                 <button
-                  onClick={() => addAdditionalLine("Tax")}
-                  className="text-xs px-3 py-1.5 rounded-lg border border-[#E5E3DE] text-[#666] hover:bg-[#F7F6F3] transition-colors"
-                >
-                  + Tax (not from vertex auto-pop)
-                </button>
-                <button
-                  onClick={() => addAdditionalLine("Shipping")}
-                  className="text-xs px-3 py-1.5 rounded-lg border border-[#E5E3DE] text-[#666] hover:bg-[#F7F6F3] transition-colors"
-                >
-                  + Shipping
-                </button>
-                <button
                   onClick={() => addAdditionalLine("")}
                   className="text-xs px-3 py-1.5 rounded-lg border border-[#E5E3DE] text-[#666] hover:bg-[#F7F6F3] transition-colors flex items-center gap-1"
                 >
                   <Plus size={11} />
-                  Other
                 </button>
               </div>
             </div>
           </div>
           {/* Contact info */}
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-3">Bill To</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#888] mb-3">
+              Bill To
+            </p>
             <div className="space-y-2">
               <input
                 type="text"
@@ -445,7 +538,9 @@ export default function CreateInvoiceModal({
           {/* Ship To */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-semibold uppercase tracking-widest text-[#888]">Ship To</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-[#888]">
+                Ship To
+              </p>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -458,7 +553,9 @@ export default function CreateInvoiceModal({
             </div>
             {sameAsBilling ? (
               <div className="px-3 py-2 rounded-xl border border-[#E5E3DE] bg-[#FAFAF9] text-sm text-[#999] min-h-[60px] whitespace-pre-wrap">
-                {billToAddress || <span className="italic">Fill in billing address above</span>}
+                {billToAddress || (
+                  <span className="italic">Fill in billing address above</span>
+                )}
               </div>
             ) : (
               <textarea
@@ -479,7 +576,11 @@ export default function CreateInvoiceModal({
               </label>
               <select
                 value={billingTerms}
-                onChange={(e) => setBillingTerms(e.target.value as "NET30" | "PROGRESS" | "PREPAID" | "")}
+                onChange={(e) =>
+                  setBillingTerms(
+                    e.target.value as "NET30" | "PROGRESS" | "PREPAID" | "",
+                  )
+                }
                 className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111] bg-white"
               >
                 <option value="">— None —</option>
@@ -520,7 +621,9 @@ export default function CreateInvoiceModal({
             {previewAmount > 0 && (
               <span className="text-[#666]">
                 Invoice total:{" "}
-                <span className="font-semibold text-[#111]">${fmt(previewAmount)}</span>
+                <span className="font-semibold text-[#111]">
+                  ${fmt(previewAmount)}
+                </span>
               </span>
             )}
           </div>

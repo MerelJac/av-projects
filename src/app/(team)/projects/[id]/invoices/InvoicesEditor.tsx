@@ -207,7 +207,7 @@ export default function InvoicesEditor({
         const data = await res.json();
         throw new Error(data.error ?? "Failed to delete");
       }
-      router.refresh();
+      router.push(`/projects/${project.id}/invoices`);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to delete");
       setDeleting(false);
@@ -525,7 +525,7 @@ export default function InvoicesEditor({
                         <div>
                           <p className="text-xs text-[#999] mb-0.5">Charge</p>
                           <p className="font-medium text-[#111]">
-                            {selected.chargePercent}% of quote
+                            {selected.chargePercent}% progress billing
                           </p>
                         </div>
                       )}

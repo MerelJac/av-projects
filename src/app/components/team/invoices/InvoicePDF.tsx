@@ -305,7 +305,7 @@ export function buildInvoicePDF({
                   </Text>
                 )}
                 <Text style={styles.colTotal}>
-                  {fmt((line.price * line.quantity + line.taxAmount!))}
+                  {fmt(line.price * line.quantity + line.taxAmount!)}
                 </Text>
               </View>
             ))}
@@ -313,14 +313,27 @@ export function buildInvoicePDF({
         )}
 
         {/* Percentage charge */}
-        {chargeType === "PERCENTAGE" && chargePercent && (
-          <View style={styles.percentBlock}>
-            <Text style={styles.percentText}>
-              {chargePercent}% of quoted amount
-            </Text>
-          </View>
-        )}
+        {chargeType === "PERCENTAGE" && chargePercent != null && (
+          <>
+            <View style={styles.tableHeader}>
+              <Text style={[styles.tableHeaderText, styles.colDesc]}>
+                Description
+              </Text>
+              <Text style={[styles.tableHeaderText, styles.colQty]}>Rate</Text>
+              <Text style={[styles.tableHeaderText, styles.colTotal]}>
+                Total
+              </Text>
+            </View>
 
+            <View style={styles.row}>
+              <Text style={styles.colDesc}>
+                Progress billing — {chargePercent}% of proposal total
+              </Text>
+              <Text style={styles.colQty}>{chargePercent}%</Text>
+              <Text style={styles.colTotal}>{fmt(total)}</Text>
+            </View>
+          </>
+        )}
         {/* Totals */}
         <View style={styles.totalsBlock}>
           <View style={styles.totalsTable}>
