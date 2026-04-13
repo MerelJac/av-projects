@@ -8,7 +8,7 @@ export function calcBOMTotals(
   const effectivePrice = (itemId: string, standardPrice: number | null) =>
     customerPrices[itemId] ?? standardPrice;
 
-  const hardwareLines = lines.filter((l) => l.item.type !== "SERVICE");
+  const hardwareLines = lines.filter((l) => (l.item.type !== "INTERNAL_SERVICE" && l.item.type !== "EXTERNAL_SERVICE"));
   const serviceLines = lines.filter((l) => (l.item.type === "INTERNAL_SERVICE" || l.item.type === "EXTERNAL_SERVICE"));
 
   const totalHardwareSell = hardwareLines.reduce(

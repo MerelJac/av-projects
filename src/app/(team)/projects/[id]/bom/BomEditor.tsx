@@ -278,33 +278,9 @@ export default function BOMEditor({
   );
 
   // Totals
-  const { totalHardwareSell, totalServiceSell, totalCostAll, grandTotal, gm } =
+  const { totalHardwareSell, totalServiceSell, grandTotal, gm } =
     calcBOMTotals(lines, customerPrices, tariff);
 
-  async function handleAllocateFromStock(lineId: string) {
-    setAllocatingLineId(lineId);
-    try {
-      const res = await fetch(
-        `/api/projects/${projectId}/boms/${bom.id}/lines/${lineId}/allocate`,
-        { method: "POST" },
-      );
-      if (!res.ok) {
-        const b = await res.json().catch(() => ({}));
-        showToast("error", b?.error ?? "Failed to allocate");
-        return;
-      }
-      const { allocated } = await res.json();
-      showToast(
-        "success",
-        `${allocated} unit${allocated !== 1 ? "s" : ""} allocated from stock`,
-      );
-      router.refresh();
-    } catch {
-      showToast("error", "Network error");
-    } finally {
-      setAllocatingLineId(null);
-    }
-  }
 
   async function handleSave() {
     setSaving(true);

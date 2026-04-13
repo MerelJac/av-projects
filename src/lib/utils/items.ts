@@ -22,5 +22,5 @@ export function isExternalService(item: {
   type: string;
   preferredVendor?: { name: string } | null;
 }): boolean {
-  return item.type === "SERVICE" && !isInternalService(item);
+  return item.type === "EXTERNAL_SERVICE" && !isInternalService(item);
 }
