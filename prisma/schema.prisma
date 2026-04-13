@@ -162,12 +162,13 @@ model PasswordResetToken {
 }
 
 model Customer {
-  id          String  @id @default(uuid())
-  bcId        String? @unique // Business Central customer ID
+  id          String            @id @default(uuid())
+  bcId        String?           @unique // Business Central customer ID
   name        String
   email       String?
   phone       String?
   billingTerm String?
+  taxStatus   CustomerTaxStatus @default(TAXABLE)
 
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
@@ -541,6 +542,11 @@ enum SalesOrderStatus {
   OPEN
   FULFILLED
   CLOSED
+}
+
+enum CustomerTaxStatus {
+  TAXABLE
+  EXEMPT
 }
 
 model PurchaseOrder {

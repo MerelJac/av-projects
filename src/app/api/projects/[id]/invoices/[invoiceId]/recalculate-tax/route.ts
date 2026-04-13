@@ -15,11 +15,35 @@ export async function POST(
         where: { taxable: true },
         include: { item: { select: { id: true } } },
       },
+      project: {
+        include: { customer: true },
+      },
     },
   });
 
   if (!invoice) {
     return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+  }
+
+  const isCustomerTaxable = invoice.project.customer.taxStatus === "TAXABLE";
+
+  //  RETURN early if not taxable
+  if (!isCustomerTaxable) {
+    const subtotal = invoice.lines.reduce(
+      (s, l) => s + l.price * l.quantity,
+      0,
+    );
+
+    const updated = await prisma.invoice.update({
+      where: { id: invoiceId },
+      data: { taxAmount: 0, amount: subtotal },
+    });
+
+    return NextResponse.json({
+      taxAmount: 0,
+      amount: updated.amount,
+      lineTaxes: [],
+    });
   }
 
   const destination = invoice.shipToAddress ?? invoice.billToAddress;
@@ -56,10 +80,7 @@ export async function POST(
     );
   }
 
-  const subtotal = invoice.lines.reduce(
-    (s, l) => s + l.price * l.quantity,
-    0,
-  );
+  const subtotal = invoice.lines.reduce((s, l) => s + l.price * l.quantity, 0);
 
   // Update invoice tax + total
   const updated = await prisma.invoice.update({

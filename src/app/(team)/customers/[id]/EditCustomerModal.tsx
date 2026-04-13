@@ -10,6 +10,7 @@ type Customer = {
   email: string | null;
   phone: string | null;
   billingTerm: string | null;
+  taxStatus: string;
 };
 
 export default function EditCustomerModal({
@@ -24,6 +25,7 @@ export default function EditCustomerModal({
   const [email, setEmail] = useState(customer.email ?? "");
   const [phone, setPhone] = useState(customer.phone ?? "");
   const [billingTerm, setBillingTerm] = useState(customer.billingTerm ?? "");
+  const [taxStatus, setTaxStatus] = useState(customer.taxStatus ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,6 +45,7 @@ export default function EditCustomerModal({
           email: email.trim() || null,
           phone: phone.trim() || null,
           billingTerm: billingTerm || null,
+          taxStatus: taxStatus || null,
         }),
       });
       if (!res.ok) throw new Error("Failed to save");
@@ -124,7 +127,23 @@ export default function EditCustomerModal({
           </div>
 
           {error && <p className="text-sm text-red-600">{error}</p>}
+
+
+        <div>
+          <label className="block text-xs font-medium text-[#888] mb-1.5 uppercase tracking-wide">
+            Tax Status
+          </label>
+          <select
+            value={taxStatus}
+            onChange={(e) => setTaxStatus(e.target.value)}
+            className="w-full border border-[#E5E3DE] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#111]/10 bg-white"
+          >
+            <option value="TAXABLE">Taxable</option>
+            <option value="EXEMPT">Tax Exempt</option>
+          </select>
         </div>
+
+                </div>
 
         <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-[#F0EEE9]">
           <button

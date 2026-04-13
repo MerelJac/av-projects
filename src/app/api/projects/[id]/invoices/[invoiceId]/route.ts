@@ -73,3 +73,13 @@ export async function PATCH(
 
   return NextResponse.json(updated);
 }
+
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string; invoiceId: string }> },
+) {
+  const { invoiceId } = await params;
+  await prisma.invoice.deleteMany({ where: { id: invoiceId } });
+  return new NextResponse(null, { status: 204 });
+}

@@ -23,6 +23,17 @@ export async function POST(
 ) {
   const { id: projectId } = await params;
 
+  const project = await prisma.project.findFirst({
+    where: { id: projectId },
+    select: { customerId: true },
+  });
+
+  const customer = await prisma.customer.findFirst({
+    where: { id: project?.customerId },
+    select: { taxStatus: true },
+  });
+
+  const isCustomerTaxable = customer?.taxStatus === "TAXABLE";
   const body = await req.json();
   const {
     quoteId,
@@ -114,8 +125,7 @@ export async function POST(
   }
 
   const invoice = await prisma.$transaction(async (tx) => {
-    const count = await tx.invoice.count();
-    const invoiceId = `${new Date().getFullYear()}-${String(count + 1).padStart(4, "0")}`;
+    const invoiceId = `${crypto.randomUUID().slice(0, 6).toUpperCase()}`;
     const invoiceNumber = `INV-AV-${invoiceId}`;
 
     const created = await tx.invoice.create({
@@ -167,7 +177,7 @@ export async function POST(
   });
 
   // Calculate tax after invoice is created
-  if (invoice.shipToAddress) {
+  if (invoice.shipToAddress && isCustomerTaxable) {
     const taxableLines = await prisma.invoiceLine.findMany({
       where: { invoiceId: invoice.id, taxable: true },
       include: { item: { select: { id: true, itemNumber: true } } },

@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Eye,
   Mail,
+  Trash2,
 } from "lucide-react";
 import NotesPanel from "@/app/components/NotesPanel";
 
@@ -134,6 +135,8 @@ export default function InvoicesEditor({
   currentUserId?: string;
 }) {
   const router = useRouter();
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
   const [selectedId, setSelectedId] = useState<string | null>(
     initialInvoices[0]?.id ?? null,
@@ -183,6 +186,34 @@ export default function InvoicesEditor({
     );
   }
 
+  async function handleDeleteInvoice() {
+    if (
+      !confirm(
+        `Are you sure you want to delete this invoice? This cannot be undone.`,
+      )
+    )
+      return;
+
+    setDeleting(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/projects/${project.id}/invoices/${selectedId}`,
+        {
+          method: "DELETE",
+        },
+      );
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error ?? "Failed to delete");
+      }
+      router.refresh();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to delete");
+      setDeleting(false);
+    }
+  }
+
   async function handleSendEmail(invoiceId: string) {
     setSendingEmail(true);
     try {
@@ -192,7 +223,7 @@ export default function InvoicesEditor({
       );
       if (!res.ok) throw new Error();
       showToast("success", "Invoice sent to Call One Finance");
-      router.refresh();
+      router.push("/invoices");
     } catch {
       showToast("error", "Failed to send invoice");
     } finally {
@@ -407,6 +438,13 @@ export default function InvoicesEditor({
                         </button>
                       );
                     })}
+                    <button
+                      onClick={() => handleDeleteInvoice()}
+                      className="w-9 h-9 flex items-center justify-center rounded-xl border border-[#E5E3DE] bg-white hover:bg-red-50 hover:border-red-200 text-[#ccc] hover:text-red-500 transition-colors"
+                      title="Delete invoice"
+                    >
+                      <Trash2 size={15} />
+                    </button>
                   </div>
                 </div>
 
