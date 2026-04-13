@@ -17,6 +17,7 @@ import {
   Eye,
   Mail,
   Trash2,
+  Download,
 } from "lucide-react";
 import NotesPanel from "@/app/components/NotesPanel";
 
@@ -450,7 +451,7 @@ export default function InvoicesEditor({
 
                 {/* Invoice details */}
                 <div className="bg-white border border-[#E5E3DE] rounded-2xl p-5">
-                  <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center justify-between mb-4">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-widest text-[#888]">
                         Invoice
@@ -459,23 +460,16 @@ export default function InvoicesEditor({
                         {selected.invoiceNumber ?? selected.id.toUpperCase()}
                       </p>
                     </div>
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-center gap-3">
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handlePreviewPDF(selected.id)}
                           className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border border-[#E5E3DE] text-[#666] hover:bg-[#F7F6F3] transition-all"
                         >
-                          <Eye size={13} />
-                          Preview PDF
+                          <Download size={13} />
+                          View PDF
                         </button>
-                        <button
-                          onClick={() => handleSendEmail(selected.id)}
-                          disabled={sendingEmail}
-                          className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-[#111] text-white hover:bg-[#333] transition-all disabled:opacity-50"
-                        >
-                          <Mail size={13} />
-                          {sendingEmail ? "Sending…" : "Send to Finance"}
-                        </button>
+                        
                       </div>
                       <div className="text-right">
                         <p className="text-xs text-[#999]">Total</p>
