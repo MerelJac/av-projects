@@ -47,6 +47,7 @@ export default async function VendorDetailPage({
           Vendors
         </Link>
 
+ 
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-[#111] tracking-tight">{vendor.name}</h1>
           <div className="flex items-center gap-4 mt-1 text-sm text-[#888]">
@@ -78,6 +79,7 @@ export default async function VendorDetailPage({
         />
         <VendorItemPricesClient vendorId={id} initialPrices={vendor.itemPrices} />
       </div>
+
     </div>
   );
 }

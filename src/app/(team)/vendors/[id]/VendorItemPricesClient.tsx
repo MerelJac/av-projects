@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { Plus, Trash2, Pencil, Check, X } from "lucide-react";
+import { Plus, Trash2, Pencil, Check, X, Upload } from "lucide-react";
+import Link from "next/link";
 
 type ItemSnippet = {
   id: string;
@@ -44,13 +45,19 @@ export default function VendorItemPricesClient({
 
   async function searchItems(q: string) {
     setNewItemSearch(q);
-    if (q.trim().length < 2) { setNewItemResults([]); return; }
+    if (q.trim().length < 2) {
+      setNewItemResults([]);
+      return;
+    }
     const res = await fetch(`/api/items?q=${encodeURIComponent(q)}&limit=10`);
     if (res.ok) setNewItemResults(await res.json());
   }
 
   async function handleAdd() {
-    if (!newItem || !newCost) { setError("Item and cost are required"); return; }
+    if (!newItem || !newCost) {
+      setError("Item and cost are required");
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -68,7 +75,9 @@ export default function VendorItemPricesClient({
       const created: VendorPrice = await res.json();
       setPrices((prev) => {
         const idx = prev.findIndex((p) => p.id === created.id);
-        return idx >= 0 ? prev.map((p) => (p.id === created.id ? created : p)) : [created, ...prev];
+        return idx >= 0
+          ? prev.map((p) => (p.id === created.id ? created : p))
+          : [created, ...prev];
       });
       setShowAdd(false);
       setNewItem(null);
@@ -115,7 +124,9 @@ export default function VendorItemPricesClient({
 
   async function handleDelete(id: string) {
     try {
-      await fetch(`/api/vendors/${vendorId}/item-prices/${id}`, { method: "DELETE" });
+      await fetch(`/api/vendors/${vendorId}/item-prices/${id}`, {
+        method: "DELETE",
+      });
       setPrices((prev) => prev.filter((p) => p.id !== id));
     } catch {
       setError("Failed to delete");
@@ -127,30 +138,56 @@ export default function VendorItemPricesClient({
       <div className="px-6 py-4 border-b border-[#F0EEE9] flex items-center justify-between">
         <div>
           <h2 className="text-sm font-semibold text-[#111]">Item Pricing</h2>
-          <p className="text-xs text-[#999] mt-0.5">Default costs used when this vendor is selected on a PO</p>
+          <p className="text-xs text-[#999] mt-0.5">
+            Default costs used when this vendor is selected on a PO
+          </p>
         </div>
-        <button
-          onClick={() => setShowAdd(true)}
-          className="flex items-center gap-1.5 text-xs font-semibold bg-[#111] text-white px-3 py-1.5 rounded-lg hover:bg-[#333] transition-colors"
-        >
-          <Plus size={12} />
-          Add Item Price
-        </button>
+        <div className="flex flex-row gap-2 items-center justify-between">
+          <Link
+            href={`/vendors/${vendorId}/import-prices`}
+            className="flex items-center gap-1.5 text-xs font-semibold text-[#666] hover:text-[#111] px-3 py-1.5 rounded-lg hover:bg-white transition-colors border border-[#E5E3DE]"
+          >
+            <Upload size={14} />
+            Import CSV Price Lists
+          </Link>
+
+          <button
+            onClick={() => setShowAdd(true)}
+            className="flex items-center gap-1.5 text-xs font-semibold bg-[#111] text-white px-3 py-1.5 rounded-lg hover:bg-[#333] transition-colors"
+          >
+            <Plus size={12} />
+            Add Item Price
+          </button>
+        </div>
       </div>
 
       {showAdd && (
         <div className="px-6 py-5 border-b border-[#F0EEE9] bg-[#FAFAF8] space-y-3">
-          <p className="text-xs font-semibold text-[#888] uppercase tracking-widest">Add item price</p>
+          <p className="text-xs font-semibold text-[#888] uppercase tracking-widest">
+            Add item price
+          </p>
 
           {/* Item search */}
           <div className="relative">
             {newItem ? (
               <div className="flex items-center justify-between px-3 py-2 border border-[#E5E3DE] rounded-xl bg-white">
                 <div>
-                  <span className="text-sm font-medium text-[#111]">{newItem.itemNumber}</span>
-                  {newItem.manufacturer && <span className="text-xs text-[#999] ml-2">{newItem.manufacturer}</span>}
+                  <span className="text-sm font-medium text-[#111]">
+                    {newItem.itemNumber}
+                  </span>
+                  {newItem.manufacturer && (
+                    <span className="text-xs text-[#999] ml-2">
+                      {newItem.manufacturer}
+                    </span>
+                  )}
                 </div>
-                <button onClick={() => { setNewItem(null); setNewItemSearch(""); }} className="text-[#bbb] hover:text-[#666]">
+                <button
+                  onClick={() => {
+                    setNewItem(null);
+                    setNewItemSearch("");
+                  }}
+                  className="text-[#bbb] hover:text-[#666]"
+                >
                   <X size={13} />
                 </button>
               </div>
@@ -168,11 +205,21 @@ export default function VendorItemPricesClient({
                     {newItemResults.map((item) => (
                       <button
                         key={item.id}
-                        onClick={() => { setNewItem(item); setNewItemResults([]); setNewItemSearch(""); }}
+                        onClick={() => {
+                          setNewItem(item);
+                          setNewItemResults([]);
+                          setNewItemSearch("");
+                        }}
                         className="w-full text-left px-4 py-2.5 hover:bg-[#F7F6F3] transition-colors"
                       >
-                        <p className="text-sm font-medium text-[#111]">{item.itemNumber}</p>
-                        {item.manufacturer && <p className="text-xs text-[#999]">{item.manufacturer}</p>}
+                        <p className="text-sm font-medium text-[#111]">
+                          {item.itemNumber}
+                        </p>
+                        {item.manufacturer && (
+                          <p className="text-xs text-[#999]">
+                            {item.manufacturer}
+                          </p>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -183,9 +230,13 @@ export default function VendorItemPricesClient({
 
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="text-xs font-semibold text-[#888] uppercase tracking-widest block mb-1">Cost</label>
+              <label className="text-xs font-semibold text-[#888] uppercase tracking-widest block mb-1">
+                Cost
+              </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[#999]">$</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[#999]">
+                  $
+                </span>
                 <input
                   type="number"
                   step="0.01"
@@ -209,7 +260,9 @@ export default function VendorItemPricesClient({
               />
             </div> */}
             <div>
-              <label className="text-xs font-semibold text-[#888] uppercase tracking-widest block mb-1">Notes</label>
+              <label className="text-xs font-semibold text-[#888] uppercase tracking-widest block mb-1">
+                Notes
+              </label>
               <input
                 type="text"
                 value={newNotes}
@@ -231,7 +284,15 @@ export default function VendorItemPricesClient({
               {saving ? "Saving…" : "Save Price"}
             </button>
             <button
-              onClick={() => { setShowAdd(false); setNewItem(null); setNewItemSearch(""); setNewCost(""); setNewLeadTime(""); setNewNotes(""); setError(null); }}
+              onClick={() => {
+                setShowAdd(false);
+                setNewItem(null);
+                setNewItemSearch("");
+                setNewCost("");
+                setNewLeadTime("");
+                setNewNotes("");
+                setError(null);
+              }}
               className="text-sm text-[#999] hover:text-[#111] transition-colors"
             >
               Cancel
@@ -241,15 +302,23 @@ export default function VendorItemPricesClient({
       )}
 
       {prices.length === 0 && !showAdd ? (
-        <p className="px-6 py-10 text-sm text-[#bbb] text-center">No item prices yet</p>
+        <p className="px-6 py-10 text-sm text-[#bbb] text-center">
+          No item prices yet
+        </p>
       ) : (
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[#F0EEE9] bg-[#FAFAF8]">
-              <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-6 py-3">Item</th>
-              <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-4 py-3 w-28">Cost</th>
+              <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-6 py-3">
+                Item
+              </th>
+              <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-4 py-3 w-28">
+                Cost
+              </th>
               {/* <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-4 py-3 w-28">Lead Time</th> */}
-              <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-4 py-3">Notes</th>
+              <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-4 py-3">
+                Notes
+              </th>
               <th className="w-20" />
             </tr>
           </thead>
@@ -257,15 +326,26 @@ export default function VendorItemPricesClient({
             {prices.map((p) => {
               const isEditing = editingId === p.id;
               return (
-                <tr key={p.id} className="border-b border-[#F7F6F3] last:border-0">
+                <tr
+                  key={p.id}
+                  className="border-b border-[#F7F6F3] last:border-0"
+                >
                   <td className="px-6 py-3">
-                    <p className="font-medium text-[#111]">{p.item.itemNumber}</p>
-                    {p.item.manufacturer && <p className="text-xs text-[#999]">{p.item.manufacturer}</p>}
+                    <p className="font-medium text-[#111]">
+                      {p.item.itemNumber}
+                    </p>
+                    {p.item.manufacturer && (
+                      <p className="text-xs text-[#999]">
+                        {p.item.manufacturer}
+                      </p>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-right">
                     {isEditing ? (
                       <div className="relative inline-flex">
-                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-[#999]">$</span>
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-[#999]">
+                          $
+                        </span>
                         <input
                           type="number"
                           step="0.01"
@@ -276,7 +356,10 @@ export default function VendorItemPricesClient({
                       </div>
                     ) : (
                       <span className="text-[#111] font-medium">
-                        ${p.cost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        $
+                        {p.cost.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                        })}
                       </span>
                     )}
                   </td>

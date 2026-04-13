@@ -10,6 +10,7 @@ type Customer = {
   email: string | null;
   phone: string | null;
   billingTerm: string | null;
+  taxStatus: string;
 };
 
 export default function EditCustomerButton({ customer }: { customer: Customer }) {
