@@ -207,7 +207,7 @@ export default function InvoicesEditor({
         const data = await res.json();
         throw new Error(data.error ?? "Failed to delete");
       }
-      router.push(`/projects/${project.id}/invoices`);
+      router.refresh();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to delete");
       setDeleting(false);
