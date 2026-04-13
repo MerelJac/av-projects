@@ -231,7 +231,7 @@ export default function VendorItemPricesClient({
           <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="text-xs font-semibold text-[#888] uppercase tracking-widest block mb-1">
-                Cost
+                Cost / MSRP
               </label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[#999]">
