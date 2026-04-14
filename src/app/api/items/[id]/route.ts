@@ -27,10 +27,21 @@ export async function PUT(
   const { id } = await params;
   const body = await req.json();
   const {
-    itemNumber, manufacturer, description, cost, price, lastSoldPrice,
-    category, type, active, approved, eolDate,
+    itemNumber,
+    manufacturer,
+    description,
+    cost,
+    price,
+    lastSoldPrice,
+    category,
+    type,
+    active,
+    approved,
+    eolDate,
     preferredVendorId,
-    changedBy, unit
+    taxStatus,
+    changedBy,
+    unit,
   } = body;
 
   if (type && !Object.values(ItemType).includes(type)) {
@@ -47,27 +58,48 @@ export async function PUT(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const newCost  = cost  !== undefined ? (cost  != null ? parseFloat(cost)  : null) : existing.cost;
-  const newPrice = price !== undefined ? (price != null ? parseFloat(price) : null) : existing.price;
+  const newCost =
+    cost !== undefined
+      ? cost != null
+        ? parseFloat(cost)
+        : null
+      : existing.cost;
+  const newPrice =
+    price !== undefined
+      ? price != null
+        ? parseFloat(price)
+        : null
+      : existing.price;
 
-  const costChanged  = cost  !== undefined && newCost  !== existing.cost;
+  const costChanged = cost !== undefined && newCost !== existing.cost;
   const priceChanged = price !== undefined && newPrice !== existing.price;
   const needsHistory = costChanged || priceChanged;
 
   const updateData = {
-    ...(itemNumber    !== undefined && { itemNumber: itemNumber.trim() }),
-    ...(manufacturer  !== undefined && { manufacturer: manufacturer?.trim() || null }),
-    ...(cost          !== undefined && { cost: newCost }),
-    ...(price         !== undefined && { price: newPrice }),
-    ...(lastSoldPrice !== undefined && { lastSoldPrice: lastSoldPrice != null ? parseFloat(lastSoldPrice) : null }),
-    ...(category      !== undefined && { category: category?.trim() || null }),
-    ...(type          !== undefined && { type }),
-    ...(active        !== undefined && { active }),
-    ...(approved      !== undefined && { approved }),
-    ...(description   !== undefined && { description: description?.trim() || null }),
-    ...(eolDate            !== undefined && { eolDate: eolDate ? new Date(eolDate) : null }),
-    ...(preferredVendorId  !== undefined && { preferredVendorId: preferredVendorId || null }),
-    ...(unit          !== undefined && { unit: unit?.trim() || null }),
+    ...(itemNumber !== undefined && { itemNumber: itemNumber.trim() }),
+    ...(taxStatus !== undefined && { taxStatus: taxStatus.trim() }),
+    ...(manufacturer !== undefined && {
+      manufacturer: manufacturer?.trim() || null,
+    }),
+    ...(cost !== undefined && { cost: newCost }),
+    ...(price !== undefined && { price: newPrice }),
+    ...(lastSoldPrice !== undefined && {
+      lastSoldPrice: lastSoldPrice != null ? parseFloat(lastSoldPrice) : null,
+    }),
+    ...(category !== undefined && { category: category?.trim() || null }),
+    ...(type !== undefined && { type }),
+    ...(active !== undefined && { active }),
+    ...(approved !== undefined && { approved }),
+    ...(description !== undefined && {
+      description: description?.trim() || null,
+    }),
+    ...(eolDate !== undefined && {
+      eolDate: eolDate ? new Date(eolDate) : null,
+    }),
+    ...(preferredVendorId !== undefined && {
+      preferredVendorId: preferredVendorId || null,
+    }),
+    ...(unit !== undefined && { unit: unit?.trim() || null }),
   };
 
   const [item] = await prisma.$transaction([
@@ -77,7 +109,7 @@ export async function PUT(
           prisma.itemPriceHistory.create({
             data: {
               itemId: id,
-              cost:  costChanged  ? newCost  : existing.cost,
+              cost: costChanged ? newCost : existing.cost,
               price: priceChanged ? newPrice : existing.price,
               changedBy: changedBy ?? null,
             },

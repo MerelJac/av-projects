@@ -42,7 +42,10 @@ export default async function ItemPage({
     orderBy: { createdAt: "desc" },
   });
 
-  const onHand: number = movements.reduce((s: number, m: { quantityDelta: number }) => s + m.quantityDelta, 0);
+  const onHand: number = movements.reduce(
+    (s: number, m: { quantityDelta: number }) => s + m.quantityDelta,
+    0,
+  );
 
   const margin =
     item.cost && item.price
@@ -191,10 +194,18 @@ export default async function ItemPage({
                 {item.unit ?? <span className="text-[#ccc]">—</span>}
               </p>
             </div>
-                 <div className="px-6 py-5">
+            <div className="px-6 py-5">
               <p className="text-xs text-[#999] mb-1">Preferred Vendor</p>
               <p className="text-sm font-medium text-[#111]">
-                {item.preferredVendor?.name ?? <span className="text-[#ccc]">—</span>}
+                {item.preferredVendor?.name ?? (
+                  <span className="text-[#ccc]">—</span>
+                )}
+              </p>
+            </div>
+            <div className="px-6 py-5">
+              <p className="text-xs text-[#999] mb-1">Tax Status</p>
+              <p className="text-sm font-medium text-[#111]">
+                <span className="text-[#ccc]">{item.taxStatus}</span>
               </p>
             </div>
           </div>
@@ -234,36 +245,63 @@ export default async function ItemPage({
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#F0EEE9]">
-                  <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-6 py-3">Date</th>
-                  <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">Type</th>
-                  <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">Reference</th>
-                  <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-6 py-3">Qty</th>
+                  <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-6 py-3">
+                    Date
+                  </th>
+                  <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">
+                    Type
+                  </th>
+                  <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">
+                    Reference
+                  </th>
+                  <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-6 py-3">
+                    Qty
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {movements.map((m) => {
                   const isIn = m.quantityDelta > 0;
                   return (
-                    <tr key={m.id} className="border-b border-[#F7F6F3] last:border-0">
+                    <tr
+                      key={m.id}
+                      className="border-b border-[#F7F6F3] last:border-0"
+                    >
                       <td className="px-6 py-3 text-xs text-[#999]">
-                        {new Date(m.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        {new Date(m.createdAt).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
                       </td>
                       <td className="px-3 py-3">
-                        <span className={`text-xs font-semibold ${
-                          m.type === "RECEIPT" ? "text-green-600" :
-                          m.type === "RETURN_TO_VENDOR" ? "text-red-500" :
-                          m.type === "RETURN_TO_INVENTORY"  ? "text-purple-600" :
-                          "text-amber-600"
-                        }`}>
+                        <span
+                          className={`text-xs font-semibold ${
+                            m.type === "RECEIPT"
+                              ? "text-green-600"
+                              : m.type === "RETURN_TO_VENDOR"
+                                ? "text-red-500"
+                                : m.type === "RETURN_TO_INVENTORY"
+                                  ? "text-purple-600"
+                                  : "text-amber-600"
+                          }`}
+                        >
                           {m.type.charAt(0) + m.type.slice(1).toLowerCase()}
                         </span>
                       </td>
                       <td className="px-3 py-3 text-xs text-[#666] font-mono">
-                        {m.invoice?.invoiceNumber ? `#${m.invoice.invoiceNumber}` : m.shipment?.id ? `Shipment` : "—"}
+                        {m.invoice?.invoiceNumber
+                          ? `#${m.invoice.invoiceNumber}`
+                          : m.shipment?.id
+                            ? `Shipment`
+                            : "—"}
                       </td>
                       <td className="px-6 py-3 text-right">
-                        <span className={`text-sm font-bold ${isIn ? "text-green-600" : "text-red-500"}`}>
-                          {isIn ? "+" : ""}{m.quantityDelta}
+                        <span
+                          className={`text-sm font-bold ${isIn ? "text-green-600" : "text-red-500"}`}
+                        >
+                          {isIn ? "+" : ""}
+                          {m.quantityDelta}
                         </span>
                       </td>
                     </tr>

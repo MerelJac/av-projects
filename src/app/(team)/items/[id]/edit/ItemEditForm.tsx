@@ -4,7 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, AlertCircle } from "lucide-react";
 
-type ItemType = "HARDWARE" | "SOFTWARE" | "SUBSCRIPTION" | "INTERNAL_SERVICE" | "EXTERNAL_SERVICE";
+type ItemType =
+  | "HARDWARE"
+  | "SOFTWARE"
+  | "SUBSCRIPTION"
+  | "INTERNAL_SERVICE"
+  | "EXTERNAL_SERVICE";
 
 type Item = {
   id: string;
@@ -21,6 +26,7 @@ type Item = {
   description: string | null;
   unit: string | null;
   preferredVendorId: string | null;
+  taxStatus: string;
 };
 
 type Vendor = { id: string; name: string };
@@ -55,6 +61,7 @@ export default function ItemEditForm({
     approved: item.approved,
     eolDate: item.eolDate ?? "",
     description: item.description ?? "",
+    taxStatus: item.taxStatus,
     unit: item.unit ?? "",
     preferredVendorId: item.preferredVendorId ?? "",
   });
@@ -92,6 +99,7 @@ export default function ItemEditForm({
           description: form.description || null,
           unit: form.unit || null,
           preferredVendorId: form.preferredVendorId || null,
+          taxStatus: form.taxStatus
         }),
       });
       if (!res.ok) throw new Error();
@@ -251,22 +259,37 @@ export default function ItemEditForm({
               </div>
             ))}
           </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-widest text-[#999]">
-              Unit
-            </label>
-            <select
-              value={form.unit}
-              onChange={(e) => set("unit", e.target.value)}
-              className="w-full text-sm text-[#111] border border-[#E5E3DE] rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#111] transition-colors bg-white"
-            >
-              <option value="">— None —</option>
-              {units.map((u) => (
-                <option key={u} value={u}>
-                  {u}
-                </option>
-              ))}
-            </select>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-widest text-[#999]">
+                Unit
+              </label>
+              <select
+                value={form.unit}
+                onChange={(e) => set("unit", e.target.value)}
+                className="w-full text-sm text-[#111] border border-[#E5E3DE] rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#111] transition-colors bg-white"
+              >
+                <option value="">— None —</option>
+                {units.map((u) => (
+                  <option key={u} value={u}>
+                    {u}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-widest text-[#999]">
+                Tax Status
+              </label>
+              <select
+                value={form.taxStatus}
+                onChange={(e) => set("taxStatus", e.target.value)}
+                className="w-full text-sm text-[#111] border border-[#E5E3DE] rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#111] transition-colors bg-white"
+              >
+                <option value="TAXABLE">TAXABLE</option>
+                <option value="EXEMPT">EXEMPT</option>
+              </select>
+            </div>
           </div>
         </div>
 

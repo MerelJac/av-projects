@@ -78,6 +78,7 @@ export default async function ItemEditPage({
             description: item.description,
             unit: item.unit,
             preferredVendorId: item.preferredVendorId,
+            taxStatus: item.taxStatus
           }}
           vendors={vendors}
         />

@@ -163,13 +163,13 @@ model PasswordResetToken {
 }
 
 model Customer {
-  id          String            @id @default(uuid())
-  bcId        String?           @unique // Business Central customer ID
+  id          String    @id @default(uuid())
+  bcId        String?   @unique // Business Central customer ID
   name        String
   email       String?
   phone       String?
   billingTerm String?
-  taxStatus   CustomerTaxStatus @default(TAXABLE)
+  taxStatus   TaxStatus @default(TAXABLE)
 
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
@@ -208,8 +208,9 @@ model Item {
   type     ItemType
   unit     String?
 
+  taxStatus         TaxStatus @default(TAXABLE)
   preferredVendorId String?
-  preferredVendor   Vendor? @relation("ItemPreferredVendor", fields: [preferredVendorId], references: [id])
+  preferredVendor   Vendor?   @relation("ItemPreferredVendor", fields: [preferredVendorId], references: [id])
 
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
@@ -545,7 +546,7 @@ enum SalesOrderStatus {
   CLOSED
 }
 
-enum CustomerTaxStatus {
+enum TaxStatus {
   TAXABLE
   EXEMPT
 }
