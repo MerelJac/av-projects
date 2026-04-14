@@ -19,13 +19,7 @@ import {
   UsersIcon,
 } from "lucide-react";
 
-import {
-  LayoutDashboard,
-  Users,
-  User2,
-  Menu,
-  X,
-} from "lucide-react";
+import { LayoutDashboard, Users, User2, Menu, X } from "lucide-react";
 import { AntaresLogo } from "../../../../public/AntaresLogo";
 
 const navItems = [
@@ -41,13 +35,13 @@ const navItems = [
   { href: "/shipments", label: "Shipments", icon: Truck },
   { href: "/time", label: "Time Tracking", icon: Clock },
   { href: "/subscriptions", label: "Subscriptions", icon: Receipt },
-   { href: "/inventory", label: "Inventory", icon: ColumnsSettingsIcon },
+  { href: "/inventory", label: "Inventory", icon: ColumnsSettingsIcon },
   { href: "/reports", label: "Reports", icon: BarChart },
-  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 const adminNavLinks = [
   { href: "/users", label: "Users", icon: UsersIcon },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export default function SidebarLayout({
@@ -98,7 +92,7 @@ export default function SidebarLayout({
         >
           <Menu className="w-4 h-4" />
         </button>
-      <AntaresLogo subtitle="Call One, Inc" />
+        <AntaresLogo subtitle="Call One, Inc" />
       </header>
 
       {/* Mobile overlay */}
@@ -122,7 +116,7 @@ export default function SidebarLayout({
         {/* Brand */}
         <div className="px-5 py-5 border-b border-surface2 flex items-center justify-between">
           <div>
-          <AntaresLogo subtitle="Call One, Inc" />
+            <AntaresLogo subtitle="Call One, Inc" />
           </div>
           <button
             onClick={() => setOpen(false)}

@@ -31,7 +31,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white px-4">
+    <div className="min-h-screen flex items-center justify-center  bg-[#F7F6F3] px-4">
       <div className="w-full max-w-sm space-y-6">
 
         {/* Brand */}
@@ -87,12 +87,12 @@ export default function LoginPage() {
 
           {/* Links */}
           <div className="flex items-center justify-between pt-1">
-            <Link
+            {/* <Link
               href="/signup"
               className="text-xs text-muted hover:text-secondary-color transition-colors"
             >
               New here? Get started
-            </Link>
+            </Link> */}
             <Link
               href="/forgot-password"
               className="text-xs text-muted hover:text-secondary-color transition-colors"
