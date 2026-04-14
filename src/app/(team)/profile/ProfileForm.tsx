@@ -17,9 +17,17 @@ type Props = {
   profile: Profile;
 };
 
-export default function ProfileForm({ userId: _userId, email, role, profile }: Props) {
+export default function ProfileForm({
+  userId: _userId,
+  email,
+  role,
+  profile,
+}: Props) {
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const [toast, setToast] = useState<{
+    type: "success" | "error";
+    msg: string;
+  } | null>(null);
 
   const [form, setForm] = useState({
     firstName: profile?.firstName ?? "",
@@ -76,7 +84,11 @@ export default function ProfileForm({ userId: _userId, email, role, profile }: P
               : "bg-white border-red-200 text-red-600"
           }`}
         >
-          {toast.type === "success" ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
+          {toast.type === "success" ? (
+            <CheckCircle2 size={15} />
+          ) : (
+            <AlertCircle size={15} />
+          )}
           {toast.msg}
         </div>
       )}
@@ -116,7 +128,9 @@ export default function ProfileForm({ userId: _userId, email, role, profile }: P
           <div className="space-y-1.5">
             <label className="text-xs font-semibold uppercase tracking-widest text-[#999]">
               Phone{" "}
-              <span className="normal-case font-normal text-[#bbb] tracking-normal">(optional)</span>
+              <span className="normal-case font-normal text-[#bbb] tracking-normal">
+                (optional)
+              </span>
             </label>
             <input
               value={form.phone}
@@ -129,7 +143,9 @@ export default function ProfileForm({ userId: _userId, email, role, profile }: P
 
         {/* Account */}
         <div className="bg-white border border-[#E5E3DE] rounded-2xl p-6 space-y-4">
-          <p className="text-xs font-semibold uppercase tracking-widest text-[#888]">Account</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-[#888]">
+            Account
+          </p>
 
           <div className="space-y-1.5">
             <label className="text-xs font-semibold uppercase tracking-widest text-[#999]">
@@ -165,11 +181,6 @@ export default function ProfileForm({ userId: _userId, email, role, profile }: P
           >
             {saving ? "Saving…" : "Save Changes"}
           </button>
-        </div>
-
-        {/* Logout */}
-        <div className="pt-2 flex justify-center">
-          <LogoutButton />
         </div>
       </div>
     </>
