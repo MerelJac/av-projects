@@ -35,8 +35,8 @@ model Profile {
   user   User   @relation(fields: [userId], references: [id])
 
   firstName String
-  phone     String?
   lastName  String
+  phone     String?
 }
 
 model Invoice {
@@ -137,11 +137,12 @@ enum InvoiceChargeType {
 }
 
 model Invite {
-  id        String @id @default(uuid())
-  token     String @unique
+  id        String  @id @default(uuid())
+  token     String  @unique
   email     String
-  trainerId String
-  trainer   User   @relation(fields: [trainerId], references: [id])
+  role      Role    @default(TEAM)
+  trainerId String?
+  trainer   User?   @relation(fields: [trainerId], references: [id])
 
   accepted  Boolean  @default(false)
   createdAt DateTime @default(now())

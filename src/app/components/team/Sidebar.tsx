@@ -25,7 +25,6 @@ import {
   User2,
   Menu,
   X,
-  GitCompare,
 } from "lucide-react";
 import { AntaresLogo } from "../../../../public/AntaresLogo";
 
@@ -48,7 +47,7 @@ const navItems = [
 ];
 
 const adminNavLinks = [
-  { href: "/", label: "Admin Stuff Later", icon: GitCompare },
+  { href: "/users", label: "Users", icon: UsersIcon },
 ];
 
 export default function SidebarLayout({

@@ -7,7 +7,7 @@ import { LogoutButton } from "@/app/components/Logout";
 type Profile = {
   firstName: string;
   lastName: string;
-  phone: string | null;
+  phone?: string | null;
 } | null;
 
 type Props = {
