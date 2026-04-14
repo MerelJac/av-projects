@@ -4,16 +4,26 @@ import { useState } from "react";
 import { Pencil } from "lucide-react";
 import EditCustomerModal from "./EditCustomerModal";
 
-type Customer = {
+export type Customer = {
   id: string;
   name: string;
   email: string | null;
   phone: string | null;
   billingTerm: string | null;
   taxStatus: string;
+  address: string | null;
+  address2: string | null;
+  country: string | null;
+  city: string | null;
+  state: string | null;
+  zipcode: string | null;
 };
 
-export default function EditCustomerButton({ customer }: { customer: Customer }) {
+export default function EditCustomerButton({
+  customer,
+}: {
+  customer: Customer;
+}) {
   const [open, setOpen] = useState(false);
 
   return (

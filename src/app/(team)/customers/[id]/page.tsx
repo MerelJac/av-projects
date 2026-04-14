@@ -114,6 +114,12 @@ export default async function CustomerPage({
                 taxStatus: customer.taxStatus,
                 phone: customer.phone,
                 billingTerm: customer.billingTerm,
+                address: customer.address,
+                address2: customer.address2,
+                country: customer.country,
+                city: customer.city,
+                state: customer.state,
+                zipcode: customer.zipcode
               }}
             />
             <Link

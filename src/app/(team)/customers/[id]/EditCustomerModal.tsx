@@ -3,21 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
+import { Customer } from "./EditCustomerButton";
 
-type Customer = {
-  id: string;
-  name: string;
-  email: string | null;
-  phone: string | null;
-  billingTerm: string | null;
-  taxStatus: string;
-  address: string | null;
-  address2: string | null;
-  country: string | null;
-  city: string | null;
-  state: string | null;
-  zipcode: number | null;
-};
+
 
 export default function EditCustomerModal({
   customer,
