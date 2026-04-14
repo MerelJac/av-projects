@@ -5,6 +5,7 @@ import { ArrowRight, Mail, Phone, Tag } from "lucide-react";
 import DeleteCustomerButton from "./DeleteCustomerButton";
 import EditCustomerButton from "./EditCustomerButton";
 import CustomerSubscriptionsPanel from "../../subscriptions/CustomerSubscriptionPanel";
+import { INVOICE_STYLES } from "../../projects/[id]/financial-report/page";
 
 const quoteStatusStyles: Record<string, string> = {
   ACCEPTED: "bg-green-100 text-green-700",
@@ -31,6 +32,14 @@ export default async function CustomerPage({
 
   if (!customer) return notFound();
 
+  const invoices = await prisma.invoice.findMany({
+    where: {
+      projectId: {
+        in: customer.projects.map((p) => p.id),
+      },
+    },
+  });
+
   const [subs, items] = await Promise.all([
     prisma.subscription.findMany({
       where: { customerId: customer.id },
@@ -44,7 +53,7 @@ export default async function CustomerPage({
       <div className="max-w-5xl mx-auto px-6 py-10 space-y-6">
         {/* Header */}
         <div className="flex items-start justify-between">
-          <div>
+          <div className=" flex flex-col gap-4">
             <h1 className="text-2xl font-bold text-[#111] tracking-tight">
               {customer.name}
             </h1>
@@ -69,10 +78,30 @@ export default async function CustomerPage({
                   {customer.billingTerm}
                 </span>
               )}
-                {customer.taxStatus && (
+              {customer.taxStatus && (
                 <span className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 bg-[#111] text-white rounded-lg">
                   {customer.taxStatus}
                 </span>
+              )}
+            </div>
+            <div className="bg-white border border-gray-200 rounded-xl p-4">
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">
+                Billing Address
+              </p>
+              {customer.address && (
+                <p className="text-sm text-gray-900">{customer.address}</p>
+              )}
+              {customer.address2 && (
+                <p className="text-sm text-gray-500">{customer.address2}</p>
+              )}
+              {(customer.city || customer.state || customer.zipcode) && (
+                <p className="text-sm text-gray-900">
+                  {[customer.city, customer.state].filter(Boolean).join(", ")}
+                  {customer.zipcode && ` ${customer.zipcode}`}
+                </p>
+              )}
+              {customer.country && (
+                <p className="text-sm text-gray-500">{customer.country}</p>
               )}
             </div>
           </div>
@@ -202,11 +231,61 @@ export default async function CustomerPage({
             )}
           </div>
         </div>
-        <CustomerSubscriptionsPanel
-          customerId={id}
-          initialSubscriptions={subs}
-          availableItems={items}
-        />
+        <div className="grid grid-cols-2 gap-6">
+          <CustomerSubscriptionsPanel
+            customerId={id}
+            initialSubscriptions={subs}
+            availableItems={items}
+          />
+          <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-[#F0EEE9] flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-[#111]">Invoices</h3>
+              <span className="text-xs text-[#bbb]">
+                {invoices.length}
+              </span>
+            </div>
+            {invoices.length === 0 ? (
+              <p className="px-5 py-8 text-sm text-[#bbb] text-center">
+                No invoices yet
+              </p>
+            ) : (
+              <div className="divide-y divide-[#F7F6F3]">
+                {invoices.map((invoice) => (
+                  <Link
+                    key={invoice.id}
+                    href={
+                      invoice.projectId
+                        && `/projects/${invoice.projectId}/invoices`
+                    }
+                    className="flex items-center justify-between px-5 py-3.5 hover:bg-[#FAFAF9] transition-colors group"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-xs font-mono font-semibold text-[#111]">
+                        #{invoice.id.toUpperCase()}
+                      </span>
+                      <span
+                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${INVOICE_STYLES[invoice.status]}`}
+                      >
+                        {invoice.status}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {invoice.amount != null && (
+                        <span className="text-sm font-semibold text-[#111]">
+                          ${invoice.amount.toLocaleString()}
+                        </span>
+                      )}
+                      <ArrowRight
+                        size={13}
+                        className="text-[#ccc] group-hover:text-[#111] transition-colors"
+                      />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

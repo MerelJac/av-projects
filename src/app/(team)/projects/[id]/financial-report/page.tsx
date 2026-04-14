@@ -25,7 +25,7 @@ const CATEGORY_STYLES: Record<string, string> = {
   Invoice: "bg-[#111] text-white",
 };
 
-const INVOICE_STYLES: Record<string, string> = {
+export const INVOICE_STYLES: Record<string, string> = {
   PAID: "bg-blue-50 text-blue-700",
   SENT: "bg-green-50 text-green-700",
   PENDING: "bg-green-50 text-green-700",

@@ -11,6 +11,12 @@ type Customer = {
   phone: string | null;
   billingTerm: string | null;
   taxStatus: string;
+  address: string | null;
+  address2: string | null;
+  country: string | null;
+  city: string | null;
+  state: string | null;
+  zipcode: number | null;
 };
 
 export default function EditCustomerModal({
@@ -26,6 +32,12 @@ export default function EditCustomerModal({
   const [phone, setPhone] = useState(customer.phone ?? "");
   const [billingTerm, setBillingTerm] = useState(customer.billingTerm ?? "");
   const [taxStatus, setTaxStatus] = useState(customer.taxStatus ?? "");
+  const [address, setAddress] = useState(customer.address ?? "");
+  const [address2, setAddress2] = useState(customer.address2 ?? "");
+  const [country, setCountry] = useState(customer.country ?? "");
+  const [city, setCity] = useState(customer.city ?? "");
+  const [state, setState] = useState(customer.state ?? "");
+  const [zipcode, setZipcode] = useState(customer.zipcode ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,6 +58,12 @@ export default function EditCustomerModal({
           phone: phone.trim() || null,
           billingTerm: billingTerm || null,
           taxStatus: taxStatus || null,
+          address: address || null,
+          address2: address2 || null,
+          country: country || null,
+          city: city || null,
+          state: state || null,
+          zipcode: zipcode || null,
         }),
       });
       if (!res.ok) throw new Error("Failed to save");
@@ -71,7 +89,7 @@ export default function EditCustomerModal({
           </button>
         </div>
 
-        <div className="px-6 py-5 space-y-4">
+        <div className="px-6 py-5 space-y-4 overflow-y-scroll max-h-[80vh]">
           <div>
             <label className="block text-xs font-medium text-[#888] mb-1.5 uppercase tracking-wide">
               Name
@@ -112,6 +130,87 @@ export default function EditCustomerModal({
 
           <div>
             <label className="block text-xs font-medium text-[#888] mb-1.5 uppercase tracking-wide">
+              Address
+            </label>
+            <input
+              type="text"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              className="w-full border border-[#E5E3DE] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#111]/10"
+              placeholder="123 Main St"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-[#888] mb-1.5 uppercase tracking-wide">
+              Address 2
+            </label>
+            <input
+              type="text"
+              value={address2}
+              onChange={(e) => setAddress2(e.target.value)}
+              className="w-full border border-[#E5E3DE] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#111]/10"
+              placeholder="Apt, suite, unit, etc."
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-[#888] mb-1.5 uppercase tracking-wide">
+                City
+              </label>
+              <input
+                type="text"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                className="w-full border border-[#E5E3DE] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#111]/10"
+                placeholder="New York"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-[#888] mb-1.5 uppercase tracking-wide">
+                State
+              </label>
+              <input
+                type="text"
+                value={state}
+                onChange={(e) => setState(e.target.value)}
+                className="w-full border border-[#E5E3DE] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#111]/10"
+                placeholder="NY"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-[#888] mb-1.5 uppercase tracking-wide">
+                Zip Code
+              </label>
+              <input
+                type="text"
+                value={zipcode}
+                onChange={(e) => setZipcode(e.target.value)}
+                className="w-full border border-[#E5E3DE] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#111]/10"
+                placeholder="10001"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-[#888] mb-1.5 uppercase tracking-wide">
+                Country
+              </label>
+              <input
+                type="text"
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+                className="w-full border border-[#E5E3DE] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#111]/10"
+                placeholder="US"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-[#888] mb-1.5 uppercase tracking-wide">
               Billing Terms
             </label>
             <select
@@ -128,22 +227,20 @@ export default function EditCustomerModal({
 
           {error && <p className="text-sm text-red-600">{error}</p>}
 
-
-        <div>
-          <label className="block text-xs font-medium text-[#888] mb-1.5 uppercase tracking-wide">
-            Tax Status
-          </label>
-          <select
-            value={taxStatus}
-            onChange={(e) => setTaxStatus(e.target.value)}
-            className="w-full border border-[#E5E3DE] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#111]/10 bg-white"
-          >
-            <option value="TAXABLE">Taxable</option>
-            <option value="EXEMPT">Tax Exempt</option>
-          </select>
+          <div>
+            <label className="block text-xs font-medium text-[#888] mb-1.5 uppercase tracking-wide">
+              Tax Status
+            </label>
+            <select
+              value={taxStatus}
+              onChange={(e) => setTaxStatus(e.target.value)}
+              className="w-full border border-[#E5E3DE] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#111]/10 bg-white"
+            >
+              <option value="TAXABLE">Taxable</option>
+              <option value="EXEMPT">Tax Exempt</option>
+            </select>
+          </div>
         </div>
-
-                </div>
 
         <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-[#F0EEE9]">
           <button

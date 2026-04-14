@@ -3,11 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   const body = await req.json();
-  const { name, email, phone, billingTerm, taxStatus } = body;
+  const { name, email, phone, billingTerm, taxStatus, address, address2, country, city, state, zipcode } = body;
 
   const customer = await prisma.customer.update({
     where: { id },
@@ -16,7 +16,13 @@ export async function PATCH(
       email: email ?? null,
       phone: phone ?? null,
       billingTerm: billingTerm ?? null,
-      taxStatus: taxStatus
+      taxStatus: taxStatus,
+      address: address ?? null,
+      address2: address2 ?? null,
+      country: country ?? null,
+      city: city ?? null,
+      state: state ?? null,
+      zipcode: zipcode ?? null,
     },
   });
 
@@ -25,7 +31,7 @@ export async function PATCH(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
 

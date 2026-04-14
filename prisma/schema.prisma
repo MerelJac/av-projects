@@ -171,6 +171,13 @@ model Customer {
   billingTerm String?
   taxStatus   TaxStatus @default(TAXABLE)
 
+  address  String?
+  address2 String?
+  country  String? @default("US")
+  city     String?
+  state    String?
+  zipcode  String?
+
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   bcSyncedAt DateTime?
