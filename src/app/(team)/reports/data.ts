@@ -9,9 +9,11 @@ export async function getProjectFinancials() {
         customer: { select: { name: true } },
         quotes: { select: { total: true, status: true, isChangeOrder: true } },
         purchaseOrders: {
-          include: { lines: { select: { cost: true, quantity: true, id: true } } },
+          include: {
+            lines: { select: { cost: true, quantity: true, id: true } },
+          },
         },
-        costs: { select: { costType: true, amount: true } },
+        costs: { select: { costType: true, amount: true, taxAmount: true } },
         shipments: { select: { cost: true } },
         scopes: {
           select: {
@@ -33,7 +35,9 @@ export async function getProjectFinancials() {
         where: { poReturn: { status: "CREDITED" } },
         _sum: { quantity: true },
       })
-      .catch(() => [] as { poLineId: string; _sum: { quantity: number | null } }[]),
+      .catch(
+        () => [] as { poLineId: string; _sum: { quantity: number | null } }[],
+      ),
   ]);
 
   const returnedQtyByLineId: Record<string, number> = {};
@@ -48,13 +52,6 @@ export async function getProjectFinancials() {
     ...calcProjectFinancials({
       ...p,
       projectCosts: p.costs,
-      purchaseOrders: p.purchaseOrders.map((po) => ({
-        ...po,
-        lines: po.lines.map((l) => ({
-          ...l,
-          returnedQuantity: returnedQtyByLineId[l.id] ?? 0,
-        })),
-      })),
     }),
   }));
 
