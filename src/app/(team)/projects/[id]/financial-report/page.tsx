@@ -32,7 +32,7 @@ async function getReportRows(projectId: string): Promise<ReportRow[]> {
   const projectCosts = await prisma.projectCost.findMany({
     where: {
       projectId,
-      costType: { in: ["MATERIAL", "RETURN", "FREIGHT"] },
+      costType: { in: ["MATERIAL", "RETURN", "FREIGHT", "LABOR"] },
     },
     include: {
       item: {
@@ -66,6 +66,7 @@ async function getReportRows(projectId: string): Promise<ReportRow[]> {
   for (const cost of projectCosts) {
     const isReturn = cost.costType === "RETURN";
     const isFreight = cost.costType === "FREIGHT";
+    const isLabor = cost.costType === "LABOR";
     const qty = cost.quantity ?? 1;
     const unitCost =
       cost.unitCost ?? (qty !== 0 ? Math.abs(cost.amount) / qty : 0);
@@ -74,7 +75,9 @@ async function getReportRows(projectId: string): Promise<ReportRow[]> {
       ? "Shipping"
       : isReturn
         ? "Return Credit"
-        : "PO Material";
+        : isLabor
+          ? "Labor"
+          : "PO Material";
     rows.push({
       date: cost.createdAt.toISOString().slice(0, 10),
       category,
@@ -88,43 +91,6 @@ async function getReportRows(projectId: string): Promise<ReportRow[]> {
       total,
       reference: cost.poLink ?? "",
     });
-  }
-
-  // ── Labor ─────────────────────────────────────────────────────────────────
-  const scopes = await prisma.projectScope.findMany({
-    where: { projectId },
-    include: {
-      timeEntries: {
-        include: { user: { select: { email: true, profile: true } } },
-        orderBy: { date: "asc" },
-      },
-    },
-  });
-
-  for (const scope of scopes) {
-    if (!scope.costPerHour) continue;
-    for (const entry of scope.timeEntries) {
-      const profile = entry.user.profile as {
-        firstName?: string;
-        lastName?: string;
-      } | null;
-      const name = profile?.firstName
-        ? `${profile.firstName}${profile.lastName ? ` ${profile.lastName}` : ""}`
-        : entry.user.email;
-      rows.push({
-        date: entry.date.toISOString().slice(0, 10),
-        category: "Labor",
-        description: scope.name,
-        itemNumber: "",
-        manufacturer: "",
-        vendorOrSource: name,
-        qty: entry.hours,
-        taxAmount: 0,
-        unitCost: scope.costPerHour,
-        total: entry.hours * scope.costPerHour,
-        reference: scope.name,
-      });
-    }
   }
 
   // ── Invoices ──────────────────────────────────────────────────────────────
@@ -207,7 +173,8 @@ export default async function FinancialReportPage({
   // Group totals by category
   const byCategory: Record<string, number> = {};
   for (const row of rows) {
-    byCategory[row.category] = (byCategory[row.category] ?? 0) + (row.total + row.taxAmount);
+    byCategory[row.category] =
+      (byCategory[row.category] ?? 0) + (row.total + row.taxAmount);
   }
 
   return (
