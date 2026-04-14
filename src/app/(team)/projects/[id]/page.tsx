@@ -100,62 +100,12 @@ export default async function ProjectPage({
 
   if (!project) return notFound();
 
-  // Fetch credited return quantities per PO line for this project.
-  // Wrapped in try/catch — the table won't exist until the migration runs.
-  const returnedQtyByLineId: Record<string, number> = {};
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rows = await (prisma as any).purchaseOrderReturnLine.groupBy({
-      by: ["poLineId"],
-      where: { poReturn: { status: "CREDITED", po: { projectId: id } } },
-      _sum: { quantity: true },
-    });
-    for (const row of rows as {
-      poLineId: string;
-      _sum: { quantity: number | null };
-    }[]) {
-      returnedQtyByLineId[row.poLineId] = row._sum.quantity ?? 0;
-    }
-  } catch {
-    // Pre-migration: return lines table doesn't exist yet; returnedQuantity defaults to 0
-  }
-
-  // Inventory cost allocated to this project via BOM_ALLOCATION movements.
-  // Shown separately — not folded into COGS.
-  let inventoryAllocatedCost = 0;
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const allocations = await (prisma as any).inventoryMovement.findMany({
-      where: { type: "BOM_ALLOCATION", bomLine: { bom: { projectId: id } } },
-      select: { quantityDelta: true, item: { select: { cost: true } } },
-    });
-    inventoryAllocatedCost = (
-      allocations as {
-        quantityDelta: number;
-        item: { cost: number | null } | null;
-      }[]
-    ).reduce(
-      (sum, m) => sum + (m.item?.cost ?? 0) * Math.abs(m.quantityDelta),
-      0,
-    );
-  } catch {
-    // Pre-migration
-  }
-
-  const projectForFinancials = {
-    ...project,
-      projectCosts: project.costs, // projectCosts
-    purchaseOrders: project.purchaseOrders.map((po) => ({
-      ...po,
-      lines: po.lines.map((l) => ({
-        ...l,
-        returnedQuantity: returnedQtyByLineId[l.id] ?? 0,
-      })),
-    })),
-  };
-
-  const financials = calcProjectFinancials(projectForFinancials);
-  console.log('financials', financials);
+  const financials = calcProjectFinancials({
+    quotes: project.quotes,
+    projectCosts: project.costs,
+    scopes: project.scopes,
+    invoices: project.invoices,
+  });
   const changeOrders = project.quotes.filter((q) => q.isChangeOrder);
   const contractBase = financials.contractBase;
   const changeOrderTotal = financials.changeOrderTotal;

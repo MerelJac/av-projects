@@ -1,16 +1,8 @@
-// lib/financials.ts
 type QuoteSlice = {
   total: number | null;
   status: string;
   isChangeOrder: boolean;
 };
-type POLineSlice = {
-  cost: number;
-  quantity: number;
-  returnedQuantity?: number;
-};
-type POSlice = { status: string; lines: POLineSlice[] };
-type ShipmentSlice = { cost: unknown };
 type ScopeSlice = {
   costPerHour: number | null;
   estimatedHours: number;
@@ -20,6 +12,7 @@ type InvoiceSlice = { amount: number | null; status: string };
 type ProjectCostSlice = {
   costType: string;
   amount: number;
+  taxAmount: number | null;
 };
 
 export function calcContractValue(quotes: QuoteSlice[]) {
@@ -36,37 +29,43 @@ export function calcContractValue(quotes: QuoteSlice[]) {
   };
 }
 
-export function calcMaterialCost(
-  projectCosts: ProjectCostSlice[],
-  shipments: ShipmentSlice[],
-) {
-  const materialCosts = projectCosts.filter((c) => c.costType === "MATERIAL");
-  const returnCosts = projectCosts.filter((c) => c.costType === "RETURN");
-  const freightCosts = projectCosts.filter((c) => c.costType === "FREIGHT");
+export function calcCosts(projectCosts: ProjectCostSlice[]) {
+  const byType = (type: string) =>
+    projectCosts.filter((c) => c.costType === type);
 
-  const grossPoCost = materialCosts.reduce((s, c) => s + c.amount, 0);
-  // RETURN amounts are stored as negative, so we subtract them (double negative = add back credit)
-  const returnCredit = returnCosts.reduce((s, c) => s + Math.abs(c.amount), 0);
+  const materialEntries = byType("MATERIAL");
+  const returnEntries = byType("RETURN");
+  const freightEntries = byType("FREIGHT");
+  const laborEntries = byType("LABOR");
+
+  const grossPoCost = materialEntries.reduce((s, c) => s + c.amount, 0);
+  // RETURN amounts are stored as negative
+  const returnCredit = returnEntries.reduce(
+    (s, c) => s + Math.abs(c.amount),
+    0,
+  );
   const poCostGrossMinusReturns = grossPoCost - returnCredit;
-  const shippingCost =
-    shipments.reduce((s, sh) => s + Number(sh.cost ?? 0), 0) +
-    freightCosts.reduce((s, c) => s + c.amount, 0);
+  const shippingCost = freightEntries.reduce((s, c) => s + c.amount, 0);
+  const laborCost = laborEntries.reduce((s, c) => s + c.amount, 0);
+
+  // Tax across all non-return cost types (return tax is negative, naturally reduces total)
+  const totalTax = projectCosts.reduce(
+    (s, c) => s + (c.taxAmount ?? 0),
+    0,
+  );
 
   return {
     grossPoCost,
     returnCredit,
     poCostGrossMinusReturns,
     shippingCost,
-    materialCosts: materialCosts.reduce((s, c) => s + c.amount, 0),
+    materialCosts: grossPoCost,
+    laborCost,
+    totalTax,
   };
 }
 
-export function calcLaborCost(scopes: ScopeSlice[]) {
-  const laborCost = scopes.reduce((s, sc) => {
-    if (!sc.costPerHour) return s;
-    const hrs = sc.timeEntries.reduce((h, t) => h + t.hours, 0);
-    return s + hrs * sc.costPerHour;
-  }, 0);
+export function calcLaborEstimates(scopes: ScopeSlice[]) {
   const budgetedLaborCost = scopes.reduce((s, sc) => {
     if (!sc.costPerHour) return s;
     return s + sc.estimatedHours * sc.costPerHour;
@@ -79,12 +78,7 @@ export function calcLaborCost(scopes: ScopeSlice[]) {
     (s, sc) => s + sc.estimatedHours,
     0,
   );
-  return {
-    laborCost,
-    budgetedLaborCost,
-    totalActualHours,
-    totalEstimatedHours,
-  };
+  return { budgetedLaborCost, totalActualHours, totalEstimatedHours };
 }
 
 export function calcInvoicing(invoices: InvoiceSlice[]) {
@@ -98,26 +92,27 @@ export function calcInvoicing(invoices: InvoiceSlice[]) {
 
 export function calcProjectFinancials(p: {
   quotes: QuoteSlice[];
-  purchaseOrders: POSlice[];
   projectCosts: ProjectCostSlice[];
-  shipments: ShipmentSlice[];
   scopes: ScopeSlice[];
   invoices: InvoiceSlice[];
 }) {
   const { contractBase, changeOrderTotal, totalContract } = calcContractValue(
     p.quotes,
   );
-  const { grossPoCost, returnCredit, poCostGrossMinusReturns, shippingCost, materialCosts } =
-    calcMaterialCost(p.projectCosts, p.shipments);
   const {
+    grossPoCost,
+    returnCredit,
+    poCostGrossMinusReturns,
+    shippingCost,
+    materialCosts,
     laborCost,
-    budgetedLaborCost,
-    totalActualHours,
-    totalEstimatedHours,
-  } = calcLaborCost(p.scopes);
+    totalTax,
+  } = calcCosts(p.projectCosts);
+  const { budgetedLaborCost, totalActualHours, totalEstimatedHours } =
+    calcLaborEstimates(p.scopes);
   const { invoiced, collected, outstanding } = calcInvoicing(p.invoices);
 
-  const cogs = materialCosts + laborCost + shippingCost - returnCredit;
+  const cogs = materialCosts + laborCost + shippingCost - returnCredit + totalTax;
   const grossProfit = totalContract - cogs;
   const marginPct =
     totalContract > 0 ? (grossProfit / totalContract) * 100 : null;
@@ -136,6 +131,7 @@ export function calcProjectFinancials(p: {
     shippingCost,
     materialCosts,
     laborCost,
+    totalTax,
     budgetedLaborCost,
     totalActualHours,
     totalEstimatedHours,
