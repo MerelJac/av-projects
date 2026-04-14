@@ -345,7 +345,6 @@ export default async function FinancialReportPage({
                     <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3 w-24">
                       Unit Cost
                     </th>
-
                     <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-4 py-3 w-28">
                       Total
                     </th>
@@ -392,14 +391,21 @@ export default async function FinancialReportPage({
                       <td className="px-3 py-3 text-right text-sm tabular-nums text-[#666]">
                         {row.qty}
                       </td>
-                      <td className="px-3 py-3 text-right text-sm tabular-nums text-[#666]">
+                      <td className="px-3 py-3 text-right text-sm tabular-nums text-[#666] ">
                         {row.unitCost > 0 ? `$${fmt(row.unitCost)}` : "—"}
                       </td>
 
                       <td
-                        className={`px-4 py-3 text-right text-sm font-semibold tabular-nums ${row.total < 0 ? "text-green-600" : "text-[#111]"}`}
+                        className={`px-4 py-3 text-right text-sm font-semibold tabular-nums flex flex-col items-center ${row.total < 0 ? "text-green-600" : "text-[#111]"}`}
                       >
-                        {row.total < 0 ? "-" : ""}${fmt(Math.abs(row.total))}
+                        <span>
+                          {row.total < 0 ? "-" : ""}${fmt(Math.abs(row.total))}
+                        </span>
+                        <span className="text-[10px] text-[#bbb]">
+                          {row.taxAmount > 0
+                            ? `+ $${fmt(row.taxAmount)} tax`
+                            : "No Tax"}
+                        </span>
                       </td>
                       <td
                         className={`px-4 py-3 text-right text-sm font-semibold tabular-nums ${row.total < 0 ? "text-green-600" : "text-[#111]"}`}
