@@ -69,6 +69,11 @@ export default async function CustomerPage({
                   {customer.billingTerm}
                 </span>
               )}
+                {customer.taxStatus && (
+                <span className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 bg-[#111] text-white rounded-lg">
+                  {customer.taxStatus}
+                </span>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -77,6 +82,7 @@ export default async function CustomerPage({
                 id: customer.id,
                 name: customer.name,
                 email: customer.email,
+                taxStatus: customer.taxStatus,
                 phone: customer.phone,
                 billingTerm: customer.billingTerm,
               }}
