@@ -25,6 +25,16 @@ const CATEGORY_STYLES: Record<string, string> = {
   Invoice: "bg-[#111] text-white",
 };
 
+const INVOICE_STYLES: Record<string, string> = {
+  PAID: "bg-blue-50 text-blue-700",
+  SENT: "bg-green-50 text-green-700",
+  PENDING: "bg-green-50 text-green-700",
+  VOID: "bg-amber-50 text-amber-700",
+  REJECTED: "bg-amber-50 text-amber-700",
+  DRAFT: "bg-gray-100 text-gray-600",
+  REVISED: "bg-[#111] text-white",
+};
+
 async function getReportRows(projectId: string): Promise<ReportRow[]> {
   const rows: ReportRow[] = [];
 
@@ -104,10 +114,10 @@ async function getReportRows(projectId: string): Promise<ReportRow[]> {
     rows.push({
       date: inv.createdAt.toISOString().slice(0, 10),
       category: "Invoice",
-      description: inv.invoiceNumber ?? inv.id,
+      description: inv.status,
       itemNumber: "",
       manufacturer: "",
-      vendorOrSource: `${inv.status}`,
+      vendorOrSource: inv.invoiceNumber ?? inv.id,
       qty: 1,
       unitCost: amt,
       total: amt,
@@ -169,6 +179,9 @@ export default async function FinancialReportPage({
   const totalInvoiced = rows
     .filter((r) => r.category === "Invoice")
     .reduce((s, r) => s + r.total, 0);
+  const totalInvoicedPaid = rows
+    .filter((r) => r.category === "Invoice" && r.description === "PAID")
+    .reduce((s, r) => s + r.total, 0);
 
   // Group totals by category
   const byCategory: Record<string, number> = {};
@@ -229,10 +242,13 @@ export default async function FinancialReportPage({
           </div>
           <div className="bg-white border border-[#E5E3DE] rounded-2xl px-5 py-4">
             <p className="text-xs text-[#999] uppercase tracking-widest mb-1">
-              Invoiced
+              Invoices
+            </p>
+            <p className="text-lg font-bold text-green-500">
+              ${fmt(totalInvoicedPaid)} paid
             </p>
             <p className="text-lg font-bold text-[#111]">
-              ${fmt(totalInvoiced)}
+              ${fmt(totalInvoiced)} total
             </p>
           </div>
         </div>
@@ -319,7 +335,16 @@ export default async function FinancialReportPage({
                         </span>
                       </td>
                       <td className="px-3 py-3 text-[#111]">
-                        <p className="text-sm">{row.description}</p>
+                        {row.category === "Invoice" ? (
+                          <span
+                            className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${INVOICE_STYLES[row.description] ?? "bg-gray-100 text-gray-600"}`}
+                          >
+                            {row.description}
+                          </span>
+                        ) : (
+                          <p className="text-sm">{row.description}</p>
+                        )}
+
                         {row.manufacturer && (
                           <p className="text-[10px] text-[#bbb]">
                             {row.manufacturer}
