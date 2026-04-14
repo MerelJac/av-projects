@@ -166,7 +166,59 @@ export async function PATCH(
   }
 
   // ─────────────────────────────────────────────
-  // 4. TAX CALCULATION for newly created costs
+  // 4. FREIGHT cost + tax
+  // ─────────────────────────────────────────────
+  const shippingCost = Number(shipment.cost ?? 0);
+  if (shippingCost > 0) {
+    try {
+      // Resolve PO for ship-to address (use first line's poId)
+      const freightPoId =
+        shipment.lines.find((l) => l.poLine?.poId)?.poLine?.poId ?? null;
+      const freightPo = freightPoId
+        ? await prisma.purchaseOrder.findUnique({
+            where: { id: freightPoId },
+            select: { shipToAddress: true },
+          })
+        : null;
+
+      let freightTax: number | null = null;
+      if (freightPo?.shipToAddress) {
+        const taxResult = await calculateVertexTax({
+          documentNumber: `FREIGHT-${shipment.id.slice(0, 8).toUpperCase()}`,
+          destination: freightPo.shipToAddress,
+          lines: [
+            {
+              lineItemNumber: 10000,
+              productCode: "FREIGHT",
+              productClass: "TAXABLE",
+              quantity: 1,
+              unitPrice: shippingCost,
+            },
+          ],
+        });
+        freightTax = taxResult?.lineTaxes[0]?.taxAmount ?? null;
+      }
+
+      await prisma.projectCost.create({
+        data: {
+          projectId,
+          costType: "FREIGHT",
+          amount: shippingCost,
+          unitCost: shippingCost,
+          quantity: 1,
+          taxAmount: freightTax,
+          shipmentId: shipment.id,
+          poLink: freightPoId,
+          notes: "Shipping cost from shipment receipt",
+        },
+      });
+    } catch (err) {
+      console.error("Freight cost creation failed", err);
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // 5. TAX CALCULATION for material costs
   // ─────────────────────────────────────────────
   try {
     const newCosts = await prisma.projectCost.findMany({

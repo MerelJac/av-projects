@@ -26,5 +26,27 @@ export async function POST(
     },
     include: { user: { include: { profile: true } } },
   });
+
+  // Create a LABOR project cost if the scope has a cost rate
+  const scope = await prisma.projectScope.findUnique({
+    where: { id: scopeId },
+    select: { costPerHour: true, itemId: true },
+  });
+
+  if (scope?.costPerHour) {
+    const unitCost = scope.costPerHour;
+    await prisma.projectCost.create({
+      data: {
+        projectId,
+        itemId: scope.itemId ?? null,
+        costType: "LABOR",
+        unitCost,
+        quantity: hours,
+        amount: unitCost * hours,
+        notes: "Auto-populated when time was logged.",
+      },
+    });
+  }
+
   return NextResponse.json(entry, { status: 201 });
 }

@@ -28,11 +28,11 @@ const CATEGORY_STYLES: Record<string, string> = {
 async function getReportRows(projectId: string): Promise<ReportRow[]> {
   const rows: ReportRow[] = [];
 
-  // ── PO materials & return credits (from ProjectCost) ──────────────────────
+  // ── PO materials, freight & return credits (from ProjectCost) ───────────────
   const projectCosts = await prisma.projectCost.findMany({
     where: {
       projectId,
-      costType: { in: ["MATERIAL", "RETURN"] },
+      costType: { in: ["MATERIAL", "RETURN", "FREIGHT"] },
     },
     include: {
       item: {
@@ -64,19 +64,25 @@ async function getReportRows(projectId: string): Promise<ReportRow[]> {
   }
 
   for (const cost of projectCosts) {
-    const isMaterial = cost.costType === "MATERIAL";
+    const isReturn = cost.costType === "RETURN";
+    const isFreight = cost.costType === "FREIGHT";
     const qty = cost.quantity ?? 1;
     const unitCost =
       cost.unitCost ?? (qty !== 0 ? Math.abs(cost.amount) / qty : 0);
     const total = cost.amount; // negative for RETURN
+    const category = isFreight
+      ? "Shipping"
+      : isReturn
+        ? "Return Credit"
+        : "PO Material";
     rows.push({
       date: cost.createdAt.toISOString().slice(0, 10),
-      category: isMaterial ? "PO Material" : "Return Credit",
+      category,
       description: cost.item?.description ?? cost.notes ?? "",
       itemNumber: cost.item?.itemNumber ?? "",
       manufacturer: cost.item?.manufacturer ?? "",
       vendorOrSource: cost.poLink ? (vendorByPoId[cost.poLink] ?? "") : "",
-      qty: isMaterial ? qty : -Math.abs(qty),
+      qty: isReturn ? -Math.abs(qty) : qty,
       unitCost,
       taxAmount: cost.taxAmount ?? 0,
       total,
@@ -119,30 +125,6 @@ async function getReportRows(projectId: string): Promise<ReportRow[]> {
         reference: scope.name,
       });
     }
-  }
-
-  // ── Shipping ──────────────────────────────────────────────────────────────
-  const shipments = await prisma.shipment.findMany({
-    where: { projectId, cost: { gt: 0 } },
-    orderBy: { createdAt: "asc" },
-  });
-
-  for (const sh of shipments) {
-    const cost = Number(sh.cost ?? 0);
-    if (!cost) continue;
-    rows.push({
-      date: sh.createdAt.toISOString().slice(0, 10),
-      category: "Shipping",
-      description: sh.carrier ?? "Shipment",
-      itemNumber: "",
-      manufacturer: "",
-      vendorOrSource: sh.carrier ?? "",
-      qty: 1,
-      taxAmount: 0,
-      unitCost: cost,
-      total: cost,
-      reference: sh.tracking ?? sh.id,
-    });
   }
 
   // ── Invoices ──────────────────────────────────────────────────────────────
@@ -214,7 +196,7 @@ export default async function FinancialReportPage({
     .filter((r) => r.total < 0)
     .reduce((s, r) => s + r.total, 0);
   const totalTax = rows
-    .filter((r) => r.taxAmount < 0)
+    .filter((r) => r.category !== "Invoice")
     .reduce((s, r) => s + r.taxAmount, 0);
   const netCost = totalCosts + totalCredits;
   const netCostIncTax = totalCosts + totalCredits + totalTax;
@@ -225,7 +207,7 @@ export default async function FinancialReportPage({
   // Group totals by category
   const byCategory: Record<string, number> = {};
   for (const row of rows) {
-    byCategory[row.category] = (byCategory[row.category] ?? 0) + row.total;
+    byCategory[row.category] = (byCategory[row.category] ?? 0) + (row.total + row.taxAmount);
   }
 
   return (
