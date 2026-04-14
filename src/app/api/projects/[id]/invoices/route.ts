@@ -7,6 +7,7 @@ type InvoiceLineInput = {
   description: string;
   quantity: number;
   price: number;
+  taxable?: boolean;
   quoteLineId?: string | null;
   quoteBundleId?: string | null;
   isBundleTotal?: boolean;
@@ -15,6 +16,7 @@ type InvoiceLineInput = {
 type AdditionalLineInput = {
   description: string;
   amount: number;
+  taxable?: boolean;
 };
 
 export async function POST(
@@ -154,6 +156,7 @@ export async function POST(
                   description: l.description,
                   quantity: l.quantity,
                   price: l.price,
+                  taxable: l.taxable ?? true,
                   quoteLineId: l.quoteLineId ?? null,
                   quoteBundleId: l.quoteBundleId ?? null,
                   isBundleTotal: l.isBundleTotal ?? false,
@@ -176,6 +179,7 @@ export async function POST(
               description: l.description,
               quantity: 1,
               price: l.amount,
+              taxable: l.taxable ?? true,
             })),
           ],
         },

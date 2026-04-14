@@ -154,6 +154,7 @@ export default function InvoicesEditor({
       `/api/projects/${project.id}/invoices/${invoiceId}/recalculate-tax`,
       { method: "POST" },
     );
+    console.log("calculate tax", res);
     if (res.ok) {
       const updated = await res.json();
       setInvoices((prev) =>
@@ -176,7 +177,11 @@ export default function InvoicesEditor({
       );
       showToast("success", "Tax recalculated");
     } else {
-      showToast("error", "Failed to recalculate tax");
+      const data = await res.json().catch(() => ({}));
+      showToast(
+        "error",
+        `Failed to recalculate tax${data.error ? ` — ${data.error}` : ""}`,
+      );
     }
   }
 
@@ -469,7 +474,6 @@ export default function InvoicesEditor({
                           <Download size={13} />
                           View PDF
                         </button>
-                        
                       </div>
                       <div className="text-right">
                         <p className="text-xs text-[#999]">Total</p>

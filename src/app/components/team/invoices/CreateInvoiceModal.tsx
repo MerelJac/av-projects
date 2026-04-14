@@ -6,6 +6,7 @@ type AdditionalLine = {
   id: string;
   description: string;
   amount: string;
+  taxable: boolean;
 };
 type QuoteLine = {
   id: string;
@@ -13,6 +14,7 @@ type QuoteLine = {
   quantity: number;
   price: number;
   bundleId: string | null;
+  item?: { taxStatus?: string | null } | null;
 };
 type Bundle = {
   id: string;
@@ -62,10 +64,25 @@ export default function CreateInvoiceModal({
   const [additionalLines, setAdditionalLines] = useState<AdditionalLine[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lineTaxable, setLineTaxable] = useState<Record<string, boolean>>(
+    () => {
+      const init: Record<string, boolean> = {};
+      for (const l of lines) init[l.id] = l.item?.taxStatus !== "EXEMPT";
+      for (const b of bundles) {
+        for (const l of b.lines) init[l.id] = l.item?.taxStatus !== "EXEMPT";
+        init[`bundle:${b.id}`] = true;
+      }
+      return init;
+    },
+  );
+  function toggleTaxable(key: string, e: React.MouseEvent) {
+    e.stopPropagation();
+    setLineTaxable((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
   function addAdditionalLine(description = "") {
     setAdditionalLines((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), description, amount: "" },
+      { id: crypto.randomUUID(), description, amount: "", taxable: true },
     ]);
   }
   function updateAdditionalLine(
@@ -75,6 +92,11 @@ export default function CreateInvoiceModal({
   ) {
     setAdditionalLines((prev) =>
       prev.map((l) => (l.id === id ? { ...l, [field]: value } : l)),
+    );
+  }
+  function toggleAdditionalTaxable(id: string) {
+    setAdditionalLines((prev) =>
+      prev.map((l) => (l.id === id ? { ...l, taxable: !l.taxable } : l)),
     );
   }
   function removeAdditionalLine(id: string) {
@@ -114,6 +136,7 @@ export default function CreateInvoiceModal({
       description: string;
       quantity: number;
       price: number;
+      taxable: boolean;
       quoteLineId?: string;
       quoteBundleId?: string;
       isBundleTotal?: boolean;
@@ -124,6 +147,7 @@ export default function CreateInvoiceModal({
           description: l.description,
           quantity: l.quantity,
           price: l.price,
+          taxable: lineTaxable[l.id] ?? true,
           quoteLineId: l.id,
         });
       }
@@ -136,6 +160,7 @@ export default function CreateInvoiceModal({
               description: l.description,
               quantity: l.quantity,
               price: l.price,
+              taxable: lineTaxable[l.id] ?? true,
               quoteLineId: l.id,
               quoteBundleId: bundle.id,
             });
@@ -151,6 +176,7 @@ export default function CreateInvoiceModal({
             description: bundle.name,
             quantity: 1,
             price: total,
+            taxable: lineTaxable[`bundle:${bundle.id}`] ?? true,
             quoteBundleId: bundle.id,
             isBundleTotal: true,
           });
@@ -206,6 +232,7 @@ export default function CreateInvoiceModal({
             .map((l) => ({
               description: l.description,
               amount: parseFloat(l.amount),
+              taxable: l.taxable,
             })),
           customerName,
           customerEmail: customerEmail || null,
@@ -338,15 +365,18 @@ export default function CreateInvoiceModal({
                     </div>
                     {unbundledLines.map((l) => {
                       const checked = selected.has(l.id);
+                      const taxable = lineTaxable[l.id] ?? true;
                       return (
-                        <label
+                        <div
                           key={l.id}
+                          onClick={() => toggleLine(l.id)}
                           className="flex items-center gap-3 px-4 py-2.5 hover:bg-[#FAFAF9] cursor-pointer border-b border-[#F7F6F3] last:border-0"
                         >
                           <input
                             type="checkbox"
                             checked={checked}
                             onChange={() => toggleLine(l.id)}
+                            onClick={(e) => e.stopPropagation()}
                             className="rounded"
                           />
                           <span className="flex-1 text-sm text-[#111]">
@@ -355,10 +385,17 @@ export default function CreateInvoiceModal({
                           <span className="text-xs text-[#888]">
                             ×{l.quantity}
                           </span>
+                          <button
+                            type="button"
+                            onClick={(e) => toggleTaxable(l.id, e)}
+                            className={`text-[10px] font-semibold px-2 py-0.5 rounded-md transition-colors ${taxable ? "bg-green-50 text-green-600" : "bg-[#F7F6F3] text-[#999]"}`}
+                          >
+                            {taxable ? "Taxable" : "Exempt"}
+                          </button>
                           <span className="text-sm font-medium text-[#111] w-20 text-right">
                             ${fmt(l.price * l.quantity)}
                           </span>
-                        </label>
+                        </div>
                       );
                     })}
                   </div>
@@ -375,11 +412,15 @@ export default function CreateInvoiceModal({
                         key={bundle.id}
                         className="border border-[#E5E3DE] rounded-xl overflow-hidden"
                       >
-                        <label className="flex items-center gap-3 px-4 py-3 hover:bg-[#FAFAF9] cursor-pointer">
+                        <div
+                          onClick={() => toggleBundle(bundle.id)}
+                          className="flex items-center gap-3 px-4 py-3 hover:bg-[#FAFAF9] cursor-pointer"
+                        >
                           <input
                             type="checkbox"
                             checked={checked}
                             onChange={() => toggleBundle(bundle.id)}
+                            onClick={(e) => e.stopPropagation()}
                             className="rounded"
                           />
                           <div className="flex-1">
@@ -390,10 +431,21 @@ export default function CreateInvoiceModal({
                               Hidden bundle · billed as total
                             </p>
                           </div>
+                          <button
+                            type="button"
+                            onClick={(e) =>
+                              toggleTaxable(`bundle:${bundle.id}`, e)
+                            }
+                            className={`text-[10px] font-semibold px-2 py-0.5 rounded-md transition-colors ${(lineTaxable[`bundle:${bundle.id}`] ?? true) ? "bg-green-50 text-green-600" : "bg-[#F7F6F3] text-[#999]"}`}
+                          >
+                            {(lineTaxable[`bundle:${bundle.id}`] ?? true)
+                              ? "Tax"
+                              : "Exempt"}
+                          </button>
                           <span className="text-sm font-medium text-[#111] w-20 text-right">
                             ${fmt(bundleTotal)}
                           </span>
-                        </label>
+                        </div>
                       </div>
                     );
                   }
@@ -412,15 +464,18 @@ export default function CreateInvoiceModal({
                       </div>
                       {bundle.lines.map((l) => {
                         const checked = selected.has(l.id);
+                        const taxable = lineTaxable[l.id] ?? true;
                         return (
-                          <label
+                          <div
                             key={l.id}
+                            onClick={() => toggleBundleLine(l.id)}
                             className="flex items-center gap-3 px-4 py-2.5 hover:bg-[#FAFAF9] cursor-pointer border-b border-[#F7F6F3] last:border-0"
                           >
                             <input
                               type="checkbox"
                               checked={checked}
                               onChange={() => toggleBundleLine(l.id)}
+                              onClick={(e) => e.stopPropagation()}
                               className="rounded"
                             />
                             <span className="flex-1 text-sm text-[#111]">
@@ -429,10 +484,17 @@ export default function CreateInvoiceModal({
                             <span className="text-xs text-[#888]">
                               ×{l.quantity}
                             </span>
+                            <button
+                              type="button"
+                              onClick={(e) => toggleTaxable(l.id, e)}
+                              className={`text-[10px] font-semibold px-2 py-0.5 rounded-md transition-colors ${taxable ? "bg-green-50 text-green-600" : "bg-[#F7F6F3] text-[#999]"}`}
+                            >
+                              {taxable ? "Tax" : "Exempt"}
+                            </button>
                             <span className="text-sm font-medium text-[#111] w-20 text-right">
                               ${fmt(l.price * l.quantity)}
                             </span>
-                          </label>
+                          </div>
                         );
                       })}
                     </div>
@@ -478,6 +540,13 @@ export default function CreateInvoiceModal({
                       className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 pl-6 focus:outline-none focus:border-[#111]"
                     />
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => toggleAdditionalTaxable(line.id)}
+                    className={`text-[10px] font-semibold px-2 py-1.5 rounded-md transition-colors whitespace-nowrap ${line.taxable ? "bg-green-50 text-green-600" : "bg-[#F7F6F3] text-[#999]"}`}
+                  >
+                    {line.taxable ? "Taxable" : "Exempt"}
+                  </button>
                   <button
                     onClick={() => removeAdditionalLine(line.id)}
                     className="w-8 h-8 flex items-center justify-center rounded-lg text-[#bbb] hover:text-red-500 hover:bg-red-50 transition-colors"
