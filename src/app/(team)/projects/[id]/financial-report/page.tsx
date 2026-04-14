@@ -12,6 +12,7 @@ type ReportRow = {
   vendorOrSource: string;
   qty: number;
   unitCost: number;
+  taxAmount: number;
   total: number;
   reference: string;
 };
@@ -27,104 +28,60 @@ const CATEGORY_STYLES: Record<string, string> = {
 async function getReportRows(projectId: string): Promise<ReportRow[]> {
   const rows: ReportRow[] = [];
 
-  // ── PO lines ──────────────────────────────────────────────────────────────
-  const pos = await prisma.purchaseOrder.findMany({
-    where: { projectId, status: { not: "CANCELLED" } },
+  // ── PO materials & return credits (from ProjectCost) ──────────────────────
+  const projectCosts = await prisma.projectCost.findMany({
+    where: {
+      projectId,
+      costType: { in: ["MATERIAL", "RETURN"] },
+    },
     include: {
-      vendor: { select: { name: true } },
-      lines: {
-        include: {
-          item: {
-            select: {
-              itemNumber: true,
-              manufacturer: true,
-              description: true,
-            },
-          },
+      item: {
+        select: {
+          itemNumber: true,
+          manufacturer: true,
+          description: true,
         },
       },
     },
     orderBy: { createdAt: "asc" },
   });
 
-  for (const po of pos) {
-    for (const line of po.lines) {
-      rows.push({
-        date: po.createdAt.toISOString().slice(0, 10),
-        category: "PO Material",
-        description: line.item?.description ?? "",
-        itemNumber: line.item?.itemNumber ?? "",
-        manufacturer: line.item?.manufacturer ?? "",
-        vendorOrSource: po.vendor?.name ?? "",
-        qty: line.quantity,
-        unitCost: line.cost,
-        total: line.quantity * line.cost,
-        reference: po.poNumber ?? po.id,
-      });
+  // Resolve vendor names from PO IDs stored in poLink
+  const poIds = [
+    ...new Set(
+      projectCosts.map((c) => c.poLink).filter((v): v is string => !!v),
+    ),
+  ];
+  const vendorByPoId: Record<string, string> = {};
+  if (poIds.length > 0) {
+    const pos = await prisma.purchaseOrder.findMany({
+      where: { id: { in: poIds } },
+      select: { id: true, poNumber: true, vendor: { select: { name: true } } },
+    });
+    for (const po of pos) {
+      vendorByPoId[po.id] = po.vendor?.name ?? "";
     }
   }
 
-  // ── PO return credits ─────────────────────────────────────────────────────
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const prismaAny = prisma as any;
-    const returns = await prismaAny.purchaseOrderReturn.findMany({
-      where: { status: "CREDITED", po: { projectId } },
-      include: {
-        po: { include: { vendor: { select: { name: true } } } },
-        lines: {
-          include: {
-            poLine: {
-              include: {
-                item: {
-                  select: {
-                    itemNumber: true,
-                    manufacturer: true,
-                    description: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-      orderBy: { updatedAt: "asc" },
+  for (const cost of projectCosts) {
+    const isMaterial = cost.costType === "MATERIAL";
+    const qty = cost.quantity ?? 1;
+    const unitCost =
+      cost.unitCost ?? (qty !== 0 ? Math.abs(cost.amount) / qty : 0);
+    const total = cost.amount; // negative for RETURN
+    rows.push({
+      date: cost.createdAt.toISOString().slice(0, 10),
+      category: isMaterial ? "PO Material" : "Return Credit",
+      description: cost.item?.description ?? cost.notes ?? "",
+      itemNumber: cost.item?.itemNumber ?? "",
+      manufacturer: cost.item?.manufacturer ?? "",
+      vendorOrSource: cost.poLink ? (vendorByPoId[cost.poLink] ?? "") : "",
+      qty: isMaterial ? qty : -Math.abs(qty),
+      unitCost,
+      taxAmount: cost.taxAmount ?? 0,
+      total,
+      reference: cost.poLink ?? "",
     });
-
-    for (const ret of returns as {
-      returnNumber: string | null;
-      updatedAt: Date;
-      po: { vendor: { name: string } | null };
-      lines: {
-        quantity: number;
-        creditPerUnit: number | null;
-        poLine: {
-          item: {
-            itemNumber: string;
-            manufacturer: string | null;
-            description: string | null;
-          } | null;
-        };
-      }[];
-    }[]) {
-      for (const line of ret.lines) {
-        const credit = (line.creditPerUnit ?? 0) * line.quantity;
-        rows.push({
-          date: ret.updatedAt.toISOString().slice(0, 10),
-          category: "Return Credit",
-          description: line.poLine.item?.description ?? "",
-          itemNumber: line.poLine.item?.itemNumber ?? "",
-          manufacturer: line.poLine.item?.manufacturer ?? "",
-          vendorOrSource: ret.po.vendor?.name ?? "",
-          qty: -line.quantity,
-          unitCost: line.creditPerUnit ?? 0,
-          total: -credit,
-          reference: ret.returnNumber ?? "",
-        });
-      }
-    }
-  } catch {
-    // returns table not yet migrated
   }
 
   // ── Labor ─────────────────────────────────────────────────────────────────
@@ -141,9 +98,10 @@ async function getReportRows(projectId: string): Promise<ReportRow[]> {
   for (const scope of scopes) {
     if (!scope.costPerHour) continue;
     for (const entry of scope.timeEntries) {
-      const profile = entry.user.profile as
-        | { firstName?: string; lastName?: string }
-        | null;
+      const profile = entry.user.profile as {
+        firstName?: string;
+        lastName?: string;
+      } | null;
       const name = profile?.firstName
         ? `${profile.firstName}${profile.lastName ? ` ${profile.lastName}` : ""}`
         : entry.user.email;
@@ -155,6 +113,7 @@ async function getReportRows(projectId: string): Promise<ReportRow[]> {
         manufacturer: "",
         vendorOrSource: name,
         qty: entry.hours,
+        taxAmount: 0,
         unitCost: scope.costPerHour,
         total: entry.hours * scope.costPerHour,
         reference: scope.name,
@@ -179,6 +138,7 @@ async function getReportRows(projectId: string): Promise<ReportRow[]> {
       manufacturer: "",
       vendorOrSource: sh.carrier ?? "",
       qty: 1,
+      taxAmount: 0,
       unitCost: cost,
       total: cost,
       reference: sh.tracking ?? sh.id,
@@ -203,6 +163,7 @@ async function getReportRows(projectId: string): Promise<ReportRow[]> {
       qty: 1,
       unitCost: amt,
       total: amt,
+      taxAmount: inv.taxAmount ?? 0,
       reference: inv.invoiceNumber ?? inv.id,
     });
   }
@@ -252,7 +213,11 @@ export default async function FinancialReportPage({
   const totalCredits = rows
     .filter((r) => r.total < 0)
     .reduce((s, r) => s + r.total, 0);
+  const totalTax = rows
+    .filter((r) => r.taxAmount < 0)
+    .reduce((s, r) => s + r.taxAmount, 0);
   const netCost = totalCosts + totalCredits;
+  const netCostIncTax = totalCosts + totalCredits + totalTax;
   const totalInvoiced = rows
     .filter((r) => r.category === "Invoice")
     .reduce((s, r) => s + r.total, 0);
@@ -380,8 +345,12 @@ export default async function FinancialReportPage({
                     <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3 w-24">
                       Unit Cost
                     </th>
+
                     <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-4 py-3 w-28">
                       Total
+                    </th>
+                    <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3 w-24">
+                      Total Incl. Tax
                     </th>
                   </tr>
                 </thead>
@@ -426,10 +395,17 @@ export default async function FinancialReportPage({
                       <td className="px-3 py-3 text-right text-sm tabular-nums text-[#666]">
                         {row.unitCost > 0 ? `$${fmt(row.unitCost)}` : "—"}
                       </td>
+
                       <td
                         className={`px-4 py-3 text-right text-sm font-semibold tabular-nums ${row.total < 0 ? "text-green-600" : "text-[#111]"}`}
                       >
                         {row.total < 0 ? "-" : ""}${fmt(Math.abs(row.total))}
+                      </td>
+                      <td
+                        className={`px-4 py-3 text-right text-sm font-semibold tabular-nums ${row.total < 0 ? "text-green-600" : "text-[#111]"}`}
+                      >
+                        {row.total < 0 ? "-" : ""}$
+                        {fmt(Math.abs(row.total + row.taxAmount))}
                       </td>
                     </tr>
                   ))}
@@ -444,6 +420,9 @@ export default async function FinancialReportPage({
                     </td>
                     <td className="px-4 py-3 text-right text-sm font-bold text-[#111] tabular-nums">
                       ${fmt(netCost)}
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm font-bold text-[#111] tabular-nums">
+                      ${fmt(netCostIncTax)}
                     </td>
                   </tr>
                 </tfoot>

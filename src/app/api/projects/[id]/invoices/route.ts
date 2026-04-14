@@ -141,6 +141,7 @@ export async function POST(
           chargeType === InvoiceChargeType.PERCENTAGE ? chargePercent : null,
         amount,
         status: "DRAFT",
+        issuedAt: new Date() ?? null,
         customerName: customerName ?? null,
         customerEmail: customerEmail ?? null,
         customerPhone: customerPhone ?? null,

@@ -14,6 +14,7 @@ import {
   ArrowRight,
   Receipt,
   Download,
+  Eye,
 } from "lucide-react";
 import AllShipments from "@/app/components/shipments/AllShipments";
 import MilestonesPanel from "@/app/components/MilestonesPanel";
@@ -232,7 +233,7 @@ export default async function ProjectPage({
                 href={`/projects/${id}/financial-report`}
                 className="flex items-center gap-1.5 text-xs text-[#666] hover:text-[#111] transition-colors"
               >
-                <Download size={12} />
+                <Eye size={12} />
                 View report
               </Link>
             </div>

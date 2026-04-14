@@ -229,6 +229,7 @@ model Item {
   vendorPrices       VendorItemPrice[]
   inventoryMovements InventoryMovement[]
   invoiceLines       InvoiceLine[]
+  projectCosts       ProjectCost[]
 }
 
 enum ItemType {
@@ -367,10 +368,12 @@ model ProjectCost {
   bomLineId  String?
   bomLine    BOMLine?         @relation(fields: [bomLineId], references: [id])
   itemId     String?
+  item       Item?            @relation(fields: [itemId], references: [id])
   costType   ProjectCostType
   unitCost   Float?
   quantity   Float?
   amount     Float
+  taxAmount  Float?
   poLink     String? // PO number or ID reference
   notes      String?
   createdAt  DateTime         @default(now())

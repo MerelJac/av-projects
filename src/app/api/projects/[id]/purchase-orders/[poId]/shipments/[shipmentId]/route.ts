@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { calculateVertexTax } from "@/lib/utils/vertex";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
@@ -80,7 +81,6 @@ export async function PATCH(
         const unitCost = poLine?.cost ?? Number(shipment.cost ?? 0);
 
         const poId = poLine?.poId ?? null;
-        const poLineId = poLine?.id ?? null;
 
         // ─────────────────────────────
         // Find BOM demand for this item
@@ -140,17 +140,15 @@ export async function PATCH(
             },
           });
 
-          // 2. Financial record (project cost)
+          // 2. Financial record (project cost) — taxAmount populated after transaction
           await tx.projectCost.create({
             data: {
               projectId,
               itemId,
-              unitCost: unitCost,
+              unitCost,
               quantity: allocateQty,
               amount: unitCost * allocateQty,
-
               costType: "MATERIAL",
-
               shipmentId: shipment.id,
               poLink: poId,
               bomLineId: bomLine.id,
@@ -165,6 +163,62 @@ export async function PATCH(
   } catch (err) {
     console.error("BOM allocation failed", err);
     // do NOT throw — receipt already succeeded
+  }
+
+  // ─────────────────────────────────────────────
+  // 4. TAX CALCULATION for newly created costs
+  // ─────────────────────────────────────────────
+  try {
+    const newCosts = await prisma.projectCost.findMany({
+      where: { shipmentId: shipment.id, costType: "MATERIAL" },
+      include: {
+        item: { select: { itemNumber: true, taxStatus: true } },
+      },
+    });
+
+    if (newCosts.length === 0) return NextResponse.json({ ok: true });
+
+    // Get ship-to address from the PO (use first poLink that resolves)
+    const poId = newCosts.find((c) => c.poLink)?.poLink ?? null;
+    const po = poId
+      ? await prisma.purchaseOrder.findUnique({
+          where: { id: poId },
+          select: { shipToAddress: true },
+        })
+      : null;
+
+    if (!po?.shipToAddress) return NextResponse.json({ ok: true });
+
+    const taxableCosts = newCosts.filter(
+      (c) => c.item?.taxStatus === "TAXABLE" && (c.unitCost ?? 0) > 0,
+    );
+
+    if (taxableCosts.length === 0) return NextResponse.json({ ok: true });
+
+    const result = await calculateVertexTax({
+      documentNumber: `RCPT-${shipment.id.slice(0, 8).toUpperCase()}`,
+      destination: po.shipToAddress,
+      lines: taxableCosts.map((c, i) => ({
+        lineItemNumber: (i + 1) * 10000,
+        productCode: c.item?.itemNumber ?? c.itemId ?? "UNKNOWN",
+        quantity: c.quantity ?? 1,
+        unitPrice: c.unitCost ?? 0,
+      })),
+    });
+
+    if (result) {
+      await Promise.all(
+        taxableCosts.map((c, i) =>
+          prisma.projectCost.update({
+            where: { id: c.id },
+            data: { taxAmount: result.lineTaxes[i]?.taxAmount ?? 0 },
+          }),
+        ),
+      );
+    }
+  } catch (err) {
+    console.error("Tax calculation for project cost failed", err);
+    // do NOT throw — allocation already succeeded
   }
 
   return NextResponse.json({ ok: true });

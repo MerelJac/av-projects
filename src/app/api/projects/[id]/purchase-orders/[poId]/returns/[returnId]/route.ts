@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { calculateVertexTax } from "@/lib/utils/vertex";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
@@ -138,6 +139,50 @@ export async function PATCH(
                   : `Returned to vendor (${returnWithLines.returnNumber ?? returnId})`,
             },
           });
+        }
+
+        // ── Tax credits on return costs ───────────────────────────────────
+        const returnCosts = await prisma.projectCost.findMany({
+          where: { poReturnId: returnId, costType: "RETURN" },
+          include: {
+            item: { select: { itemNumber: true, taxStatus: true } },
+          },
+        });
+
+        const taxableCosts = returnCosts.filter(
+          (c) => c.item?.taxStatus === "TAXABLE" && (c.unitCost ?? 0) > 0,
+        );
+
+        if (taxableCosts.length > 0) {
+          const po = await prisma.purchaseOrder.findUnique({
+            where: { id: poId },
+            select: { shipToAddress: true },
+          });
+
+          if (po?.shipToAddress) {
+            const result = await calculateVertexTax({
+              documentNumber: `RET-${returnId.slice(0, 8).toUpperCase()}`,
+              destination: po.shipToAddress,
+              lines: taxableCosts.map((c, i) => ({
+                lineItemNumber: (i + 1) * 10000,
+                productCode: c.item?.itemNumber ?? c.itemId ?? "UNKNOWN",
+                quantity: c.quantity ?? 1,
+                unitPrice: c.unitCost ?? 0,
+              })),
+            });
+
+            if (result) {
+              await Promise.all(
+                taxableCosts.map((c, i) =>
+                  prisma.projectCost.update({
+                    where: { id: c.id },
+                    // Return tax is a credit — store as negative
+                    data: { taxAmount: -(result.lineTaxes[i]?.taxAmount ?? 0) },
+                  }),
+                ),
+              );
+            }
+          }
         }
       }
     } catch {
