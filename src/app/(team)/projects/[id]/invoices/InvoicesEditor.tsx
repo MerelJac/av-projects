@@ -138,6 +138,9 @@ export default function InvoicesEditor({
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [recalculating, setRecalculating] = useState(false);
+  const [recalculatingText, setRecalculatingText] = useState("Recalculate Tax");
+
   const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
   const [selectedId, setSelectedId] = useState<string | null>(
     initialInvoices[0]?.id ?? null,
@@ -150,34 +153,40 @@ export default function InvoicesEditor({
   const [sendingEmail, setSendingEmail] = useState(false);
 
   async function handleRecalculateTax(invoiceId: string) {
+    setRecalculating(true);
+    setRecalculatingText("Recalculating...");
+
     const res = await fetch(
       `/api/projects/${project.id}/invoices/${invoiceId}/recalculate-tax`,
       { method: "POST" },
     );
-    console.log("calculate tax", res);
+    // console.log("calculate tax", res);
     if (res.ok) {
       const updated = await res.json();
       setInvoices((prev) =>
         prev.map((inv) => {
           if (inv.id !== invoiceId) return inv;
+          console.log("tax lines", inv.lines);
           return {
             ...inv,
             taxAmount: updated.taxAmount,
             amount: updated.amount,
-            lines: inv.lines.map((line, i) => {
-              const lineItemNumber = (i + 1) * 10000;
+            lines: inv.lines.map((line) => {
               const lt = updated.lineTaxes?.find(
-                (t: { lineItemNumber: number; taxAmount: number }) =>
-                  t.lineItemNumber === lineItemNumber,
+                (t: { invoiceLineId: string; taxAmount: number }) =>
+                  t.invoiceLineId === line.id,
               );
-              return lt ? { ...line, taxAmount: lt.taxAmount } : line;
+              return lt != null ? { ...line, taxAmount: lt.taxAmount } : line;
             }),
           };
         }),
       );
       showToast("success", "Tax recalculated");
+      setRecalculating(false);
+      setRecalculatingText("Recalculate Tax");
     } else {
       const data = await res.json().catch(() => ({}));
+      setRecalculating(false);
       showToast(
         "error",
         `Failed to recalculate tax${data.error ? ` — ${data.error}` : ""}`,
@@ -472,7 +481,7 @@ export default function InvoicesEditor({
                           className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border border-[#E5E3DE] text-[#666] hover:bg-[#F7F6F3] transition-all"
                         >
                           <Download size={13} />
-                          View PDF
+                          PDF
                         </button>
                       </div>
                       <div className="text-right">
@@ -688,10 +697,11 @@ export default function InvoicesEditor({
                       </table>
                       <button
                         onClick={() => handleRecalculateTax(selected.id)}
+                        disabled={recalculating}
                         className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border border-[#E5E3DE] text-[#666] hover:bg-[#F7F6F3] transition-all"
                       >
                         <RefreshCw size={13} />
-                        Recalculate Tax
+                        {recalculatingText}
                       </button>
                     </div>
                   )}

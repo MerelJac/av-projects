@@ -106,9 +106,21 @@ export async function POST(
     }),
   );
 
+  // Attach the invoiceLineId so the frontend can match by ID, not index
+  const lineTaxesWithId = invoice.lines.map((line, i) => {
+    const lineItemNumber = (i + 1) * 10000;
+    const lt = vertexResult.lineTaxes.find(
+      (t) => t.lineItemNumber === lineItemNumber,
+    );
+    return {
+      invoiceLineId: line.id,
+      taxAmount: lt?.taxAmount ?? 0,
+    };
+  });
+
   return NextResponse.json({
     taxAmount: updated.taxAmount,
     amount: updated.amount,
-    lineTaxes: vertexResult.lineTaxes,
+    lineTaxes: lineTaxesWithId,
   });
 }

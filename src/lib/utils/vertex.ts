@@ -254,7 +254,7 @@ export async function calculateVertexTax(
     },
   });
 
-  console.log("calculateVertexTax: sending envelope\n", envelope);
+  // console.log("calculateVertexTax: sending envelope\n", envelope);
 
   try {
     const res = await fetch(VERTEX_ENDPOINT, {
@@ -285,7 +285,7 @@ export async function calculateVertexTax(
     }
 
     const responseXml = await res.text();
-    console.log("calculateVertexTax: response\n", responseXml);
+    // console.log("calculateVertexTax: response\n", responseXml);
 
     const { totalTax, lineTaxes } = extractTaxFromResponse(responseXml);
     const totalAmount = input.lines.reduce(
