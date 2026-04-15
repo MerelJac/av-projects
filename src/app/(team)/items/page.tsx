@@ -17,6 +17,12 @@ const typeStyles: Record<string, string> = {
   EXTERNAL_SERVICE: "bg-green-50 text-green-700",
 };
 
+const taxStyles: Record<string, string> = {
+  TAXABLE: "bg-green-50 text-green-700",
+  EXEMPT: "bg-purple-50 text-purple-700",
+};
+
+
 const PAGE_SIZE = 50;
 
 export default async function ItemsPage({
@@ -78,7 +84,10 @@ export default async function ItemsPage({
 
         <form method="GET" action="/items" className="mb-4">
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#999] pointer-events-none" />
+            <Search
+              size={14}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[#999] pointer-events-none"
+            />
             <input
               name="q"
               defaultValue={query}
@@ -100,6 +109,9 @@ export default async function ItemsPage({
                 </th>
                 <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">
                   Type
+                </th>
+                <th className="text-left text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">
+                  Tax
                 </th>
                 <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3">
                   Cost
@@ -149,6 +161,13 @@ export default async function ItemsPage({
                         className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${typeStyles[item.type] ?? "bg-gray-100 text-gray-600"}`}
                       >
                         {item.type}
+                      </span>
+                    </td>
+                                        <td className="px-3 py-3.5">
+                      <span
+                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${taxStyles[item.taxStatus] ?? "bg-gray-100 text-gray-600"}`}
+                      >
+                        {item.taxStatus}
                       </span>
                     </td>
                     <td className="px-3 py-3.5 text-right text-sm text-[#999]">

@@ -84,12 +84,12 @@ export async function POST(
     });
 
     const projectBillToAddress = buildAddress({
-      address1: project?.customer?.address,
-      address2: project?.customer?.address2,
-      city: project?.customer?.city,
-      state: project?.customer?.state,
-      zipCode: project?.customer?.zipcode,
-      country: project?.customer?.country,
+      address1: project?.customer?.billToAddress,
+      address2: project?.customer?.billToAddress2,
+      city: project?.customer?.billToCity,
+      state: project?.customer?.billToState,
+      zipCode: project?.customer?.billToZipcode,
+      country: project?.customer?.billToCountry,
     });
     return tx.purchaseOrder.create({
       data: {

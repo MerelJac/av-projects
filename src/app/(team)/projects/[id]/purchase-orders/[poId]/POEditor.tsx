@@ -265,6 +265,7 @@ export default function POEditor({
   const [addQty, setAddQty] = useState("1");
   const [addCost, setAddCost] = useState("");
   const [addingLine, setAddingLine] = useState(false);
+  const [receiving, setReceiving] = useState(false);
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showToast = (type: "success" | "error", msg: string) => {
@@ -273,9 +274,11 @@ export default function POEditor({
   };
 
   async function handleMarkReceived(shipmentId: string) {
+
     const shipment = shipments.find((s) => s.id === shipmentId);
     if (!shipment) return;
     try {
+          setReceiving(true);
       const res = await fetch(
         `/api/projects/${projectId}/purchase-orders/${po.id}/shipments/${shipmentId}`,
         {
@@ -316,11 +319,12 @@ export default function POEditor({
           }),
         );
       }
-
+    setReceiving(false);
       showToast("success", "Shipment marked as received");
       router.refresh();
     } catch {
       showToast("error", "Failed to update shipment");
+          setReceiving(false);
     }
   }
 
@@ -1582,6 +1586,7 @@ export default function POEditor({
                       {!s.receivedAt && (
                         <button
                           onClick={() => handleMarkReceived(s.id)}
+                          disabled={receiving}
                           className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-[#E5E3DE] hover:bg-green-50 hover:border-green-200 hover:text-green-700 transition-colors"
                         >
                           Mark Received

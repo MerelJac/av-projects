@@ -14,6 +14,11 @@ type ReportRow = {
   unitCost: number;
   taxAmount: number;
   total: number;
+
+  unitPrice: number;
+  taxAmountPrice: number;
+  totalPrice: number;
+
   reference: string;
 };
 
@@ -81,6 +86,7 @@ async function getReportRows(projectId: string): Promise<ReportRow[]> {
     const unitCost =
       cost.unitCost ?? (qty !== 0 ? Math.abs(cost.amount) / qty : 0);
     const total = cost.amount; // negative for RETURN
+    const totalPrice = cost.amountPrice ?? 0; // negative for RETURN
     const category = isFreight
       ? "Shipping"
       : isReturn
@@ -99,6 +105,10 @@ async function getReportRows(projectId: string): Promise<ReportRow[]> {
       unitCost,
       taxAmount: cost.taxAmount ?? 0,
       total,
+
+      unitPrice: cost.unitPrice ?? 0,
+      taxAmountPrice: cost.taxAmountPrice ?? 0,
+      totalPrice,
       reference: cost.poLink ?? "",
     });
   }
@@ -119,9 +129,15 @@ async function getReportRows(projectId: string): Promise<ReportRow[]> {
       manufacturer: "",
       vendorOrSource: inv.invoiceNumber ?? inv.id,
       qty: 1,
-      unitCost: amt,
-      total: amt,
-      taxAmount: inv.taxAmount ?? 0,
+      // Zero for now bc there is no cost, only price
+      unitCost: 0,
+      total: 0,
+      taxAmount: 0,
+
+      unitPrice: amt,
+      totalPrice: amt,
+      taxAmountPrice: inv.taxAmount ?? 0,
+
       reference: inv.invoiceNumber ?? inv.id,
     });
   }
@@ -168,6 +184,9 @@ export default async function FinancialReportPage({
   const totalCosts = rows
     .filter((r) => r.total > 0 && r.category !== "Invoice")
     .reduce((s, r) => s + r.total, 0);
+  const totalPrices = rows
+    .filter((r) => r.totalPrice > 0 && r.category !== "Invoice")
+    .reduce((s, r) => s + r.totalPrice, 0);
   const totalCredits = rows
     .filter((r) => r.total < 0)
     .reduce((s, r) => s + r.total, 0);
@@ -225,6 +244,10 @@ export default async function FinancialReportPage({
               Total Costs
             </p>
             <p className="text-lg font-bold text-[#111]">${fmt(totalCosts)}</p>
+            <p className="text-xs text-[#999] uppercase tracking-widest mb-1">
+              Total Prices
+            </p>
+            <p className="text-lg font-bold text-[#111]">${fmt(totalPrices)}</p>
           </div>
           <div className="bg-white border border-[#E5E3DE] rounded-2xl px-5 py-4">
             <p className="text-xs text-[#999] uppercase tracking-widest mb-1">
@@ -316,6 +339,16 @@ export default async function FinancialReportPage({
                     <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3 w-24">
                       Total Incl. Tax
                     </th>
+
+                    <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3 w-24">
+                      Unit Price
+                    </th>
+                    <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-4 py-3 w-28">
+                      Total
+                    </th>
+                    <th className="text-right text-[10px] font-semibold uppercase tracking-widest text-[#999] px-3 py-3 w-24">
+                      Total Price Incl. Tax
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -370,16 +403,16 @@ export default async function FinancialReportPage({
                       </td>
 
                       <td
-                        className={`px-4 py-3 text-right text-sm font-semibold tabular-nums flex flex-col items-center ${row.total < 0 ? "text-green-600" : "text-[#111]"}`}
+                        className={`px-3 py-3 ${row.total < 0 ? "text-green-600" : "text-[#111]"}`}
                       >
-                        <span>
+                        <p>
                           {row.total < 0 ? "-" : ""}${fmt(Math.abs(row.total))}
-                        </span>
-                        <span className="text-[10px] text-[#bbb]">
+                        </p>
+                        <p className="text-[10px] text-[#bbb]">
                           {row.taxAmount > 0
                             ? `+ $${fmt(row.taxAmount)} tax`
                             : "No Tax"}
-                        </span>
+                        </p>
                       </td>
                       <td
                         className={`px-4 py-3 text-right text-sm font-semibold tabular-nums ${row.total < 0 ? "text-green-600" : "text-[#111]"}`}
@@ -387,13 +420,37 @@ export default async function FinancialReportPage({
                         {row.total < 0 ? "-" : ""}$
                         {fmt(Math.abs(row.total + row.taxAmount))}
                       </td>
+
+                      <td className="px-3 py-3 text-right text-sm tabular-nums text-[#666] ">
+                        {row.unitPrice > 0 ? `$${fmt(row.unitPrice)}` : "—"}
+                      </td>
+
+                      <td
+                        className={`px-3 py-3 ${row.totalPrice < 0 ? "text-green-600" : "text-[#111]"}`}
+                      >
+                        <p>
+                          {row.totalPrice < 0 ? "-" : ""}$
+                          {fmt(Math.abs(row.totalPrice))}
+                        </p>
+                        <p className="text-[10px] text-[#bbb]">
+                          {row.taxAmountPrice > 0
+                            ? `+ $${fmt(row.taxAmountPrice)} tax`
+                            : "No Tax"}
+                        </p>
+                      </td>
+                      <td
+                        className={`px-4 py-3 text-right text-sm font-semibold tabular-nums ${row.totalPrice < 0 ? "text-green-600" : "text-[#111]"}`}
+                      >
+                        {row.totalPrice < 0 ? "-" : ""}$
+                        {fmt(Math.abs(row.totalPrice + row.taxAmountPrice))}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr className="border-t-2 border-[#E5E3DE] bg-[#FAFAF9]">
                     <td
-                      colSpan={7}
+                      colSpan={10}
                       className="px-4 py-3 text-xs font-semibold text-[#666] uppercase tracking-widest"
                     >
                       Net Cost
