@@ -247,7 +247,7 @@ export default function InvoicesEditor({
   }
 
   const selected = invoices.find((i) => i.id === selectedId) ?? null;
-  console.log("ship to address", selected?.shipToAddress);
+  // console.log("ship to address", selected?.shipToAddress);
 
   function showToast(type: "success" | "error", msg: string) {
     setToast({ type, msg });

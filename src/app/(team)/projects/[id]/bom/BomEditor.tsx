@@ -131,6 +131,17 @@ export default function BOMEditor({
       .then(setClaimedPOs);
   }, [projectId]);
 
+  const handleSaveRef = useRef(handleSave);
+  useEffect(() => {
+    handleSaveRef.current = handleSave;
+  });
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!saved && !saving) handleSaveRef.current();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [saved, saving]);
+
   function effectivePrice(
     itemId: string,
     standardPrice: number | null,
@@ -516,6 +527,11 @@ export default function BOMEditor({
               </button>
             </div>
             <div className="flex items-center gap-2">
+              <p className="text-sm text-[#888] mt-1">
+                {!saved && (
+                  <span className="text-amber-600 ml-2">Unsaved changes</span>
+                )}
+              </p>
               <button
                 onClick={handleSave}
                 disabled={saving || saved}
@@ -523,11 +539,6 @@ export default function BOMEditor({
               >
                 {saving ? "Saving…" : saved ? "Saved ✓" : "Save Changes"}
               </button>
-              <p className="text-sm text-[#888] mt-1">
-                {!saved && (
-                  <span className="text-amber-600 ml-2">Unsaved changes</span>
-                )}
-              </p>
             </div>
           </div>
         </div>
