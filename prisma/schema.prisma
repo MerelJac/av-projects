@@ -381,6 +381,8 @@ model ProjectCost {
   bom            BillOfMaterials? @relation(fields: [bomId], references: [id])
   bomLineId      String?
   bomLine        BOMLine?         @relation(fields: [bomLineId], references: [id])
+  timeEntryId    String?
+  TimeEntry      TimeEntry?       @relation(fields: [timeEntryId], references: [id])
   itemId         String?
   item           Item?            @relation(fields: [itemId], references: [id])
   costType       ProjectCostType
@@ -439,17 +441,18 @@ model ProjectScope {
 }
 
 model TimeEntry {
-  id        String        @id @default(uuid())
-  projectId String
-  project   Project       @relation(fields: [projectId], references: [id])
-  userId    String
-  user      User          @relation(fields: [userId], references: [id])
-  scopeId   String?
-  scope     ProjectScope? @relation(fields: [scopeId], references: [id])
-  hours     Float
-  notes     String?
-  date      DateTime      @default(now())
-  createdAt DateTime      @default(now())
+  id           String        @id @default(uuid())
+  projectId    String
+  project      Project       @relation(fields: [projectId], references: [id])
+  userId       String
+  user         User          @relation(fields: [userId], references: [id])
+  scopeId      String?
+  scope        ProjectScope? @relation(fields: [scopeId], references: [id])
+  hours        Float
+  notes        String?
+  date         DateTime      @default(now())
+  createdAt    DateTime      @default(now())
+  projectCosts ProjectCost[]
 }
 
 model ItemPriceHistory {

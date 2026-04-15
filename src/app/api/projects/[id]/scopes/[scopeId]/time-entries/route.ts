@@ -48,6 +48,7 @@ export async function POST(
         quantity: hours,
         amount: unitCost * hours,
         amountPrice: unitPrice ? unitPrice * hours : null,
+        timeEntryId: entry.id,
         notes: "Auto-populated when time was logged.",
       },
       include: {

@@ -87,6 +87,7 @@ async function getReportRows(projectId: string): Promise<ReportRow[]> {
       cost.unitCost ?? (qty !== 0 ? Math.abs(cost.amount) / qty : 0);
     const total = cost.amount; // negative for RETURN
     const totalPrice = cost.amountPrice ?? 0; // negative for RETURN
+    const timeEntry = cost.timeEntryId ?? null;
     const category = isFreight
       ? "Shipping"
       : isReturn
@@ -100,7 +101,9 @@ async function getReportRows(projectId: string): Promise<ReportRow[]> {
       description: cost.item?.description ?? cost.notes ?? "",
       itemNumber: cost.item?.itemNumber ?? "",
       manufacturer: cost.item?.manufacturer ?? "",
-      vendorOrSource: cost.poLink ? (vendorByPoId[cost.poLink] ?? "") : "",
+      vendorOrSource: cost.poLink
+        ? (vendorByPoId[cost.poLink] ?? timeEntry ?? "")
+        : "",
       qty: isReturn ? -Math.abs(qty) : qty,
       unitCost,
       taxAmount: cost.taxAmount ?? 0,
@@ -370,12 +373,12 @@ export default async function FinancialReportPage({
                       <td className="px-3 py-3 text-[#111]">
                         {row.category === "Invoice" ? (
                           <span
-                            className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${INVOICE_STYLES[row.description] ?? "bg-gray-100 text-gray-600"}`}
+                            className={`text-[10px]  text-sm font-semibold px-2 py-0.5 rounded-full ${INVOICE_STYLES[row.description] ?? "bg-gray-100 text-gray-600"}`}
                           >
                             {row.description}
                           </span>
                         ) : (
-                          <p className="text-sm">{row.description}</p>
+                          <p className="text-[10px]  ">{row.description}</p>
                         )}
 
                         {row.manufacturer && (
