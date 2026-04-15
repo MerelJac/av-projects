@@ -31,7 +31,6 @@ const navItems = [
   { href: "/quotes", label: "Proposals", icon: FileText },
   { href: "/purchase-orders", label: "Purchase Orders", icon: CreditCard },
   { href: "/invoices", label: "Invoices", icon: CreditCard },
-  { href: "/sales-orders", label: "Sales Orders", icon: ShoppingBag },
   { href: "/shipments", label: "Shipments", icon: Truck },
   { href: "/time", label: "Time Tracking", icon: Clock },
   { href: "/subscriptions", label: "Subscriptions", icon: Receipt },

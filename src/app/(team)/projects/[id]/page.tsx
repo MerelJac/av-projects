@@ -113,21 +113,19 @@ export default async function ProjectPage({
 
   const shippingCost = financials.shippingCost;
   const returnCredit = financials.returnCredit;
-
-  const materialCost = financials.materialCosts;
   const materialsIncludingReturns = financials.poCostGrossMinusReturns;
-  // Labor cost: actual logged hours × cost rate per scope
   const laborCost = financials.laborCost;
-
-  // Total spent = PO-based cost + inventory allocated to this project via BOM
   const cogs = financials.cogs;
   const invoiced = financials.invoiced;
   const collected = financials.collected;
   const owed = totalContract - invoiced;
 
-  const grossProfit = totalContract - (cogs + owed);
-  const marginPct =
-    totalContract > 0 ? (grossProfit / totalContract) * 100 : null;
+  const grossProfit = financials.grossProfit;
+  const marginPct = financials.marginPct;
+
+  // Price-side (sell price allocated from BOM lines)
+  const netMaterialPrice = financials.netMaterialPrice;
+  const materialMarkup = financials.materialMarkup;
 
   const shipments = await prisma.shipment.findMany({
     where: { projectId: id },
@@ -221,7 +219,7 @@ export default async function ProjectPage({
               {/* Spent */}
               <div className="px-5 py-4">
                 <p className="text-xs text-[#999] uppercase tracking-widest mb-1">
-                  Spent
+                  COGS
                 </p>
                 <p className="text-lg font-bold text-[#111]">
                   $
@@ -231,7 +229,6 @@ export default async function ProjectPage({
                   })}
                 </p>
                 {materialsIncludingReturns > 0 && (
-                  // FROM
                   <p className="text-xs text-[#999] mt-0.5">
                     $
                     {materialsIncludingReturns.toLocaleString(undefined, {
@@ -239,9 +236,23 @@ export default async function ProjectPage({
                       maximumFractionDigits: 2,
                     })}{" "}
                     materials
+                    {netMaterialPrice > 0 && (
+                      <span className="text-[#bbb]">
+                        {" "}→ $
+                        {netMaterialPrice.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}{" "}
+                        sell
+                        {materialMarkup !== null && (
+                          <span className="text-green-600 font-medium">
+                            {" "}({materialMarkup > 0 ? "+" : ""}{materialMarkup.toFixed(0)}%)
+                          </span>
+                        )}
+                      </span>
+                    )}
                   </p>
                 )}
-                
                 {laborCost > 0 && (
                   <p className="text-xs text-[#999] mt-0.5">
                     $

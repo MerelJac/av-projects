@@ -12,7 +12,9 @@ type InvoiceSlice = { amount: number | null; status: string };
 type ProjectCostSlice = {
   costType: string;
   amount: number;
+  amountPrice: number | null;
   taxAmount: number | null;
+  taxAmountPrice: number | null;
 };
 
 export function calcContractValue(quotes: QuoteSlice[]) {
@@ -48,9 +50,24 @@ export function calcCosts(projectCosts: ProjectCostSlice[]) {
   const shippingCost = freightEntries.reduce((s, c) => s + c.amount, 0);
   const laborCost = laborEntries.reduce((s, c) => s + c.amount, 0);
 
+  // Price-side (sell price) totals from BOM allocation records
+  const grossPoPrice = materialEntries.reduce(
+    (s, c) => s + (c.amountPrice ?? 0),
+    0,
+  );
+  const returnCreditPrice = returnEntries.reduce(
+    (s, c) => s + Math.abs(c.amountPrice ?? 0),
+    0,
+  );
+  const netMaterialPrice = grossPoPrice - returnCreditPrice;
+
   // Tax across all non-return cost types (return tax is negative, naturally reduces total)
   const totalTax = projectCosts.reduce(
     (s, c) => s + (c.taxAmount ?? 0),
+    0,
+  );
+  const totalTaxPrice = projectCosts.reduce(
+    (s, c) => s + (c.taxAmountPrice ?? 0),
     0,
   );
 
@@ -61,7 +78,11 @@ export function calcCosts(projectCosts: ProjectCostSlice[]) {
     shippingCost,
     materialCosts: grossPoCost,
     laborCost,
+    grossPoPrice,
+    returnCreditPrice,
+    netMaterialPrice,
     totalTax,
+    totalTaxPrice,
   };
 }
 
@@ -106,7 +127,11 @@ export function calcProjectFinancials(p: {
     shippingCost,
     materialCosts,
     laborCost,
+    grossPoPrice,
+    returnCreditPrice,
+    netMaterialPrice,
     totalTax,
+    totalTaxPrice,
   } = calcCosts(p.projectCosts);
   const { budgetedLaborCost, totalActualHours, totalEstimatedHours } =
     calcLaborEstimates(p.scopes);
@@ -121,6 +146,9 @@ export function calcProjectFinancials(p: {
       ? Math.min((totalActualHours / totalEstimatedHours) * 100, 100)
       : null;
 
+  const materialMarkup =
+    grossPoPrice > 0 ? ((grossPoPrice - grossPoCost) / grossPoCost) * 100 : null;
+
   return {
     contractBase,
     changeOrderTotal,
@@ -131,7 +159,12 @@ export function calcProjectFinancials(p: {
     shippingCost,
     materialCosts,
     laborCost,
+    grossPoPrice,
+    returnCreditPrice,
+    netMaterialPrice,
     totalTax,
+    totalTaxPrice,
+    materialMarkup,
     budgetedLaborCost,
     totalActualHours,
     totalEstimatedHours,
