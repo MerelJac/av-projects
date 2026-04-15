@@ -36,7 +36,7 @@ export default function LoginPage() {
 
         {/* Brand */}
         <div className="text-center space-y-1">
-          <h1 className="font-syne font-extrabold text-3xl text-secondary-color tracking-tight">
+          <h1 className="font-orbitron font-extrabold text-3xl text-secondary-color tracking-tight">
             Antares
           </h1>
           <p className="text-sm text-muted">Sign in to your account</p>

@@ -11,7 +11,7 @@ export default function PublicLayout({
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-surface2">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="font-syne font-extrabold text-lg text-secondary-color tracking-tight">
+          <Link href="/" className="font-extrabold text-lg text-secondary-color tracking-tight font-orbitron">
             Antares
           </Link>
 
