@@ -17,6 +17,12 @@ export type Customer = {
   city: string | null;
   state: string | null;
   zipcode: string | null;
+  billToAddress: string | null;
+  billToAddress2: string | null;
+  billToCountry: string | null;
+  billToCity: string | null;
+  billToState: string | null;
+  billToZipcode: string | null;
 };
 
 export default function EditCustomerButton({

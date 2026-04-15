@@ -7,7 +7,25 @@ export async function PATCH(
 ) {
   const { id } = await params;
   const body = await req.json();
-  const { name, email, phone, billingTerm, taxStatus, address, address2, country, city, state, zipcode } = body;
+  const {
+    name,
+    email,
+    phone,
+    billingTerm,
+    taxStatus,
+    address,
+    address2,
+    country,
+    city,
+    state,
+    zipcode,
+    billToAddress,
+    billToAddress2,
+    billToState,
+    billToCity,
+    billToCountry,
+    billToZipcode,
+  } = body;
 
   const customer = await prisma.customer.update({
     where: { id },
@@ -23,6 +41,13 @@ export async function PATCH(
       city: city ?? null,
       state: state ?? null,
       zipcode: zipcode ?? null,
+
+      billToAddress: billToAddress ?? null,
+      billToAddress2: billToAddress2 ?? null,
+      billToCountry: billToCountry ?? null,
+      billToCity: billToCity ?? null,
+      billToState: billToState ?? null,
+      billToZipcode: billToZipcode ?? null,
     },
   });
 

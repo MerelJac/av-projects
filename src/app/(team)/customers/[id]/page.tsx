@@ -84,26 +84,6 @@ export default async function CustomerPage({
                 </span>
               )}
             </div>
-            <div className="bg-white border border-gray-200 rounded-xl p-4">
-              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">
-                Billing Address
-              </p>
-              {customer.address && (
-                <p className="text-sm text-gray-900">{customer.address}</p>
-              )}
-              {customer.address2 && (
-                <p className="text-sm text-gray-500">{customer.address2}</p>
-              )}
-              {(customer.city || customer.state || customer.zipcode) && (
-                <p className="text-sm text-gray-900">
-                  {[customer.city, customer.state].filter(Boolean).join(", ")}
-                  {customer.zipcode && ` ${customer.zipcode}`}
-                </p>
-              )}
-              {customer.country && (
-                <p className="text-sm text-gray-500">{customer.country}</p>
-              )}
-            </div>
           </div>
           <div className="flex items-center gap-2">
             <EditCustomerButton
@@ -119,7 +99,13 @@ export default async function CustomerPage({
                 country: customer.country,
                 city: customer.city,
                 state: customer.state,
-                zipcode: customer.zipcode
+                zipcode: customer.zipcode,
+                billToAddress: customer.billToAddress,
+                billToAddress2: customer.billToAddress2,
+                billToCountry: customer.billToCountry,
+                billToCity: customer.billToCity,
+                billToState: customer.billToState,
+                billToZipcode: customer.billToZipcode,
               }}
             />
             <Link
@@ -137,7 +123,53 @@ export default async function CustomerPage({
             />
           </div>
         </div>
+        <div className="grid grid-cols-2 gap-6">
+        <div className="bg-white border border-gray-200 rounded-xl p-4">
+          <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">
+            Shipping Address
+          </p>
+          {customer.address && (
+            <p className="text-sm text-gray-900">{customer.address}</p>
+          )}
+          {customer.address2 && (
+            <p className="text-sm text-gray-500">{customer.address2}</p>
+          )}
+          {(customer.city || customer.state || customer.zipcode) && (
+            <p className="text-sm text-gray-900">
+              {[customer.city, customer.state].filter(Boolean).join(", ")}
+              {customer.zipcode && ` ${customer.zipcode}`}
+            </p>
+          )}
+          {customer.country && (
+            <p className="text-sm text-gray-500">{customer.country}</p>
+          )}
+        </div>
 
+        <div className="bg-white border border-gray-200 rounded-xl p-4">
+          <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">
+            Billing Address
+          </p>
+          {customer.billToAddress && (
+            <p className="text-sm text-gray-900">{customer.billToAddress}</p>
+          )}
+          {customer.billToAddress2 && (
+            <p className="text-sm text-gray-500">{customer.billToAddress2}</p>
+          )}
+          {(customer.billToCity ||
+            customer.billToState ||
+            customer.billToZipcode) && (
+            <p className="text-sm text-gray-900">
+              {[customer.billToCity, customer.billToState]
+                .filter(Boolean)
+                .join(", ")}
+              {customer.billToZipcode && ` ${customer.billToZipcode}`}
+            </p>
+          )}
+          {customer.billToCountry && (
+            <p className="text-sm text-gray-500">{customer.billToCountry}</p>
+          )}
+        </div>
+</div>
         <div className="grid grid-cols-2 gap-6">
           {/* Projects */}
           <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
@@ -246,9 +278,7 @@ export default async function CustomerPage({
           <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
             <div className="px-5 py-4 border-b border-[#F0EEE9] flex items-center justify-between">
               <h3 className="text-sm font-semibold text-[#111]">Invoices</h3>
-              <span className="text-xs text-[#bbb]">
-                {invoices.length}
-              </span>
+              <span className="text-xs text-[#bbb]">{invoices.length}</span>
             </div>
             {invoices.length === 0 ? (
               <p className="px-5 py-8 text-sm text-[#bbb] text-center">
@@ -260,8 +290,8 @@ export default async function CustomerPage({
                   <Link
                     key={invoice.id}
                     href={
-                      invoice.projectId
-                        && `/projects/${invoice.projectId}/invoices`
+                      invoice.projectId &&
+                      `/projects/${invoice.projectId}/invoices`
                     }
                     className="flex items-center justify-between px-5 py-3.5 hover:bg-[#FAFAF9] transition-colors group"
                   >

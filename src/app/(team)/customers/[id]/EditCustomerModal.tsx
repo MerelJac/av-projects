@@ -5,8 +5,6 @@ import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { Customer } from "./EditCustomerButton";
 
-
-
 export default function EditCustomerModal({
   customer,
   onClose,
@@ -26,6 +24,22 @@ export default function EditCustomerModal({
   const [city, setCity] = useState(customer.city ?? "");
   const [state, setState] = useState(customer.state ?? "");
   const [zipcode, setZipcode] = useState(customer.zipcode ?? "");
+
+  const [billToAddress, setBillToAddress] = useState(
+    customer.billToAddress ?? "",
+  );
+  const [billToAddress2, setBillToAddress2] = useState(
+    customer.billToAddress2 ?? "",
+  );
+  const [billToCountry, setBillToCountry] = useState(
+    customer.billToCountry ?? "",
+  );
+  const [billToCity, setBillToCity] = useState(customer.billToCity ?? "");
+  const [billToState, setBillToState] = useState(customer.billToState ?? "");
+  const [billToZipcode, setBillToZipcode] = useState(
+    customer.billToZipcode ?? "",
+  );
+
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,6 +66,12 @@ export default function EditCustomerModal({
           city: city || null,
           state: state || null,
           zipcode: zipcode || null,
+          billToAddress: billToAddress || null,
+          billToAddress2: billToAddress2 || null,
+          billToCountry: billToCountry || null,
+          billToCity: billToCity || null,
+          billToState: billToState || null,
+          billToZipcode: billToZipcode || null,
         }),
       });
       if (!res.ok) throw new Error("Failed to save");
@@ -117,6 +137,7 @@ export default function EditCustomerModal({
           </div>
 
           <div>
+             <h2 className="text-base font-semibold text-[#111]">Ship To Address</h2>
             <label className="block text-xs font-medium text-[#888] mb-1.5 uppercase tracking-wide">
               Address
             </label>
@@ -197,6 +218,90 @@ export default function EditCustomerModal({
               />
             </div>
           </div>
+
+          <div>
+             <h2 className="text-base font-semibold text-[#111]">Bill To Address</h2>
+            <label className="block text-xs font-medium text-[#888] mb-1.5 uppercase tracking-wide">
+              Address
+            </label>
+            <input
+              type="text"
+              value={billToAddress}
+              onChange={(e) => setBillToAddress(e.target.value)}
+              className="w-full border border-[#E5E3DE] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#111]/10"
+              placeholder="123 Main St"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-[#888] mb-1.5 uppercase tracking-wide">
+              Address 2
+            </label>
+            <input
+              type="text"
+              value={billToAddress2}
+              onChange={(e) => setBillToAddress2(e.target.value)}
+              className="w-full border border-[#E5E3DE] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#111]/10"
+              placeholder="Apt, suite, unit, etc."
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-[#888] mb-1.5 uppercase tracking-wide">
+                City
+              </label>
+              <input
+                type="text"
+                value={billToCity}
+                onChange={(e) => setBillToCity(e.target.value)}
+                className="w-full border border-[#E5E3DE] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#111]/10"
+                placeholder="New York"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-[#888] mb-1.5 uppercase tracking-wide">
+                State
+              </label>
+              <input
+                type="text"
+                value={billToState}
+                onChange={(e) => setBillToState(e.target.value)}
+                className="w-full border border-[#E5E3DE] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#111]/10"
+                placeholder="NY"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-[#888] mb-1.5 uppercase tracking-wide">
+                Zip Code
+              </label>
+              <input
+                type="text"
+                value={billToZipcode}
+                onChange={(e) => setBillToZipcode(e.target.value)}
+                className="w-full border border-[#E5E3DE] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#111]/10"
+                placeholder="10001"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-[#888] mb-1.5 uppercase tracking-wide">
+                Country
+              </label>
+              <input
+                type="text"
+                value={billToCountry}
+                onChange={(e) => setBillToCountry(e.target.value)}
+                className="w-full border border-[#E5E3DE] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#111]/10"
+                placeholder="US"
+              />
+            </div>
+          </div>
+
           <div>
             <label className="block text-xs font-medium text-[#888] mb-1.5 uppercase tracking-wide">
               Billing Terms

@@ -178,6 +178,13 @@ model Customer {
   state    String?
   zipcode  String?
 
+  billToAddress  String?
+  billToAddress2 String?
+  billToCountry  String? @default("US")
+  billToCity     String?
+  billToState    String?
+  billToZipcode  String?
+
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   bcSyncedAt DateTime?
