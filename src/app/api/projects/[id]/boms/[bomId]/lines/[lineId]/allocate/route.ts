@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
+// NOTE: this file might be deprecated
 export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string; bomId: string; lineId: string }> }

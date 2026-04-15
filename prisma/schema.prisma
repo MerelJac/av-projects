@@ -367,25 +367,28 @@ enum ProjectCostType {
 
 /// Tracks actual costs incurred per project (from BOM lines, POs, etc.)
 model ProjectCost {
-  id         String           @id @default(uuid())
-  projectId  String
-  project    Project          @relation(fields: [projectId], references: [id])
-  bomId      String?
-  bom        BillOfMaterials? @relation(fields: [bomId], references: [id])
-  bomLineId  String?
-  bomLine    BOMLine?         @relation(fields: [bomLineId], references: [id])
-  itemId     String?
-  item       Item?            @relation(fields: [itemId], references: [id])
-  costType   ProjectCostType
-  unitCost   Float?
-  quantity   Float?
-  amount     Float
-  taxAmount  Float?
-  poLink     String? // PO number or ID reference
-  notes      String?
-  createdAt  DateTime         @default(now())
-  shipmentId String?
-  shipment   Shipment?        @relation(fields: [shipmentId], references: [id])
+  id             String           @id @default(uuid())
+  projectId      String
+  project        Project          @relation(fields: [projectId], references: [id])
+  bomId          String?
+  bom            BillOfMaterials? @relation(fields: [bomId], references: [id])
+  bomLineId      String?
+  bomLine        BOMLine?         @relation(fields: [bomLineId], references: [id])
+  itemId         String?
+  item           Item?            @relation(fields: [itemId], references: [id])
+  costType       ProjectCostType
+  quantity       Float?
+  amount         Float
+  taxAmount      Float?
+  unitCost       Float?
+  unitPrice      Float? // Price charged on the project
+  taxAmountPrice Float? // Tax charged on the project item price
+  amountPrice    Float? // Tax charged on the project item price
+  poLink         String? // PO number or ID reference
+  notes          String?
+  createdAt      DateTime         @default(now())
+  shipmentId     String?
+  shipment       Shipment?        @relation(fields: [shipmentId], references: [id])
 
   poReturnId String?
   poReturn   PurchaseOrderReturn? @relation(fields: [poReturnId], references: [id])

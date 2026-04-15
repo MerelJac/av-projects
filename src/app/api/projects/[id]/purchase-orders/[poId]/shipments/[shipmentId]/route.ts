@@ -93,6 +93,8 @@ export async function PATCH(
           select: {
             id: true,
             quantity: true,
+            bomId: true,
+            sellEach: true,
           },
           orderBy: {
             id: "asc", // deterministic allocation order
@@ -127,7 +129,10 @@ export async function PATCH(
           // Allocate
           // ─────────────────────────────
           const allocateQty = Math.min(remainingQty, stillNeeded);
-
+          const unitSellAtPrice = bomLine.sellEach ?? null;
+          const amountPrice = unitSellAtPrice
+            ? unitSellAtPrice * allocateQty
+            : null;
           // 1. Inventory movement (consumption)
           await tx.inventoryMovement.create({
             data: {
@@ -145,12 +150,15 @@ export async function PATCH(
             data: {
               projectId,
               itemId,
-              unitCost,
               quantity: allocateQty,
+              unitCost,
               amount: unitCost * allocateQty,
+              unitPrice: unitSellAtPrice,
+              amountPrice: amountPrice,
               costType: "MATERIAL",
               shipmentId: shipment.id,
               poLink: poId,
+              bomId: bomLine.bomId,
               bomLineId: bomLine.id,
               notes: "Auto-allocated from shipment receipt",
             },
@@ -247,23 +255,41 @@ export async function PATCH(
 
     if (taxableCosts.length === 0) return NextResponse.json({ ok: true });
 
-    const result = await calculateVertexTax({
-      documentNumber: `RCPT-${shipment.id.slice(0, 8).toUpperCase()}`,
-      destination: po.shipToAddress,
-      lines: taxableCosts.map((c, i) => ({
-        lineItemNumber: (i + 1) * 10000,
-        productCode: c.item?.itemNumber ?? c.itemId ?? "UNKNOWN",
-        quantity: c.quantity ?? 1,
-        unitPrice: c.unitCost ?? 0,
-      })),
-    });
+    const lineInputs = taxableCosts.map((c, i) => ({
+      lineItemNumber: (i + 1) * 10000,
+      productCode: c.item?.itemNumber ?? c.itemId ?? "UNKNOWN",
+      quantity: c.quantity ?? 1,
+    }));
 
-    if (result) {
+    // Two separate Vertex calls — one for cost, one for sell price
+    const [costResult, priceResult] = await Promise.all([
+      calculateVertexTax({
+        documentNumber: `RCPT-COST-${shipment.id.slice(0, 8).toUpperCase()}`,
+        destination: po.shipToAddress,
+        lines: lineInputs.map((l, i) => ({
+          ...l,
+          unitPrice: taxableCosts[i].unitCost ?? 0,
+        })),
+      }),
+      calculateVertexTax({
+        documentNumber: `RCPT-PRICE-${shipment.id.slice(0, 8).toUpperCase()}`,
+        destination: po.shipToAddress,
+        lines: lineInputs.map((l, i) => ({
+          ...l,
+          unitPrice: taxableCosts[i].unitPrice ?? 0,
+        })),
+      }),
+    ]);
+
+    if (costResult || priceResult) {
       await Promise.all(
         taxableCosts.map((c, i) =>
           prisma.projectCost.update({
             where: { id: c.id },
-            data: { taxAmount: result.lineTaxes[i]?.taxAmount ?? 0 },
+            data: {
+              taxAmount: costResult?.lineTaxes[i]?.taxAmount ?? null,
+              taxAmountPrice: priceResult?.lineTaxes[i]?.taxAmount ?? null,
+            },
           }),
         ),
       );
