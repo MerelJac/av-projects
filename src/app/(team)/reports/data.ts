@@ -13,7 +13,7 @@ export async function getProjectFinancials() {
             lines: { select: { cost: true, quantity: true, id: true } },
           },
         },
-        costs: { select: { costType: true, amount: true, taxAmount: true } },
+        costs: { select: { costType: true, amount: true, taxAmount: true, amountPrice: true, taxAmountPrice: true } },
         shipments: { select: { cost: true } },
         scopes: {
           select: {
