@@ -23,6 +23,7 @@ import BillingTermsEditor from "@/app/components/BillingTermsEditor";
 import DeleteProjectButton from "@/app/components/projects/DeleteProjectButton";
 import { calcProjectFinancials } from "@/lib/utils/financials";
 import AuditFeed from "@/app/components/AuditFeed";
+import BomNameEditor from "@/app/components/bom/BomNameEditor";
 
 const quoteStatusStyles: Record<string, string> = {
   ACCEPTED: "bg-green-100 text-green-700",
@@ -429,9 +430,11 @@ export default async function ProjectPage({
                   className="flex items-center justify-between px-6 py-4 hover:bg-[#FAFAF9] transition-colors group"
                 >
                   <div>
-                    <p className="text-sm font-medium text-[#111]">
-                      {bom.name}
-                    </p>
+                    <BomNameEditor
+                      projectId={project.id}
+                      bomId={bom.id}
+                      initialName={bom.name}
+                    />
                     <p className="text-xs text-[#999] mt-0.5">
                       {bom.lines.length} item{bom.lines.length !== 1 ? "s" : ""}{" "}
                       ·{" "}

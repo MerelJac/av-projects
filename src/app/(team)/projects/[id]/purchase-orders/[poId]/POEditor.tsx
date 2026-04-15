@@ -158,7 +158,7 @@ export default function POEditor({
   po,
   projectId,
   users,
-  currentUserId
+  currentUserId,
 }: {
   po: PO;
   projectId: string;
@@ -266,6 +266,7 @@ export default function POEditor({
   const [addCost, setAddCost] = useState("");
   const [addingLine, setAddingLine] = useState(false);
   const [receiving, setReceiving] = useState(false);
+  const [receivingText, setReceivingText] = useState("Mark Received");
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showToast = (type: "success" | "error", msg: string) => {
@@ -274,11 +275,11 @@ export default function POEditor({
   };
 
   async function handleMarkReceived(shipmentId: string) {
-
     const shipment = shipments.find((s) => s.id === shipmentId);
     if (!shipment) return;
     try {
-          setReceiving(true);
+      setReceiving(true);
+      setReceivingText("Receiving...");
       const res = await fetch(
         `/api/projects/${projectId}/purchase-orders/${po.id}/shipments/${shipmentId}`,
         {
@@ -319,12 +320,14 @@ export default function POEditor({
           }),
         );
       }
-    setReceiving(false);
+      setReceiving(false);
+        setReceivingText("Mark Received");
       showToast("success", "Shipment marked as received");
       router.refresh();
     } catch {
       showToast("error", "Failed to update shipment");
-          setReceiving(false);
+      setReceiving(false);
+        setReceivingText("Mark Received");
     }
   }
 
@@ -1299,12 +1302,16 @@ export default function POEditor({
                             >
                               {RETURN_STATUS_LABELS[ret.status] ?? ret.status}
                             </span>
-                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
-                              ret.disposition === "KEEP_IN_INVENTORY"
-                                ? "bg-blue-50 text-blue-700 border-blue-200"
-                                : "bg-[#F0EEE9] text-[#666] border-[#E5E3DE]"
-                            }`}>
-                              {ret.disposition === "KEEP_IN_INVENTORY" ? "→ Inventory" : "→ Vendor"}
+                            <span
+                              className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                                ret.disposition === "KEEP_IN_INVENTORY"
+                                  ? "bg-blue-50 text-blue-700 border-blue-200"
+                                  : "bg-[#F0EEE9] text-[#666] border-[#E5E3DE]"
+                              }`}
+                            >
+                              {ret.disposition === "KEEP_IN_INVENTORY"
+                                ? "→ Inventory"
+                                : "→ Vendor"}
                             </span>
                             {ret.rmaNumber && (
                               <span className="text-xs text-[#666] bg-[#F0EEE9] px-2 py-0.5 rounded font-mono">
@@ -1589,7 +1596,7 @@ export default function POEditor({
                           disabled={receiving}
                           className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-[#E5E3DE] hover:bg-green-50 hover:border-green-200 hover:text-green-700 transition-colors"
                         >
-                          Mark Received
+                          {receivingText}
                         </button>
                       )}
                     </div>

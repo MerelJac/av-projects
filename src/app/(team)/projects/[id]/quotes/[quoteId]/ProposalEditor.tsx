@@ -121,8 +121,17 @@ export default function ProposalEditor({
     return () => {
       if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lines, bundles, status, isDirect, isChangeOrder, scopeOfWork, termsAndConditions, clientResponsibilities]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    lines,
+    bundles,
+    status,
+    isDirect,
+    isChangeOrder,
+    scopeOfWork,
+    termsAndConditions,
+    clientResponsibilities,
+  ]);
 
   const showToast = (type: "success" | "error", msg: string) => {
     setToast({ type, msg });
@@ -328,12 +337,12 @@ export default function ProposalEditor({
                 {statusCfg.label}
               </span>
             </div>
-            {!saved && (
-              <p className="text-xs text-amber-600 mt-1">Unsaved changes</p>
-            )}
           </div>
 
           <div className="flex items-center gap-3">
+            {!saved && (
+              <p className="text-xs text-amber-600 mt-1">Unsaved changes</p>
+            )}
             <button
               onClick={() => handleSave()}
               disabled={saving || saved}

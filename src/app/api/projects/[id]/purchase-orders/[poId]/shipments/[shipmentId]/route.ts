@@ -182,39 +182,21 @@ export async function PATCH(
       // Resolve PO for ship-to address (use first line's poId)
       const freightPoId =
         shipment.lines.find((l) => l.poLine?.poId)?.poLine?.poId ?? null;
-      const freightPo = freightPoId
-        ? await prisma.purchaseOrder.findUnique({
-            where: { id: freightPoId },
-            select: { shipToAddress: true },
-          })
-        : null;
 
-      let freightTax: number | null = null;
-      if (freightPo?.shipToAddress) {
-        const taxResult = await calculateVertexTax({
-          documentNumber: `FREIGHT-${shipment.id.slice(0, 8).toUpperCase()}`,
-          destination: freightPo.shipToAddress,
-          lines: [
-            {
-              lineItemNumber: 10000,
-              productCode: "FREIGHT",
-              productClass: "TAXABLE",
-              quantity: 1,
-              unitPrice: shippingCost,
-            },
-          ],
-        });
-        freightTax = taxResult?.lineTaxes[0]?.taxAmount ?? null;
-      }
+      // SHIPPING is not taxable
+      const freightTax: number = 0;
 
       await prisma.projectCost.create({
         data: {
           projectId,
           costType: "FREIGHT",
+          quantity: 1,
           amount: shippingCost,
           unitCost: shippingCost,
-          quantity: 1,
           taxAmount: freightTax,
+          amountPrice: shippingCost,
+          unitPrice: shippingCost,
+          taxAmountPrice: freightTax,
           shipmentId: shipment.id,
           poLink: freightPoId,
           notes: "Shipping cost from shipment receipt",
