@@ -194,6 +194,7 @@ export async function PATCH(
           amount: shippingCost,
           unitCost: shippingCost,
           taxAmount: freightTax,
+          // Cost and Sell Price are the same
           amountPrice: shippingCost,
           unitPrice: shippingCost,
           taxAmountPrice: freightTax,

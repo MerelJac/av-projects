@@ -15,6 +15,7 @@ import {
   Receipt,
   Settings,
   ShoppingBag,
+  SquareUserRound,
   Truck,
   UsersIcon,
 } from "lucide-react";
@@ -27,7 +28,7 @@ const navItems = [
   { href: "/projects", label: "Projects", icon: FolderKanban },
   { href: "/items", label: "Items", icon: Boxes },
   { href: "/customers", label: "Customers", icon: Users },
-  { href: "/vendors", label: "Vendors", icon: UsersIcon },
+  { href: "/vendors", label: "Vendors", icon: SquareUserRound },
   { href: "/quotes", label: "Proposals", icon: FileText },
   { href: "/purchase-orders", label: "Purchase Orders", icon: CreditCard },
   { href: "/invoices", label: "Invoices", icon: CreditCard },
