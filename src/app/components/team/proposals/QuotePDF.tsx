@@ -1,4 +1,5 @@
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { htmlToPdfElements } from "@/lib/utils/htmlToPdf";
 
 const styles = StyleSheet.create({
   page: { padding: 48, fontSize: 10, fontFamily: "Helvetica", color: "#111" },
@@ -224,7 +225,7 @@ export function buildQuotePDF({
         ].filter(({ text }) => !!text).map(({ label, text }) => (
           <View key={label} style={styles.textSection}>
             <Text style={styles.textSectionLabel}>{label}</Text>
-            <Text style={styles.textSectionBody}>{text}</Text>
+            <View style={styles.textSectionBody}>{htmlToPdfElements(text ?? "")}</View>
           </View>
         ))}
 

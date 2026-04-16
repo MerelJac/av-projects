@@ -23,6 +23,7 @@ import CreatePOModal from "@/app/components/team/purchase-orders/CreatePOModal";
 import CreateInvoiceModal from "@/app/components/team/invoices/CreateInvoiceModal";
 import { BillingTerms } from "@/app/(team)/customers/[id]/EditCustomerButton";
 import AuditFeed from "@/app/components/AuditFeed";
+import RichTextEditor from "@/app/components/RichTextEditor";
 
 // Derive types directly from the Prisma payload
 type QuoteLine = QuoteWithDetails["lines"][number];
@@ -573,15 +574,13 @@ export default function ProposalEditor({
                     {label}
                   </p>
                 </div>
-                <textarea
+                <RichTextEditor
                   value={value}
-                  onChange={(e) => {
-                    setter(e.target.value);
+                  onChange={(v) => {
+                    setter(v);
                     setSaved(false);
                   }}
                   placeholder={`Enter ${label.toLowerCase()}…`}
-                  rows={5}
-                  className="w-full px-5 py-4 text-sm text-[#111] placeholder:text-[#bbb] resize-y focus:outline-none"
                 />
               </div>
             ))}
