@@ -362,6 +362,7 @@ model Project {
   salesOrders    SalesOrder[]
   scopes         ProjectScope[]
   costs          ProjectCost[]
+  subscriptions  Subscription[]
 }
 
 // ─── Project Costs ─────────────────────────────────────────────────────────────
@@ -373,21 +374,22 @@ enum ProjectCostType {
   RETURN
   TAX
   OTHER
+  SUBSCRIPTION
 }
 
 /// Tracks actual costs incurred per project (from BOM lines, POs, etc.)
 model ProjectCost {
-  id             String           @id @default(uuid())
+  id             String               @id @default(uuid())
   projectId      String
-  project        Project          @relation(fields: [projectId], references: [id])
+  project        Project              @relation(fields: [projectId], references: [id])
   bomId          String?
-  bom            BillOfMaterials? @relation(fields: [bomId], references: [id])
+  bom            BillOfMaterials?     @relation(fields: [bomId], references: [id])
   bomLineId      String?
-  bomLine        BOMLine?         @relation(fields: [bomLineId], references: [id])
+  bomLine        BOMLine?             @relation(fields: [bomLineId], references: [id])
   timeEntryId    String?
-  TimeEntry      TimeEntry?       @relation(fields: [timeEntryId], references: [id])
+  TimeEntry      TimeEntry?           @relation(fields: [timeEntryId], references: [id])
   itemId         String?
-  item           Item?            @relation(fields: [itemId], references: [id])
+  item           Item?                @relation(fields: [itemId], references: [id])
   costType       ProjectCostType
   quantity       Float?
   amount         Float
@@ -398,12 +400,13 @@ model ProjectCost {
   amountPrice    Float? // Tax charged on the project item price
   poLink         String? // PO number or ID reference
   notes          String?
-  createdAt      DateTime         @default(now())
+  createdAt      DateTime             @default(now())
   shipmentId     String?
-  shipment       Shipment?        @relation(fields: [shipmentId], references: [id])
-
-  poReturnId String?
-  poReturn   PurchaseOrderReturn? @relation(fields: [poReturnId], references: [id])
+  shipment       Shipment?            @relation(fields: [shipmentId], references: [id])
+  subscriptionId String?
+  subscription   Subscription?        @relation(fields: [subscriptionId], references: [id])
+  poReturnId     String?
+  poReturn       PurchaseOrderReturn? @relation(fields: [poReturnId], references: [id])
 
   @@index([projectId])
   @@index([bomId])
@@ -425,7 +428,16 @@ model Subscription {
 
   notes String?
 
-  createdAt DateTime @default(now())
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+
+  quantity     Float?
+  cost         Float?
+  price        Float?
+  billingCycle String?
+
+  createdAt    DateTime      @default(now())
+  projectCosts ProjectCost[]
 }
 
 model ProjectScope {

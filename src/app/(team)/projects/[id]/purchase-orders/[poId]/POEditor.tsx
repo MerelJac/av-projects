@@ -15,6 +15,7 @@ import {
   FileText,
   RotateCcw,
   X,
+  CalendarDays,
 } from "lucide-react";
 import ReturnItemsModal from "@/app/components/team/purchase-orders/ReturnItemsModal";
 import NotesPanel from "@/app/components/NotesPanel";
@@ -32,6 +33,7 @@ type POLine = {
     manufacturer: string | null;
     description: string | null;
     unit: string | null;
+    type: string | null;
   } | null;
 };
 
@@ -96,7 +98,11 @@ type PO = {
   status: string;
   notes: string | null;
   createdAt: Date;
-  project: { id: string; name: string; customer: { name: string } } | null;
+  project: {
+    id: string;
+    name: string;
+    customer: { id: string; name: string };
+  } | null;
   lines: POLine[];
   shipments: Shipment[];
   returns: POReturn[];
@@ -198,6 +204,90 @@ export default function POEditor({
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
   const [editQty, setEditQty] = useState("");
   const [editCost, setEditCost] = useState("");
+
+  // Subscription logging
+  const subscriptionLines = lines.filter(
+    (l) => l.item?.type === "SUBSCRIPTION",
+  );
+  const [subForms, setSubForms] = useState<
+    Record<
+      string,
+      {
+        startDate: string;
+        endDate: string;
+        price: string;
+        billingCycle: string;
+        notes: string;
+        saving: boolean;
+        saved: boolean;
+      }
+    >
+  >(() =>
+    Object.fromEntries(
+      subscriptionLines.map((l) => [
+        l.id,
+        {
+          startDate: "",
+          endDate: "",
+          price: "",
+          billingCycle: "MONTHLY",
+          notes: "",
+          saving: false,
+          saved: false,
+        },
+      ]),
+    ),
+  );
+
+  async function handleLogSubscription(
+    lineId: string,
+    itemId: string,
+    cost: number,
+    quantity: number,
+  ) {
+    const form = subForms[lineId];
+    if (!form?.startDate || !form?.endDate) return;
+    const customerId = po.project?.customer?.id;
+    const shipToAddress = po.shipToAddress;
+    if (!customerId) return;
+    setSubForms((prev) => ({
+      ...prev,
+      [lineId]: { ...prev[lineId], saving: true },
+    }));
+    try {
+      const res = await fetch("/api/subscriptions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          itemId,
+          projectId,
+          customerId,
+          startDate: form.startDate,
+          endDate: form.endDate,
+          notes: form.notes || null,
+          status: "ACTIVE",
+          cost,
+          price: form.price ? parseFloat(form.price) : null,
+          quantity,
+          billingCycle: form.billingCycle || null,
+          poId: po.id,
+          shipToAddress,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      setSubForms((prev) => ({
+        ...prev,
+        [lineId]: { ...prev[lineId], saving: false, saved: true },
+      }));
+      showToast("success", "Subscription logged");
+    } catch {
+      setSubForms((prev) => ({
+        ...prev,
+        [lineId]: { ...prev[lineId], saving: false },
+      }));
+      showToast("error", "Failed to log subscription");
+    }
+  }
 
   // Resend state
   const [resending, setResending] = useState(false);
@@ -1695,6 +1785,192 @@ export default function POEditor({
             />
           );
         })()}
+      {/* Subscriptions */}
+      {subscriptionLines.length > 0 && (
+        <div className="max-w-4xl mx-auto px-6 pb-2">
+          <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
+            <div className="px-6 py-4 border-b border-[#F0EEE9] flex items-center gap-2.5">
+              <CalendarDays size={15} className="text-[#999]" />
+              <h3 className="font-semibold text-sm text-[#111]">
+                Log Subscriptions
+              </h3>
+              <span className="text-xs text-[#bbb]">
+                {subscriptionLines.length}
+              </span>
+            </div>
+            <div className="divide-y divide-[#F0EEE9]">
+              {subscriptionLines.map((line) => {
+                const form =
+                  subForms[line.id] ??
+                  (() => {
+                    const initial = {
+                      startDate: "",
+                      endDate: "",
+                      price: "",
+                      billingCycle: "MONTHLY",
+                      notes: "",
+                      saving: false,
+                      saved: false,
+                    };
+                    setSubForms((p) => ({ ...p, [line.id]: initial }));
+                    return initial;
+                  })();
+                return (
+                  <div key={line.id} className="px-6 py-4">
+                    <p className="text-sm font-medium text-[#111] mb-3">
+                      {line.item?.manufacturer && (
+                        <span className="text-[#999] mr-1">
+                          {line.item.manufacturer}
+                        </span>
+                      )}
+                      {line.item?.itemNumber}
+                      {line.item?.description && (
+                        <span className="text-xs text-[#999] ml-2">
+                          {line.item.description}
+                        </span>
+                      )}
+                    </p>
+                    {form.saved ? (
+                      <p className="text-sm text-green-600 flex items-center gap-1.5">
+                        <CheckCircle2 size={13} /> Subscription logged
+                      </p>
+                    ) : (
+                      <div className="flex items-end gap-3 flex-wrap">
+                        <div>
+                          <label className="text-[10px] font-semibold uppercase tracking-widest text-[#999] block mb-1">
+                            Start Date
+                          </label>
+                          <input
+                            type="date"
+                            value={form.startDate}
+                            onChange={(e) =>
+                              setSubForms((p) => ({
+                                ...p,
+                                [line.id]: {
+                                  ...p[line.id],
+                                  startDate: e.target.value,
+                                },
+                              }))
+                            }
+                            className="text-sm border border-[#E5E3DE] rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#111]"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-semibold uppercase tracking-widest text-[#999] block mb-1">
+                            End Date
+                          </label>
+                          <input
+                            type="date"
+                            value={form.endDate}
+                            onChange={(e) =>
+                              setSubForms((p) => ({
+                                ...p,
+                                [line.id]: {
+                                  ...p[line.id],
+                                  endDate: e.target.value,
+                                },
+                              }))
+                            }
+                            className="text-sm border border-[#E5E3DE] rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#111]"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-semibold uppercase tracking-widest text-[#999] block mb-1">
+                            Cycle
+                          </label>
+                          <select
+                            value={form.billingCycle}
+                            onChange={(e) =>
+                              setSubForms((p) => ({
+                                ...p,
+                                [line.id]: {
+                                  ...p[line.id],
+                                  billingCycle: e.target.value,
+                                },
+                              }))
+                            }
+                            className="text-sm border border-[#E5E3DE] rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:border-[#111]"
+                          >
+                            <option value="MONTHLY">Monthly</option>
+                            <option value="QUARTERLY">Quarterly</option>
+                            <option value="BIANNUAL">Biannual</option>
+                            <option value="ANNUAL">Annual</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-semibold uppercase tracking-widest text-[#999] block mb-1">
+                            Sell at Price
+                          </label>
+                          <div className="relative">
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[#999]">
+                              $
+                            </span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={form.price}
+                              onChange={(e) =>
+                                setSubForms((p) => ({
+                                  ...p,
+                                  [line.id]: {
+                                    ...p[line.id],
+                                    price: e.target.value,
+                                  },
+                                }))
+                              }
+                              placeholder="0.00"
+                              className="w-28 text-sm border border-[#E5E3DE] rounded-lg pl-6 pr-2 py-1.5 focus:outline-none focus:border-[#111]"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-[160px]">
+                          <label className="text-[10px] font-semibold uppercase tracking-widest text-[#999] block mb-1">
+                            Notes
+                          </label>
+                          <input
+                            type="text"
+                            value={form.notes}
+                            onChange={(e) =>
+                              setSubForms((p) => ({
+                                ...p,
+                                [line.id]: {
+                                  ...p[line.id],
+                                  notes: e.target.value,
+                                },
+                              }))
+                            }
+                            placeholder="Optional"
+                            className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#111]"
+                          />
+                        </div>
+                        <button
+                          onClick={() =>
+                            handleLogSubscription(
+                              line.id,
+                              line.item!.id,
+                              line.cost,
+                              line.quantity,
+                            )
+                          }
+                          disabled={
+                            !form.startDate || !form.endDate || form.saving
+                          }
+                          className="flex items-center gap-1.5 text-xs font-semibold bg-[#111] text-white px-3 py-1.5 rounded-lg hover:bg-[#333] disabled:opacity-40 transition-colors"
+                        >
+                          <Plus size={12} />
+                          {form.saving ? "Saving…" : "Log"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Internal Notes */}
       <div className="max-w-4xl mx-auto px-6 py-10">
         <NotesPanel

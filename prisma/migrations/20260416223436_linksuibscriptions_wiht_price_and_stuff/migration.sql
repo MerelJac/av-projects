@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Subscription" ADD COLUMN     "cost" DOUBLE PRECISION,
+ADD COLUMN     "price" DOUBLE PRECISION,
+ADD COLUMN     "quantity" DOUBLE PRECISION;
