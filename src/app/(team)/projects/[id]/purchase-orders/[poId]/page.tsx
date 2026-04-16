@@ -46,6 +46,17 @@ export default async function POPage({
 
   if (!po || po.projectId !== id) return notFound();
 
+  const linkedSubscriptions = await prisma.projectCost.findMany({
+    where: { poLink: poId, subscriptionId: { not: null } },
+    include: {
+      subscription: {
+        include: {
+          item: { select: { id: true, itemNumber: true, manufacturer: true, description: true } },
+        },
+      },
+    },
+  });
+
   const poSerialized = {
     ...po,
     creditLimit: po.creditLimit != null ? Number(po.creditLimit) : null,
@@ -56,5 +67,5 @@ export default async function POPage({
     returns: po.returns,
   };
 
-  return <POEditor po={poSerialized} projectId={id} users={users} currentUserId={currentUserId} />;
+  return <POEditor po={poSerialized} projectId={id} users={users} currentUserId={currentUserId} linkedSubscriptions={linkedSubscriptions} />;
 }
