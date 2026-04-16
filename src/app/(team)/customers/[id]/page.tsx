@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, Mail, Phone, Tag } from "lucide-react";
 import DeleteCustomerButton from "./DeleteCustomerButton";
-import EditCustomerButton from "./EditCustomerButton";
+import EditCustomerButton, { BillingTerms } from "./EditCustomerButton";
 import CustomerSubscriptionsPanel from "../../subscriptions/CustomerSubscriptionPanel";
 import { INVOICE_STYLES } from "../../projects/[id]/financial-report/page";
 
@@ -93,7 +93,7 @@ export default async function CustomerPage({
                 email: customer.email,
                 taxStatus: customer.taxStatus,
                 phone: customer.phone,
-                billingTerm: customer.billingTerm,
+                billingTerm: customer.billingTerm as BillingTerms | null,
                 address: customer.address,
                 address2: customer.address2,
                 country: customer.country,

@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { X, FileText, Percent, List, Plus, Trash2 } from "lucide-react";
+import { buildAddress } from "@/lib/utils/helpers";
+import { Customer } from "@/app/(team)/customers/[id]/EditCustomerButton";
 type AdditionalLine = {
   id: string;
   description: string;
@@ -22,11 +24,7 @@ type Bundle = {
   showToCustomer: boolean;
   lines: QuoteLine[];
 };
-type Customer = {
-  name: string;
-  email?: string | null;
-  phone?: string | null;
-};
+
 export default function CreateInvoiceModal({
   projectId,
   quoteId,
@@ -53,12 +51,30 @@ export default function CreateInvoiceModal({
   const [customerName, setCustomerName] = useState(customer.name);
   const [customerEmail, setCustomerEmail] = useState(customer.email ?? "");
   const [customerPhone, setCustomerPhone] = useState(customer.phone ?? "");
-  const [billToAddress, setBillToAddress] = useState("");
-  const [shipToAddress, setShipToAddress] = useState("");
+
+  const projectShipToAddress = buildAddress({
+    address1: customer?.address,
+    address2: customer?.address2,
+    city: customer?.city,
+    state: customer?.state,
+    zipCode: customer?.zipcode,
+    country: customer?.country,
+  });
+
+  const projectBillToAddress = buildAddress({
+    address1: customer?.billToAddress,
+    address2: customer?.billToAddress2,
+    city: customer?.billToCity,
+    state: customer?.billToState,
+    zipCode: customer?.billToZipcode,
+    country: customer?.billToCountry,
+  });
+  const [billToAddress, setBillToAddress] = useState(projectBillToAddress);
+  const [shipToAddress, setShipToAddress] = useState(projectShipToAddress);
   const [sameAsBilling, setSameAsBilling] = useState(false);
   const [billingTerms, setBillingTerms] = useState<
     "NET30" | "PROGRESS" | "PREPAID" | ""
-  >("");
+  >(customer.billingTerm ?? "");
   const [notes, setNotes] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [additionalLines, setAdditionalLines] = useState<AdditionalLine[]>([]);
@@ -638,7 +654,15 @@ export default function CreateInvoiceModal({
           </div>
 
           {/* Terms & due date */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-widest text-[#888] block mb-1.5">
+                Tax Status
+              </label>
+              <div className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 bg-white">
+                {customer.taxStatus}
+              </div>
+            </div>
             <div>
               <label className="text-xs font-semibold uppercase tracking-widest text-[#888] block mb-1.5">
                 Billing Terms
@@ -658,6 +682,7 @@ export default function CreateInvoiceModal({
                 <option value="PREPAID">Prepaid</option>
               </select>
             </div>
+
             <div>
               <label className="text-xs font-semibold uppercase tracking-widest text-[#888] block mb-1.5">
                 Due Date

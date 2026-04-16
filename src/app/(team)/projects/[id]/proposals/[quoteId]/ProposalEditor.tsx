@@ -21,6 +21,7 @@ import { QuoteStatus } from "@prisma/client";
 import ConvertToSalesOrderButton from "@/app/components/team/sales-orders/ConvertToSalesOrderButton";
 import CreatePOModal from "@/app/components/team/purchase-orders/CreatePOModal";
 import CreateInvoiceModal from "@/app/components/team/invoices/CreateInvoiceModal";
+import { BillingTerms } from "@/app/(team)/customers/[id]/EditCustomerButton";
 import AuditFeed from "@/app/components/AuditFeed";
 
 // Derive types directly from the Prisma payload
@@ -731,7 +732,10 @@ export default function ProposalEditor({
                 quoteId={initialQuote.id}
                 lines={lines}
                 bundles={bundles}
-                customer={initialQuote.customer}
+                customer={{
+                  ...initialQuote.customer,
+                  billingTerm: initialQuote.customer.billingTerm as BillingTerms | null,
+                }}
                 quoteSubtotal={subtotal}
                 onClose={() => setShowInvoiceModal(false)}
               />

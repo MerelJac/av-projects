@@ -4,12 +4,14 @@ import { useState } from "react";
 import { Pencil } from "lucide-react";
 import EditCustomerModal from "./EditCustomerModal";
 
+export type BillingTerms = "NET30" | "PROGRESS" | "PREPAID";
+
 export type Customer = {
   id: string;
   name: string;
   email: string | null;
   phone: string | null;
-  billingTerm: string | null;
+  billingTerm: BillingTerms | null;
   taxStatus: string;
   address: string | null;
   address2: string | null;
