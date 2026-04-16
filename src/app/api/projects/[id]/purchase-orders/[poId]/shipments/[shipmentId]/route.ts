@@ -194,7 +194,7 @@ export async function PATCH(
           amount: shippingCost,
           unitCost: shippingCost,
           taxAmount: freightTax,
-          // Cost and Sell Price are the same
+          // Cost and Sell Price are the same Shipping is tax exempt
           amountPrice: shippingCost,
           unitPrice: shippingCost,
           taxAmountPrice: freightTax,
