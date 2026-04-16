@@ -57,12 +57,13 @@ export async function POST(req: NextRequest) {
   const subscription = await prisma.subscription.create({
     data: {
       itemId,
+      projectId: projectId,
       customerId,
       startDate: new Date(startDate),
       endDate: new Date(endDate),
       status,
       notes: notes?.trim() || null,
-      projectId: projectId || null,
+
       quantity: quantity != null ? Number(quantity) : null,
       cost: cost != null ? Number(cost) : null,
       price: price != null ? Number(price) : null,
@@ -77,12 +78,18 @@ export async function POST(req: NextRequest) {
   });
 
   const item = await prisma.item.findFirst({ where: { id: itemId } });
-  const customer = await prisma.customer.findFirst({ where: { id: customerId } });
-  
+  const customer = await prisma.customer.findFirst({
+    where: { id: customerId },
+  });
+
   let costResult = null;
   let priceResult = null;
 
-  if (item?.taxStatus === "TAXABLE" && customer?.taxStatus === "TAXABLE" && shipToAddress) {
+  if (
+    item?.taxStatus === "TAXABLE" &&
+    customer?.taxStatus === "TAXABLE" &&
+    shipToAddress
+  ) {
     const lineBase = {
       productCode: item.itemNumber,
       productClass: "TAXABLE",

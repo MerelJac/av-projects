@@ -255,6 +255,7 @@ export default function POEditor({
       [lineId]: { ...prev[lineId], saving: true },
     }));
     try {
+      console.log("Subscription for project id: ", projectId)
       const res = await fetch("/api/subscriptions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -696,7 +697,7 @@ export default function POEditor({
         </div>
       )}
 
-      <div className="max-w-4xl mx-auto px-6 py-10">
+      <div className="max-w-4xl mx-auto px-6 pt-10 pb-6">
         <button
           onClick={() =>
             router.push(po.project ? `/projects/${projectId}` : `/projects`)
