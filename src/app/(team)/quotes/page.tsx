@@ -59,7 +59,7 @@ export default async function QuotesPage() {
                 <tr key={q.id} className="border-b border-[#F7F6F3] last:border-0 hover:bg-[#FAFAF9] transition-colors">
                   <td className="px-5 py-3">
                     <Link
-                      href={q.projectId ? `/projects/${q.projectId}/quotes/${q.id}` : `/quotes/${q.id}`}
+                      href={q.projectId ? `/projects/${q.projectId}/proposals/${q.id}` : `/proposals/${q.id}`}
                       className="text-xs font-mono font-semibold text-[#111] hover:underline"
                     >
                       #{q.id.toUpperCase()}

@@ -357,7 +357,7 @@ export default function BOMEditor({
       );
       if (!res.ok) throw new Error();
       const data = await res.json();
-      router.push(`/projects/${projectId}/quotes/${data.quoteId}`);
+      router.push(`/projects/${projectId}/proposals/${data.quoteId}`);
     } catch {
       showToast("error", "Failed to generate proposal");
       setGenerating(false);
@@ -1243,7 +1243,7 @@ export default function BOMEditor({
                   {bom.quotes.map((q) => (
                     <a
                       key={q.id}
-                      href={`/projects/${projectId}/quotes/${q.id}`}
+                      href={`/projects/${projectId}/proposals/${q.id}`}
                       className="flex items-center justify-between p-3 border border-[#F0EEE9] rounded-xl hover:border-[#E5E3DE] hover:bg-[#F7F6F3] transition-all"
                     >
                       <div>

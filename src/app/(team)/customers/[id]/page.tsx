@@ -237,8 +237,8 @@ export default async function CustomerPage({
                     key={quote.id}
                     href={
                       quote.projectId
-                        ? `/projects/${quote.projectId}/quotes/${quote.id}`
-                        : `/quotes/${quote.id}`
+                        ? `/projects/${quote.projectId}/proposals/${quote.id}`
+                        : `/proposals/${quote.id}`
                     }
                     className="flex items-center justify-between px-5 py-3.5 hover:bg-[#FAFAF9] transition-colors group"
                   >

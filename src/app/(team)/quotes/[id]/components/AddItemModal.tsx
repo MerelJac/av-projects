@@ -12,7 +12,7 @@ export default function AddItemModal({
   const [open, setOpen] = useState(false);
 
   async function addItem(itemId: string) {
-    await fetch("/api/quotes/add-item", {
+    await fetch("/api/proposals/add-item", {
       method: "POST",
       body: JSON.stringify({
         quoteId,

@@ -502,7 +502,7 @@ export default async function ProjectPage({
                         </span>
 
                         <Link
-                          href={`/projects/${project.id}/quotes/${quote.id}`}
+                          href={`/projects/${project.id}/proposals/${quote.id}`}
                           className="flex items-center gap-1 text-xs font-semibold text-[#666] hover:underline"
                         >
                           <ArrowRight size={11} />
@@ -729,7 +729,7 @@ export default async function ProjectPage({
                       )}
                     </span>
                     <Link
-                      href={`/projects/${project.id}/quotes/${co.id}`}
+                      href={`/projects/${project.id}/proposals/${co.id}`}
                       className="flex items-center gap-1 text-xs font-semibold text-[#666] hover:underline"
                     >
                       View <ArrowRight size={11} />

@@ -1,5 +1,5 @@
 "use server";
-// src/app/(team)/quotes/action.ts
+// src/app/(team)/proposals/action.ts
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 
@@ -41,5 +41,5 @@ export async function createQuote(formData: FormData) {
     },
   });
 
-  redirect(`/quotes/${quote.id}/builder`);
+  redirect(`/proposals/${quote.id}/builder`);
 }

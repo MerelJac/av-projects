@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
-import { buildQuotePDF } from "@/app/components/team/quotes/QuotePDF";
+import { buildQuotePDF } from "@/app/components/team/proposals/QuotePDF";
 
 export async function GET(
   req: NextRequest,

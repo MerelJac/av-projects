@@ -151,7 +151,7 @@ export default function SalesOrderEditor({
                     className="cursor-pointer hover:text-[#111] transition-colors"
                     onClick={() =>
                       router.push(
-                        `/projects/${projectId}/quotes/${initialSO.quote!.id}`,
+                        `/projects/${projectId}/proposals/${initialSO.quote!.id}`,
                       )
                     }
                   >
@@ -318,7 +318,7 @@ export default function SalesOrderEditor({
                 <button
                   onClick={() =>
                     router.push(
-                      `/projects/${projectId}/quotes/${initialSO.quote!.id}`,
+                      `/projects/${projectId}/proposals/${initialSO.quote!.id}`,
                     )
                   }
                   className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-[#111] border border-[#E5E3DE] hover:bg-[#F7F6F3] transition-colors"

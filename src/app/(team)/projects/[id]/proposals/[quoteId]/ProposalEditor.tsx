@@ -76,7 +76,7 @@ export default function ProposalEditor({
   const [showPOModal, setShowPOModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [showPDFPreview, setShowPDFPreview] = useState(false);
-  const pdfUrl = `/api/projects/${projectId}/quotes/${initialQuote.id}/pdf`;
+  const pdfUrl = `/api/projects/${projectId}/proposals/${initialQuote.id}/pdf`;
 
   const [depositPct, setDepositPct] = useState<number | null>(
     initialQuote.depositPct ?? null,
@@ -152,7 +152,7 @@ export default function ProposalEditor({
     setSavingDeposit(true);
     try {
       const res = await fetch(
-        `/api/projects/${projectId}/quotes/${initialQuote.id}/deposit`,
+        `/api/projects/${projectId}/proposals/${initialQuote.id}/deposit`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -235,7 +235,7 @@ export default function ProposalEditor({
     setSaving(true);
     try {
       const res = await fetch(
-        `/api/projects/${projectId}/quotes/${initialQuote.id}`,
+        `/api/projects/${projectId}/proposals/${initialQuote.id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },

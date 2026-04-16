@@ -621,7 +621,7 @@ export default function POEditor({
                 <>
                   <span>·</span>
                   <a
-                    href={`/projects/${projectId}/quotes/${po.quote.id}`}
+                    href={`/projects/${projectId}/proposals/${po.quote.id}`}
                     className="hover:text-[#111] transition-colors"
                   >
                     Proposal #{po.quote.id.toUpperCase()}

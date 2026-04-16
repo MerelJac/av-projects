@@ -46,7 +46,7 @@ export default function GenerateQuoteModal({
     setError(null);
     try {
       const res = await fetch(
-        `/api/projects/${projectId}/quotes/generate-from-boms`,
+        `/api/projects/${projectId}/proposals/generate-from-boms`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -55,7 +55,7 @@ export default function GenerateQuoteModal({
       );
       if (!res.ok) throw new Error();
       const data = await res.json();
-      router.push(`/projects/${projectId}/quotes/${data.quoteId}`);
+      router.push(`/projects/${projectId}/proposals/${data.quoteId}`);
     } catch {
       setError(`Failed to generate ${type.toLowerCase()}. Please try again.`);
       setGenerating(false);

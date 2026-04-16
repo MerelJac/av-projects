@@ -22,7 +22,7 @@ export default function DeleteQuoteButton({ id }: { id: string }) {
     setError(null);
 
     try {
-      const res = await fetch(`/api/quotes/${id}`, {
+      const res = await fetch(`/api/proposals/${id}`, {
         method: "DELETE",
       });
 

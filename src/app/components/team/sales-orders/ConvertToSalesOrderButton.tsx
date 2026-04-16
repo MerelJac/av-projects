@@ -37,7 +37,7 @@ export default function ConvertToSalesOrderButton({
     setError(null);
     try {
       const res = await fetch(
-        `/api/projects/${projectId}/quotes/${quoteId}/convert`,
+        `/api/projects/${projectId}/proposals/${quoteId}/convert`,
         { method: "POST" },
       );
       const data = await res.json();
