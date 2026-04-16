@@ -686,12 +686,12 @@ model Vendor {
 }
 
 model VendorItemPrice {
-  id       String @id @default(uuid())
-  vendorId String
-  vendor   Vendor @relation(fields: [vendorId], references: [id])
-  itemId   String
-  item     Item   @relation(fields: [itemId], references: [id])
-
+  id           String  @id @default(uuid())
+  vendorId     String
+  vendor       Vendor  @relation(fields: [vendorId], references: [id])
+  itemId       String
+  item         Item    @relation(fields: [itemId], references: [id])
+  msrp         Float?
   cost         Float
   leadTimeDays Int?
   notes        String?
