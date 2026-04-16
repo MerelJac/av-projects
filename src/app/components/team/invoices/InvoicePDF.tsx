@@ -141,7 +141,10 @@ type InvoiceLine = {
 };
 
 const BILLING_TERMS_LABELS: Record<string, string> = {
+  NET15: "Net 15",
   NET30: "Net 30",
+  DUE_UPON_RECEIPT: "Due Upon Receipt",
+  NET45: "Net 45",
   PROGRESS: "Progress Billing",
   PREPAID: "Prepaid",
 };
@@ -185,7 +188,7 @@ export function buildInvoicePDF({
   customerPhone: string | null;
   billToAddress: string | null;
   shipToAddress: string | null;
-  billingTerms: "NET30" | "PROGRESS" | "PREPAID" | null;
+  billingTerms: "NET45" | "NET15" | "NET30" | "DUE_UPON_RECEIPT" | "PROGRESS" | "PREPAID" | null;
   chargeType: "LINE_ITEMS" | "PERCENTAGE";
   chargePercent: number | null;
   lines: InvoiceLine[];

@@ -42,7 +42,7 @@ type Invoice = {
   customerPhone: string | null;
   billToAddress: string | null;
   shipToAddress: string | null;
-  billingTerms: "NET30" | "PROGRESS" | "PREPAID" | null;
+  billingTerms: "NET15" | "NET45" | "NET30" | "PROGRESS" | "PREPAID" | null;
   notes: string | null;
   issuedAt: Date | null;
   dueDate: Date | null;
@@ -519,7 +519,10 @@ export default function InvoicesEditor({
                         <p className="font-medium text-[#111]">
                           {
                             {
+                              NET15: "Net 15",
                               NET30: "Net 30",
+  DUE_UPON_RECEIPT: "Due Upon Receipt",
+                              NET45: "Net 45",
                               PROGRESS: "Progress Billing",
                               PREPAID: "Prepaid",
                             }[selected.billingTerms]

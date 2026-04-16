@@ -104,7 +104,14 @@ type PO = {
   shipToAddress: string | null;
   billToAddress: string | null;
   shippingMethod: string | null;
-  billingTerms: "NET30" | "PROGRESS" | "PREPAID" | null;
+  billingTerms:
+    | "NET45"
+    | "NET15"
+    | "NET30"
+    | "DUE_UPON_RECEIPT"
+    | "PROGRESS"
+    | "PREPAID"
+    | null;
   creditLimit: number | null;
   buyerId: string | null;
   buyer: {
@@ -321,13 +328,13 @@ export default function POEditor({
         );
       }
       setReceiving(false);
-        setReceivingText("Mark Received");
+      setReceivingText("Mark Received");
       showToast("success", "Shipment marked as received");
       router.refresh();
     } catch {
       showToast("error", "Failed to update shipment");
       setReceiving(false);
-        setReceivingText("Mark Received");
+      setReceivingText("Mark Received");
     }
   }
 
@@ -809,7 +816,10 @@ export default function POEditor({
                     }
                   >
                     <option value="">— None —</option>
+                    <option value="NET15">Net 15</option>
                     <option value="NET30">Net 30</option>
+                    <option value="DUE_UPON_RECEIPT">Due Upon Receipt</option>
+                    <option value="NET45">Net 45</option>
                     <option value="PROGRESS">Progress Billing</option>
                     <option value="PREPAID">Prepaid</option>
                   </select>
@@ -895,7 +905,10 @@ export default function POEditor({
                   </p>
                   <p className="text-sm text-[#111]">
                     {{
+                      NET15: "Net 15",
                       NET30: "Net 30",
+                      DUE_UPON_RECEIPT: "Due Upon Receipt",
+                      NET45: "Net 45",
                       PROGRESS: "Progress Billing",
                       PREPAID: "Prepaid",
                     }[infoForm.billingTerms] ?? "—"}

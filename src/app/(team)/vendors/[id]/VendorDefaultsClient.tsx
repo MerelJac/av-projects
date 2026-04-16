@@ -2,13 +2,16 @@
 import { useState } from "react";
 import { CheckCircle2, AlertCircle, Pencil, X, Check } from "lucide-react";
 
-type User = { id: string; profile: { firstName: string; lastName: string } | null };
+type User = {
+  id: string;
+  profile: { firstName: string; lastName: string } | null;
+};
 
 type VendorDefaults = {
   shipToAddress: string | null;
   billToAddress: string | null;
   shippingMethod: string | null;
-  billingTerms: "NET30" | "PROGRESS" | "PREPAID" | null;
+  billingTerms: "NET45" | "NET15" | "NET30" | "PROGRESS" | "PREPAID" | null;
   creditLimit: number | null;
   defaultBuyerId: string | null;
 };
@@ -24,14 +27,18 @@ export default function VendorDefaultsClient({
 }) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const [toast, setToast] = useState<{
+    type: "success" | "error";
+    msg: string;
+  } | null>(null);
 
   const [form, setForm] = useState({
     shipToAddress: defaults.shipToAddress ?? "",
     billToAddress: defaults.billToAddress ?? "",
     shippingMethod: defaults.shippingMethod ?? "",
     billingTerms: defaults.billingTerms ?? "",
-    creditLimit: defaults.creditLimit != null ? String(defaults.creditLimit) : "",
+    creditLimit:
+      defaults.creditLimit != null ? String(defaults.creditLimit) : "",
     defaultBuyerId: defaults.defaultBuyerId ?? "",
   });
 
@@ -75,10 +82,18 @@ export default function VendorDefaultsClient({
   return (
     <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden mb-6">
       {toast && (
-        <div className={`fixed top-5 right-5 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-medium shadow-lg border ${
-          toast.type === "success" ? "bg-white border-green-200 text-green-700" : "bg-white border-red-200 text-red-600"
-        }`}>
-          {toast.type === "success" ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
+        <div
+          className={`fixed top-5 right-5 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-medium shadow-lg border ${
+            toast.type === "success"
+              ? "bg-white border-green-200 text-green-700"
+              : "bg-white border-red-200 text-red-600"
+          }`}
+        >
+          {toast.type === "success" ? (
+            <CheckCircle2 size={15} />
+          ) : (
+            <AlertCircle size={15} />
+          )}
           {toast.msg}
         </div>
       )}
@@ -119,7 +134,9 @@ export default function VendorDefaultsClient({
                 rows={3}
                 className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-[#111]"
                 value={form.shipToAddress}
-                onChange={(e) => setForm((f) => ({ ...f, shipToAddress: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, shipToAddress: e.target.value }))
+                }
               />
             </Field>
             <Field label="Bill-To Address">
@@ -127,14 +144,18 @@ export default function VendorDefaultsClient({
                 rows={3}
                 className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-[#111]"
                 value={form.billToAddress}
-                onChange={(e) => setForm((f) => ({ ...f, billToAddress: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, billToAddress: e.target.value }))
+                }
               />
             </Field>
             <Field label="Shipping Method">
               <input
                 className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#111]"
                 value={form.shippingMethod}
-                onChange={(e) => setForm((f) => ({ ...f, shippingMethod: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, shippingMethod: e.target.value }))
+                }
                 placeholder="e.g. UPS Ground"
               />
             </Field>
@@ -142,10 +163,15 @@ export default function VendorDefaultsClient({
               <select
                 className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#111] bg-white"
                 value={form.billingTerms}
-                onChange={(e) => setForm((f) => ({ ...f, billingTerms: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, billingTerms: e.target.value }))
+                }
               >
                 <option value="">— None —</option>
+                <option value="NET15">Net 15</option>
                 <option value="NET30">Net 30</option>
+                <option value="DUE_UPON_RECEIPT">Due Upon Receipt</option>
+                <option value="NET45">Net 45</option>
                 <option value="PROGRESS">Progress Billing</option>
                 <option value="PREPAID">Prepaid</option>
               </select>
@@ -155,7 +181,9 @@ export default function VendorDefaultsClient({
                 type="number"
                 className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#111]"
                 value={form.creditLimit}
-                onChange={(e) => setForm((f) => ({ ...f, creditLimit: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, creditLimit: e.target.value }))
+                }
                 placeholder="0.00"
               />
             </Field>
@@ -163,12 +191,16 @@ export default function VendorDefaultsClient({
               <select
                 className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#111] bg-white"
                 value={form.defaultBuyerId}
-                onChange={(e) => setForm((f) => ({ ...f, defaultBuyerId: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, defaultBuyerId: e.target.value }))
+                }
               >
                 <option value="">— None —</option>
                 {users.map((u) => (
                   <option key={u.id} value={u.id}>
-                    {u.profile ? `${u.profile.firstName} ${u.profile.lastName}` : u.id}
+                    {u.profile
+                      ? `${u.profile.firstName} ${u.profile.lastName}`
+                      : u.id}
                   </option>
                 ))}
               </select>
@@ -176,15 +208,45 @@ export default function VendorDefaultsClient({
           </>
         ) : (
           <>
-            <ReadField label="Ship-To Address" value={form.shipToAddress || null} multiline />
-            <ReadField label="Bill-To Address" value={form.billToAddress || null} multiline />
-            <ReadField label="Shipping Method" value={form.shippingMethod || null} />
-            <ReadField label="Billing Terms" value={{ NET30: "Net 30", PROGRESS: "Progress Billing", PREPAID: "Prepaid" }[form.billingTerms] ?? null} />
+            <ReadField
+              label="Ship-To Address"
+              value={form.shipToAddress || null}
+              multiline
+            />
+            <ReadField
+              label="Bill-To Address"
+              value={form.billToAddress || null}
+              multiline
+            />
+            <ReadField
+              label="Shipping Method"
+              value={form.shippingMethod || null}
+            />
+            <ReadField
+              label="Billing Terms"
+              value={
+                {
+                  NET15: "Net 15",
+                  NET30: "Net 30",
+                  DUE_UPON_RECEIPT: "Due Upon Receipt",
+                  NET45: "Net 45",
+                  PROGRESS: "Progress Billing",
+                  PREPAID: "Prepaid",
+                }[form.billingTerms] ?? null
+              }
+            />
             <ReadField
               label="Credit Limit"
-              value={form.creditLimit ? `$${parseFloat(form.creditLimit).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : null}
+              value={
+                form.creditLimit
+                  ? `$${parseFloat(form.creditLimit).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                  : null
+              }
             />
-            <ReadField label="Default Buyer" value={buyerName(form.defaultBuyerId || null)} />
+            <ReadField
+              label="Default Buyer"
+              value={buyerName(form.defaultBuyerId || null)}
+            />
           </>
         )}
       </div>
@@ -192,20 +254,42 @@ export default function VendorDefaultsClient({
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div>
-      <label className="block text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1.5">{label}</label>
+      <label className="block text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1.5">
+        {label}
+      </label>
       {children}
     </div>
   );
 }
 
-function ReadField({ label, value, multiline }: { label: string; value: string | null; multiline?: boolean }) {
+function ReadField({
+  label,
+  value,
+  multiline,
+}: {
+  label: string;
+  value: string | null;
+  multiline?: boolean;
+}) {
   return (
     <div>
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">{label}</p>
-      <p className={`text-sm text-[#111] ${multiline ? "whitespace-pre-wrap" : ""}`}>{value ?? "—"}</p>
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">
+        {label}
+      </p>
+      <p
+        className={`text-sm text-[#111] ${multiline ? "whitespace-pre-wrap" : ""}`}
+      >
+        {value ?? "—"}
+      </p>
     </div>
   );
 }

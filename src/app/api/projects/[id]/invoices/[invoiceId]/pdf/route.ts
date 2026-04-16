@@ -26,6 +26,8 @@ export async function GET(
       billToAddress: invoice.billToAddress,
       shipToAddress: invoice.shipToAddress,
       billingTerms: invoice.billingTerms as
+        | "NET45"
+        | "NET15"
         | "NET30"
         | "PROGRESS"
         | "PREPAID"

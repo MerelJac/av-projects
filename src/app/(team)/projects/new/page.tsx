@@ -67,7 +67,10 @@ export default async function NewProjectPage() {
                 name="billingTerms"
                 className="w-full text-sm text-[#111] border border-[#E5E3DE] rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#111] transition-colors bg-white"
               >
+                <option value="NET15">Net 15</option>
                 <option value="NET30">Net 30</option>
+                <option value="DUE_UPON_RECEIPT">Due Upon Receipt</option>
+                <option value="NET45">Net 45</option>
                 <option value="PROGRESS">Progress Billing</option>
                 <option value="PREPAID">Prepaid</option>
               </select>

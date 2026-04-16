@@ -197,8 +197,11 @@ model Customer {
 }
 
 enum BillingTerms {
+  NET45
   NET30
+  NET15
   PROGRESS
+  DUE_UPON_RECEIPT
   PREPAID
 }
 

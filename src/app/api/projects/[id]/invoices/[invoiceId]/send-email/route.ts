@@ -91,6 +91,8 @@ export async function POST(
       billToAddress: invoice.billToAddress,
       shipToAddress: invoice.shipToAddress,
       billingTerms: invoice.billingTerms as
+        | "NET45"
+        | "NET15"
         | "NET30"
         | "PROGRESS"
         | "PREPAID"
@@ -109,7 +111,7 @@ export async function POST(
       issuedAt: invoice.issuedAt,
       dueDate: invoice.dueDate,
       notes: invoice.notes,
-      taxAmount: invoice.taxAmount
+      taxAmount: invoice.taxAmount,
     }),
   );
 

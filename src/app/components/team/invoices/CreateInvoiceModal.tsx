@@ -73,7 +73,13 @@ export default function CreateInvoiceModal({
   const [shipToAddress, setShipToAddress] = useState(projectShipToAddress);
   const [sameAsBilling, setSameAsBilling] = useState(false);
   const [billingTerms, setBillingTerms] = useState<
-    "NET30" | "PROGRESS" | "PREPAID" | ""
+    | "NET45"
+    | "NET15"
+    | "NET30"
+    | "DUE_UPON_RECEIPT"
+    | "PROGRESS"
+    | "PREPAID"
+    | ""
   >(customer.billingTerm ?? "");
   const [notes, setNotes] = useState("");
   const [dueDate, setDueDate] = useState("");
@@ -671,13 +677,22 @@ export default function CreateInvoiceModal({
                 value={billingTerms}
                 onChange={(e) =>
                   setBillingTerms(
-                    e.target.value as "NET30" | "PROGRESS" | "PREPAID" | "",
+                    e.target.value as
+                      | "NET45"
+                      | "NET15"
+                      | "NET30"
+                      | "PROGRESS"
+                      | "PREPAID"
+                      | "",
                   )
                 }
                 className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111] bg-white"
               >
                 <option value="">— None —</option>
+                <option value="NET15">Net 15</option>
                 <option value="NET30">Net 30</option>
+                <option value="DUE_UPON_RECEIPT">Due Upon Receipt</option>
+                <option value="NET45">Net 45</option>
                 <option value="PROGRESS">Progress Billing</option>
                 <option value="PREPAID">Prepaid</option>
               </select>

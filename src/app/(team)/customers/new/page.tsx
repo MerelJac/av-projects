@@ -3,16 +3,12 @@ import { createCustomer } from "../actions";
 export default function NewCustomerPage() {
   return (
     <div>
-
-      <h1 className="text-2xl font-semibold mb-6">
-        Create Customer
-      </h1>
+      <h1 className="text-2xl font-semibold mb-6">Create Customer</h1>
 
       <form
         action={createCustomer}
         className="bg-white border rounded-xl p-6 max-w-lg flex flex-col gap-4"
       >
-
         <input
           name="name"
           placeholder="Customer Name"
@@ -37,7 +33,10 @@ export default function NewCustomerPage() {
           className="border p-2 rounded"
           defaultValue="NET30"
         >
+          <option value="NET15">Net 15</option>
           <option value="NET30">Net 30</option>
+          <option value="DUE_UPON_RECEIPT">Due Upon Receipt</option>
+          <option value="NET45">Net 45</option>
           <option value="PROGRESS">Progress Billing</option>
           <option value="PREPAID">Prepaid</option>
         </select>
@@ -45,9 +44,7 @@ export default function NewCustomerPage() {
         <button className="bg-black text-white p-2 rounded">
           Save Customer
         </button>
-
       </form>
-
     </div>
   );
 }

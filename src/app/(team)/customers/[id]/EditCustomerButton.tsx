@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Pencil } from "lucide-react";
 import EditCustomerModal from "./EditCustomerModal";
 
-export type BillingTerms = "NET30" | "PROGRESS" | "PREPAID";
+export type BillingTerms = "NET45" |"NET15" |  "NET30" | "PROGRESS" | "PREPAID";
 
 export type Customer = {
   id: string;

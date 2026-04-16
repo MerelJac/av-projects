@@ -13,7 +13,7 @@ export default function BillingTermsEditor({
 }) {
   const router = useRouter();
   const [saveText, setSaveText] = useState("Save");
-  
+
   return (
     <form
       onSubmit={async (e) => {
@@ -33,7 +33,10 @@ export default function BillingTermsEditor({
         className="text-[10px] font-semibold uppercase tracking-widest px-2.5 py-1 bg-[#F0EEE9] text-[#666] rounded-lg border-none focus:outline-none cursor-pointer"
       >
         <option value="">No terms</option>
+        <option value="NET15">Net 15</option>
         <option value="NET30">Net 30</option>
+        <option value="DUE_UPON_RECEIPT">Due Upon Receipt</option>
+        <option value="NET45">Net 45</option>
         <option value="PROGRESS">Progress Billing</option>
         <option value="PREPAID">Prepaid</option>
       </select>
