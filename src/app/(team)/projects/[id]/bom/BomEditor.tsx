@@ -52,7 +52,7 @@ export default function BOMEditor({
   projectPOs = [],
   canProposalCreate,
   canPoCreate,
-  canEditBom
+  canEditBom,
 }: {
   bom: BOM;
   items: Item[];
@@ -63,7 +63,7 @@ export default function BOMEditor({
   projectPOs?: { id: string; poNumber: string | null }[];
   canProposalCreate?: boolean;
   canPoCreate?: boolean;
-    canEditBom?: boolean;
+  canEditBom?: boolean;
 }) {
   const router = useRouter();
   const [lines, setLines] = useState<BOMLine[]>(() =>
@@ -552,13 +552,17 @@ export default function BOMEditor({
 
         <div className="grid grid-cols-4 gap-6">
           {/* Main table — left 3/4 */}
-          
+
           <div className="col-span-3 space-y-4">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-red-500">PSSST... You don&apos;t have permissions to edit this BOM.</p>
+            {!canEditBom && (
+              <p className="text-xs font-semibold uppercase tracking-widest text-red-500">
+                PSSST... You don&apos;t have permissions to edit this BOM.
+              </p>
+            )}
+
             {/* Add Item */}
             <div className="bg-white border border-[#E5E3DE] rounded-2xl">
               <div className="px-5 py-4 border-b border-[#F0EEE9] flex items-center justify-between">
-              
                 <p className="text-xs font-semibold uppercase tracking-widest text-[#888]">
                   Add Item
                 </p>

@@ -197,7 +197,7 @@ export default function POEditor({
   currentUserId,
   linkedSubscriptions = [],
   canEditPo,
-  canApprovePo
+  canApprovePo,
 }: {
   po: PO;
   projectId: string;
@@ -787,7 +787,7 @@ export default function POEditor({
             <div className="flex items-center gap-2 flex-wrap justify-end">
               {STATUS_OPTIONS.map((s) => (
                 <button
-                disabled={!canApprovePo || !canEditPo}
+                  disabled={!canApprovePo || !canEditPo}
                   key={s}
                   onClick={() => handleStatusChange(s)}
                   className={`text-xs font-semibold px-3 py-1.5 rounded-xl border transition-colors ${
@@ -803,10 +803,19 @@ export default function POEditor({
 
             <div className="flex items-center gap-2">
               <a
-                href={`/api/projects/${projectId}/purchase-orders/${po.id}/pdf?preview=true`}
+                href={
+                  canEditPo
+                    ? `/api/projects/${projectId}/purchase-orders/${po.id}/pdf?preview=true`
+                    : undefined
+                }
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-xs font-semibold border border-[#E5E3DE] text-[#444] px-3 py-1.5 rounded-xl hover:bg-[#F0EEE9] transition-colors"
+                onClick={!canEditPo ? (e) => e.preventDefault() : undefined}
+                className={`flex items-center gap-2 text-xs font-semibold border border-[#E5E3DE] px-3 py-1.5 rounded-xl transition-colors ${
+                  canEditPo
+                    ? "text-[#444] hover:bg-[#F0EEE9] cursor-pointer"
+                    : "text-[#AAA] cursor-not-allowed opacity-50"
+                }`}
               >
                 <FileText size={12} />
                 Export PDF
@@ -814,7 +823,7 @@ export default function POEditor({
               {(status === "SENT" || status === "DRAFT") && (
                 <button
                   onClick={handleResend}
-                  disabled={resending}
+                  disabled={resending || !canEditPo}
                   className="flex items-center gap-2 text-xs font-semibold bg-[#111] text-white px-3 py-1.5 rounded-xl hover:bg-[#333] disabled:opacity-40 transition-colors"
                 >
                   <Send size={12} />
@@ -829,6 +838,11 @@ export default function POEditor({
             <p className="text-xs italic text-green-600 mt-0.5">
               This page autosaves
             </p>
+            {!canEditPo && (
+              <p className="text-xs font-semibold uppercase tracking-widest text-red-500">
+                PSSST... You don&apos;t have permissions to edit this BOM.
+              </p>
+            )}
           </div>
         </div>
 
@@ -1082,7 +1096,7 @@ export default function POEditor({
               </div>
               {canEdit && (
                 <button
-                disabled={!canEditPo}
+                  disabled={!canEditPo}
                   onClick={() => setShowAddLine((v) => !v)}
                   className="flex items-center gap-1.5 text-xs font-semibold bg-[#111] text-white px-3 py-1.5 rounded-lg hover:bg-[#333] transition-colors"
                 >
@@ -1242,12 +1256,14 @@ export default function POEditor({
                           ) : (
                             <div className="flex items-center gap-0.5">
                               <button
+                                disabled={!canEditPo}
                                 onClick={() => startEditLine(line)}
                                 className="p-1 rounded hover:bg-[#F0EEE9] text-[#bbb] hover:text-[#666]"
                               >
                                 <Pencil size={13} />
                               </button>
                               <button
+                                disabled={!canEditPo}
                                 onClick={() => handleDeleteLine(line.id)}
                                 className="p-1 rounded hover:bg-red-50 text-[#bbb] hover:text-red-500"
                               >
@@ -1395,7 +1411,7 @@ export default function POEditor({
                 )}
               </div>
               {lines.some((l) => l.receivedQuantity > 0) &&
-               ( status !== "CANCELLED"  || !canEditPo) && (
+                (status !== "CANCELLED" || !canEditPo) && (
                   <button
                     onClick={() => setShowReturnModal(true)}
                     className="flex items-center gap-1.5 text-xs font-semibold border border-[#E5E3DE] text-[#444] px-3 py-1.5 rounded-lg hover:bg-[#F0EEE9] transition-colors"
@@ -1546,7 +1562,7 @@ export default function POEditor({
                 <span className="text-xs text-[#bbb]">{shipments.length}</span>
               </div>
               <button
-                disabled={status === "CANCELLED"  || !canEditPo}
+                disabled={status === "CANCELLED" || !canEditPo}
                 onClick={() => setShowShipmentForm(true)}
                 className="flex items-center gap-1.5 text-xs font-semibold bg-[#111] text-white px-3 py-1.5 rounded-lg hover:bg-[#333] transition-colors"
               >
@@ -1951,7 +1967,7 @@ export default function POEditor({
                                   },
                                 }))
                               }
-                             placeholder={String(line?.item?.price ?? 0.0)}
+                              placeholder={String(line?.item?.price ?? 0.0)}
                               className="w-28 text-sm border border-[#E5E3DE] rounded-lg pl-6 pr-2 py-1.5 focus:outline-none focus:border-[#111]"
                             />
                           </div>
@@ -1986,7 +2002,10 @@ export default function POEditor({
                             )
                           }
                           disabled={
-                            !form.startDate || !form.endDate || form.saving || !canEditPo
+                            !form.startDate ||
+                            !form.endDate ||
+                            form.saving ||
+                            !canEditPo
                           }
                           className="flex items-center gap-1.5 text-xs font-semibold bg-[#111] text-white px-3 py-1.5 rounded-lg hover:bg-[#333] disabled:opacity-40 transition-colors"
                         >
