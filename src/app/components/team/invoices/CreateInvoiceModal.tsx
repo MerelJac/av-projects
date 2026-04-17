@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { X, FileText, Percent, List, Plus, Trash2 } from "lucide-react";
-import { buildAddress } from "@/lib/utils/helpers";
 import { Customer } from "@/app/(team)/customers/[id]/EditCustomerButton";
 type AdditionalLine = {
   id: string;
@@ -52,25 +51,28 @@ export default function CreateInvoiceModal({
   const [customerEmail, setCustomerEmail] = useState(customer.email ?? "");
   const [customerPhone, setCustomerPhone] = useState(customer.phone ?? "");
 
-  const projectShipToAddress = buildAddress({
-    address1: customer?.address,
-    address2: customer?.address2,
-    city: customer?.city,
-    state: customer?.state,
-    zipCode: customer?.zipcode,
-    country: customer?.country,
-  });
-
-  const projectBillToAddress = buildAddress({
-    address1: customer?.billToAddress,
-    address2: customer?.billToAddress2,
-    city: customer?.billToCity,
-    state: customer?.billToState,
-    zipCode: customer?.billToZipcode,
-    country: customer?.billToCountry,
-  });
-  const [billToAddress, setBillToAddress] = useState(projectBillToAddress);
-  const [shipToAddress, setShipToAddress] = useState(projectShipToAddress);
+  const [billToContact, setBillToContact] = useState(customer.name ?? "");
+  const [billToAddress, setBillToAddress] = useState(
+    customer.billToAddress ?? "",
+  );
+  const [billToAddress2, setBillToAddress2] = useState(
+    customer.billToAddress2 ?? "",
+  );
+  const [billToCity, setBillToCity] = useState(customer.billToCity ?? "");
+  const [billToState, setBillToState] = useState(customer.billToState ?? "");
+  const [billToZipcode, setBillToZipcode] = useState(
+    customer.billToZipcode ?? "",
+  );
+  const [billToCountry, setBillToCountry] = useState(
+    customer.billToCountry ?? "",
+  );
+  const [shipToContact, setShipToContact] = useState(customer.name ?? "");
+  const [shipToAddress, setShipToAddress] = useState(customer.address ?? "");
+  const [shipToAddress2, setShipToAddress2] = useState(customer.address2 ?? "");
+  const [shipToCity, setShipToCity] = useState(customer.city ?? "");
+  const [shipToState, setShipToState] = useState(customer.state ?? "");
+  const [shipToZipcode, setShipToZipcode] = useState(customer.zipcode ?? "");
+  const [shipToCountry, setShipToCountry] = useState(customer.country ?? "");
   const [sameAsBilling, setSameAsBilling] = useState(false);
   const [billingTerms, setBillingTerms] = useState<
     | "NET45"
@@ -235,7 +237,23 @@ export default function CreateInvoiceModal({
     (chargeType === "PERCENTAGE" ? (pctAmount ?? 0) : (lineItemsAmount ?? 0)) +
     additionalTotal;
 
-  const resolvedShipTo = sameAsBilling ? billToAddress : shipToAddress;
+  const resolvedShip = sameAsBilling
+    ? {
+        address: billToAddress,
+        address2: billToAddress2,
+        city: billToCity,
+        state: billToState,
+        zipcode: billToZipcode,
+        country: billToCountry,
+      }
+    : {
+        address: shipToAddress,
+        address2: shipToAddress2,
+        city: shipToCity,
+        state: shipToState,
+        zipcode: shipToZipcode,
+        country: shipToCountry,
+      };
 
   async function handleCreate() {
     setError(null);
@@ -275,8 +293,20 @@ export default function CreateInvoiceModal({
           customerName,
           customerEmail: customerEmail || null,
           customerPhone: customerPhone || null,
+          billToContact: billToContact || null,
           billToAddress: billToAddress || null,
-          shipToAddress: resolvedShipTo || null,
+          billToAddress2: billToAddress2 || null,
+          billToCity: billToCity || null,
+          billToState: billToState || null,
+          billToZipcode: billToZipcode || null,
+          billToCountry: billToCountry || null,
+          shipToContact: shipToContact || null,
+          shipToAddress: resolvedShip.address || null,
+          shipToAddress2: resolvedShip.address2 || null,
+          shipToCity: resolvedShip.city || null,
+          shipToState: resolvedShip.state || null,
+          shipToZipcode: resolvedShip.zipcode || null,
+          shipToCountry: resolvedShip.country || null,
           billingTerms: billingTerms || null,
           notes: notes || null,
           dueDate: dueDate || null,
@@ -427,7 +457,10 @@ export default function CreateInvoiceModal({
                             onClick={(e) => e.stopPropagation()}
                             onChange={(e) => {
                               e.stopPropagation();
-                              updateLineQuantity(l.id, parseInt(e.target.value) || 1);
+                              updateLineQuantity(
+                                l.id,
+                                parseInt(e.target.value) || 1,
+                              );
                             }}
                             className="w-12 text-right text-sm border border-[#E5E3DE] rounded px-1 py-0.5 focus:outline-none focus:border-[#111] tabular-nums"
                           />
@@ -534,7 +567,10 @@ export default function CreateInvoiceModal({
                               onClick={(e) => e.stopPropagation()}
                               onChange={(e) => {
                                 e.stopPropagation();
-                                updateLineQuantity(l.id, parseInt(e.target.value) || 1);
+                                updateLineQuantity(
+                                  l.id,
+                                  parseInt(e.target.value) || 1,
+                                );
                               }}
                               className="w-12 text-right text-sm border border-[#E5E3DE] rounded px-1 py-0.5 focus:outline-none focus:border-[#111] tabular-nums"
                             />
@@ -546,7 +582,10 @@ export default function CreateInvoiceModal({
                               {taxable ? "Tax" : "Exempt"}
                             </button>
                             <span className="text-sm font-medium text-[#111] w-20 text-right">
-                              ${fmt(l.price * (lineQuantity[l.id] ?? l.quantity))}
+                              $
+                              {fmt(
+                                l.price * (lineQuantity[l.id] ?? l.quantity),
+                              )}
                             </span>
                           </div>
                         );
@@ -648,12 +687,56 @@ export default function CreateInvoiceModal({
                   className="flex-1 text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111]"
                 />
               </div>
-              <textarea
-                placeholder="Billing address"
+              <input
+                type="text"
+                placeholder="Bill to Contact"
+                value={billToContact}
+                onChange={(e) => setBillToContact(e.target.value)}
+                className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111]"
+              />
+              <input
+                type="text"
+                placeholder="Address line 1"
                 value={billToAddress}
                 onChange={(e) => setBillToAddress(e.target.value)}
-                rows={2}
-                className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111] resize-none"
+                className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111]"
+              />
+              <input
+                type="text"
+                placeholder="Address line 2"
+                value={billToAddress2}
+                onChange={(e) => setBillToAddress2(e.target.value)}
+                className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111]"
+              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="City"
+                  value={billToCity}
+                  onChange={(e) => setBillToCity(e.target.value)}
+                  className="flex-1 text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111]"
+                />
+                <input
+                  type="text"
+                  placeholder="ST"
+                  value={billToState}
+                  onChange={(e) => setBillToState(e.target.value)}
+                  className="w-14 text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111]"
+                />
+                <input
+                  type="text"
+                  placeholder="Zip"
+                  value={billToZipcode}
+                  onChange={(e) => setBillToZipcode(e.target.value)}
+                  className="w-24 text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111]"
+                />
+              </div>
+              <input
+                type="text"
+                placeholder="Country"
+                value={billToCountry}
+                onChange={(e) => setBillToCountry(e.target.value)}
+                className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111]"
               />
             </div>
           </div>
@@ -675,19 +758,75 @@ export default function CreateInvoiceModal({
               </label>
             </div>
             {sameAsBilling ? (
-              <div className="px-3 py-2 rounded-xl border border-[#E5E3DE] bg-[#FAFAF9] text-sm text-[#999] min-h-[60px] whitespace-pre-wrap">
-                {billToAddress || (
+              <div className="px-3 py-2 rounded-xl border border-[#E5E3DE] bg-[#FAFAF9] text-sm text-[#999] min-h-[40px]">
+                {[
+                  billToContact,
+                  billToAddress,
+                  billToAddress2,
+                  [billToCity, billToState, billToZipcode]
+                    .filter(Boolean)
+                    .join(", "),
+                  billToCountry,
+                ]
+                  .filter(Boolean)
+                  .join("\n") || (
                   <span className="italic">Fill in billing address above</span>
                 )}
               </div>
             ) : (
-              <textarea
-                placeholder="Shipping address (used for tax calculation)"
-                value={shipToAddress}
-                onChange={(e) => setShipToAddress(e.target.value)}
-                rows={2}
-                className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111] resize-none"
-              />
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  placeholder="Ship to Contact"
+                  value={shipToContact}
+                  onChange={(e) => setShipToContact(e.target.value)}
+                  className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111]"
+                />
+                <input
+                  type="text"
+                  placeholder="Address line 1"
+                  value={shipToAddress}
+                  onChange={(e) => setShipToAddress(e.target.value)}
+                  className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111]"
+                />
+                <input
+                  type="text"
+                  placeholder="Address line 2"
+                  value={shipToAddress2}
+                  onChange={(e) => setShipToAddress2(e.target.value)}
+                  className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111]"
+                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="City"
+                    value={shipToCity}
+                    onChange={(e) => setShipToCity(e.target.value)}
+                    className="flex-1 text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111]"
+                  />
+                  <input
+                    type="text"
+                    placeholder="ST"
+                    value={shipToState}
+                    onChange={(e) => setShipToState(e.target.value)}
+                    className="w-14 text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111]"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Zip"
+                    value={shipToZipcode}
+                    onChange={(e) => setShipToZipcode(e.target.value)}
+                    className="w-24 text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111]"
+                  />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Country"
+                  value={shipToCountry}
+                  onChange={(e) => setShipToCountry(e.target.value)}
+                  className="w-full text-sm border border-[#E5E3DE] rounded-xl px-3 py-2 focus:outline-none focus:border-[#111]"
+                />
+              </div>
             )}
           </div>
 

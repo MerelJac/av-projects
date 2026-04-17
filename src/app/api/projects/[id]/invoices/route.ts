@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { InvoiceChargeType } from "@prisma/client";
-import { calculateVertexTax } from "@/lib/utils/vertex";
 import { applyInvoiceTax } from "@/lib/utils/invoice-tax";
+import { buildAddress } from "@/lib/utils/helpers";
 
 type InvoiceLineInput = {
   description: string;
@@ -47,8 +47,20 @@ export async function POST(
     customerName,
     customerEmail,
     customerPhone,
+    billToContact,
     billToAddress,
+    billToAddress2,
+    billToCity,
+    billToState,
+    billToZipcode,
+    billToCountry,
+    shipToContact,
     shipToAddress,
+    shipToAddress2,
+    shipToCity,
+    shipToState,
+    shipToZipcode,
+    shipToCountry,
     billingTerms,
     notes,
     dueDate,
@@ -146,8 +158,20 @@ export async function POST(
         customerName: customerName ?? null,
         customerEmail: customerEmail ?? null,
         customerPhone: customerPhone ?? null,
+        billToContact: billToContact ?? null,
         billToAddress: billToAddress ?? null,
+        billToAddress2: billToAddress2 ?? null,
+        billToCity: billToCity ?? null,
+        billToState: billToState ?? null,
+        billToZipcode: billToZipcode ?? null,
+        billToCountry: billToCountry ?? null,
+        shipToContact: shipToContact ?? null,
         shipToAddress: shipToAddress ?? null,
+        shipToAddress2: shipToAddress2 ?? null,
+        shipToCity: shipToCity ?? null,
+        shipToState: shipToState ?? null,
+        shipToZipcode: shipToZipcode ?? null,
+        shipToCountry: shipToCountry ?? null,
         billingTerms: billingTerms ?? null,
         notes: notes ?? null,
         dueDate: dueDate ? new Date(dueDate) : null,
@@ -197,10 +221,29 @@ export async function POST(
     include: { item: { select: { id: true, itemNumber: true } } },
   });
 
+  const destination =
+    buildAddress({
+      address1: shipToAddress,
+      address2: shipToAddress2,
+      city: shipToCity,
+      state: shipToState,
+      zipCode: shipToZipcode,
+      country: shipToCountry,
+    }) ||
+    buildAddress({
+      address1: billToAddress,
+      address2: billToAddress2,
+      city: billToCity,
+      state: billToState,
+      zipCode: billToZipcode,
+      country: billToCountry,
+    }) ||
+    null;
+
   await applyInvoiceTax({
     invoiceId: invoice.id,
     invoiceNumber: invoice.invoiceNumber,
-    destination: invoice.shipToAddress,
+    destination,
     lines: invoiceLines,
     isCustomerTaxable,
   });

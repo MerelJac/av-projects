@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Image,
 } from "@react-pdf/renderer";
+import { buildAddress } from "@/lib/utils/helpers";
 
 const styles = StyleSheet.create({
   page: { padding: 48, fontSize: 10, fontFamily: "Helvetica", color: "#111" },
@@ -170,8 +171,20 @@ export function buildInvoicePDF({
   customerName,
   customerEmail,
   customerPhone,
+  billToContact,
   billToAddress,
+  billToAddress2,
+  billToCity,
+  billToState,
+  billToZipcode,
+  billToCountry,
+  shipToContact,
   shipToAddress,
+  shipToAddress2,
+  shipToCity,
+  shipToState,
+  shipToZipcode,
+  shipToCountry,
   billingTerms,
   chargeType,
   chargePercent,
@@ -186,9 +199,29 @@ export function buildInvoicePDF({
   customerName: string | null;
   customerEmail: string | null;
   customerPhone: string | null;
+  billToContact: string | null;
   billToAddress: string | null;
+  billToAddress2?: string | null;
+  billToCity?: string | null;
+  billToState?: string | null;
+  billToZipcode?: string | null;
+  billToCountry?: string | null;
+  shipToContact: string | null;
+
   shipToAddress: string | null;
-  billingTerms: "NET45" | "NET15" | "NET30" | "DUE_UPON_RECEIPT" | "PROGRESS" | "PREPAID" | null;
+  shipToAddress2?: string | null;
+  shipToCity?: string | null;
+  shipToState?: string | null;
+  shipToZipcode?: string | null;
+  shipToCountry?: string | null;
+  billingTerms:
+    | "NET45"
+    | "NET15"
+    | "NET30"
+    | "DUE_UPON_RECEIPT"
+    | "PROGRESS"
+    | "PREPAID"
+    | null;
   chargeType: "LINE_ITEMS" | "PERCENTAGE";
   chargePercent: number | null;
   lines: InvoiceLine[];
@@ -198,6 +231,23 @@ export function buildInvoicePDF({
   dueDate: Date | null;
   notes: string | null;
 }) {
+  const billToFormatted = buildAddress({
+    address1: billToAddress,
+    address2: billToAddress2,
+    city: billToCity,
+    state: billToState,
+    zipCode: billToZipcode,
+    country: billToCountry,
+  });
+  const shipToFormatted = buildAddress({
+    address1: shipToAddress,
+    address2: shipToAddress2,
+    city: shipToCity,
+    state: shipToState,
+    zipCode: shipToZipcode,
+    country: shipToCountry,
+  });
+
   const total = amount ?? 0;
   const subtotal = taxAmount != null ? total - taxAmount : total;
   const hasTax = taxAmount != null && taxAmount > 0;
@@ -243,15 +293,15 @@ export function buildInvoicePDF({
             {customerPhone && (
               <Text style={styles.billToDetail}>{customerPhone}</Text>
             )}
-            {billToAddress && (
-              <Text style={styles.billToDetail}>{billToAddress}</Text>
+            {billToFormatted && (
+              <Text style={styles.billToDetail}>{billToFormatted}</Text>
             )}
           </View>
 
-          {shipToAddress && (
+          {shipToFormatted && (
             <View style={styles.billToBlock}>
               <Text style={styles.billToLabel}>Ship To</Text>
-              <Text style={styles.billToDetail}>{shipToAddress}</Text>
+              <Text style={styles.billToDetail}>{shipToFormatted}</Text>
             </View>
           )}
         </View>

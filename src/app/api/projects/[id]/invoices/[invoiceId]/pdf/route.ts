@@ -24,7 +24,17 @@ export async function GET(
       customerEmail: invoice.customerEmail,
       customerPhone: invoice.customerPhone,
       billToAddress: invoice.billToAddress,
+      billToAddress2: (invoice as any).billToAddress2,
+      billToCity: (invoice as any).billToCity,
+      billToState: (invoice as any).billToState,
+      billToZipcode: (invoice as any).billToZipcode,
+      billToCountry: (invoice as any).billToCountry,
       shipToAddress: invoice.shipToAddress,
+      shipToAddress2: (invoice as any).shipToAddress2,
+      shipToCity: (invoice as any).shipToCity,
+      shipToState: (invoice as any).shipToState,
+      shipToZipcode: (invoice as any).shipToZipcode,
+      shipToCountry: (invoice as any).shipToCountry,
       billingTerms: invoice.billingTerms as
         | "NET45"
         | "NET15"

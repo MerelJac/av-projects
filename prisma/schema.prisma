@@ -57,12 +57,25 @@ model Invoice {
   status    InvoiceStatus @default(DRAFT)
 
   // Contact info snapshot — copied from customer at creation, editable per invoice
-  customerName  String?
-  customerEmail String?
-  customerPhone String?
-  billToAddress String?
-  shipToAddress String?
-  billingTerms  BillingTerms?
+  customerName   String?
+  customerEmail  String?
+  customerPhone  String?
+  shipToContact  String?
+  shipToAddress  String?
+  shipToAddress2 String?
+  shipToCountry  String? @default("US")
+  shipToCity     String?
+  shipToState    String?
+  shipToZipcode  String?
+  billToContact  String?
+  billToAddress  String?
+  billToAddress2 String?
+  billToCountry  String? @default("US")
+  billToCity     String?
+  billToState    String?
+  billToZipcode  String?
+
+  billingTerms BillingTerms?
 
   notes    String?
   issuedAt DateTime?

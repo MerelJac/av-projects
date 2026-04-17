@@ -21,6 +21,7 @@ import {
   Pencil,
 } from "lucide-react";
 import NotesPanel from "@/app/components/NotesPanel";
+import { buildAddress } from "@/lib/utils/helpers";
 
 type InvoiceLine = {
   id: string;
@@ -41,8 +42,20 @@ type Invoice = {
   customerName: string | null;
   customerEmail: string | null;
   customerPhone: string | null;
+  billToContact: string | null;
   billToAddress: string | null;
+  billToAddress2: string | null;
+  billToCity: string | null;
+  billToState: string | null;
+  billToZipcode: string | null;
+  billToCountry: string | null;
+  shipToContact: string | null;
   shipToAddress: string | null;
+  shipToAddress2: string | null;
+  shipToCity: string | null;
+  shipToState: string | null;
+  shipToZipcode: string | null;
+  shipToCountry: string | null;
   billingTerms: "NET15" | "NET45" | "NET30" | "PROGRESS" | "PREPAID" | null;
   notes: string | null;
   issuedAt: Date | null;
@@ -155,9 +168,28 @@ export default function InvoicesEditor({
   const [editingInfo, setEditingInfo] = useState(false);
   const [savingInfo, setSavingInfo] = useState(false);
   const [infoForm, setInfoForm] = useState({
-    issuedAt: "", dueDate: "", paidAt: "",
-    billingTerms: "", customerName: "", customerEmail: "",
-    customerPhone: "", billToAddress: "", shipToAddress: "", notes: "",
+    issuedAt: "",
+    dueDate: "",
+    paidAt: "",
+    billingTerms: "",
+    customerName: "",
+    customerEmail: "",
+    customerPhone: "",
+    billToContact: "",
+    billToAddress: "",
+    billToAddress2: "",
+    billToCity: "",
+    billToState: "",
+    billToZipcode: "",
+    billToCountry: "",
+    shipToContact: "",
+    shipToAddress: "",
+    shipToAddress2: "",
+    shipToCity: "",
+    shipToState: "",
+    shipToZipcode: "",
+    shipToCountry: "",
+    notes: "",
   });
 
   function toDateInput(d: Date | null | string) {
@@ -175,8 +207,20 @@ export default function InvoicesEditor({
       customerName: selected.customerName ?? "",
       customerEmail: selected.customerEmail ?? "",
       customerPhone: selected.customerPhone ?? "",
+      billToContact: selected.billToContact ?? "",
       billToAddress: selected.billToAddress ?? "",
+      billToAddress2: selected.billToAddress2 ?? "",
+      billToCity: selected.billToCity ?? "",
+      billToState: selected.billToState ?? "",
+      billToZipcode: selected.billToZipcode ?? "",
+      billToCountry: selected.billToCountry ?? "",
+      shipToContact: selected.shipToContact ?? "",
       shipToAddress: selected.shipToAddress ?? "",
+      shipToAddress2: selected.shipToAddress2 ?? "",
+      shipToCity: selected.shipToCity ?? "",
+      shipToState: selected.shipToState ?? "",
+      shipToZipcode: selected.shipToZipcode ?? "",
+      shipToCountry: selected.shipToCountry ?? "",
       notes: selected.notes ?? "",
     });
     setEditingInfo(true);
@@ -186,25 +230,42 @@ export default function InvoicesEditor({
     if (!selected) return;
     setSavingInfo(true);
     try {
-      const res = await fetch(`/api/projects/${project.id}/invoices/${selected.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          issuedAt: infoForm.issuedAt || null,
-          dueDate: infoForm.dueDate || null,
-          paidAt: infoForm.paidAt || null,
-          billingTerms: infoForm.billingTerms || null,
-          customerName: infoForm.customerName || null,
-          customerEmail: infoForm.customerEmail || null,
-          customerPhone: infoForm.customerPhone || null,
-          billToAddress: infoForm.billToAddress || null,
-          shipToAddress: infoForm.shipToAddress || null,
-          notes: infoForm.notes || null,
-        }),
-      });
+      const res = await fetch(
+        `/api/projects/${project.id}/invoices/${selected.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            issuedAt: infoForm.issuedAt || null,
+            dueDate: infoForm.dueDate || null,
+            paidAt: infoForm.paidAt || null,
+            billingTerms: infoForm.billingTerms || null,
+            customerName: infoForm.customerName || null,
+            customerEmail: infoForm.customerEmail || null,
+            customerPhone: infoForm.customerPhone || null,
+            billToContact: infoForm.billToContact || null,
+            billToAddress: infoForm.billToAddress || null,
+            billToAddress2: infoForm.billToAddress2 || null,
+            billToCity: infoForm.billToCity || null,
+            billToState: infoForm.billToState || null,
+            billToZipcode: infoForm.billToZipcode || null,
+            billToCountry: infoForm.billToCountry || null,
+            shipToContact: infoForm.shipToContact || null,
+            shipToAddress: infoForm.shipToAddress || null,
+            shipToAddress2: infoForm.shipToAddress2 || null,
+            shipToCity: infoForm.shipToCity || null,
+            shipToState: infoForm.shipToState || null,
+            shipToZipcode: infoForm.shipToZipcode || null,
+            shipToCountry: infoForm.shipToCountry || null,
+            notes: infoForm.notes || null,
+          }),
+        },
+      );
       if (!res.ok) throw new Error();
       const updated = await res.json();
-      setInvoices((prev) => prev.map((i) => (i.id === selected.id ? { ...i, ...updated } : i)));
+      setInvoices((prev) =>
+        prev.map((i) => (i.id === selected.id ? { ...i, ...updated } : i)),
+      );
       setEditingInfo(false);
       showToast("success", "Invoice updated");
     } catch {
@@ -288,23 +349,6 @@ export default function InvoicesEditor({
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to delete");
       setDeleting(false);
-    }
-  }
-
-  async function handleSendEmail(invoiceId: string) {
-    setSendingEmail(true);
-    try {
-      const res = await fetch(
-        `/api/projects/${project.id}/invoices/${invoiceId}/send-email`,
-        { method: "POST" },
-      );
-      if (!res.ok) throw new Error();
-      showToast("success", "Invoice sent to Call One Finance");
-      router.push("/invoices");
-    } catch {
-      showToast("error", "Failed to send invoice");
-    } finally {
-      setSendingEmail(false);
     }
   }
 
@@ -558,15 +602,29 @@ export default function InvoicesEditor({
                   {/* Info grid */}
                   <div className="border-t border-[#F0EEE9] pt-4 mb-5">
                     <div className="flex items-center justify-between mb-3">
-                      <p className="text-xs font-semibold uppercase tracking-widest text-[#888]">Details</p>
+                      <p className="text-xs font-semibold uppercase tracking-widest text-[#888]">
+                        Details
+                      </p>
                       {!editingInfo ? (
-                        <button onClick={startEditInfo} className="flex items-center gap-1 text-xs text-[#888] hover:text-[#111] transition-colors">
+                        <button
+                          onClick={startEditInfo}
+                          className="flex items-center gap-1 text-xs text-[#888] hover:text-[#111] transition-colors"
+                        >
                           <Pencil size={11} /> Edit
                         </button>
                       ) : (
                         <div className="flex items-center gap-2">
-                          <button onClick={() => setEditingInfo(false)} className="text-xs text-[#888] hover:text-[#111] transition-colors">Cancel</button>
-                          <button onClick={handleSaveInfo} disabled={savingInfo} className="text-xs font-semibold bg-[#111] text-white px-3 py-1 rounded-lg hover:bg-[#333] disabled:opacity-40 transition-colors">
+                          <button
+                            onClick={() => setEditingInfo(false)}
+                            className="text-xs text-[#888] hover:text-[#111] transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleSaveInfo}
+                            disabled={savingInfo}
+                            className="text-xs font-semibold bg-[#111] text-white px-3 py-1 rounded-lg hover:bg-[#333] disabled:opacity-40 transition-colors"
+                          >
                             {savingInfo ? "Saving…" : "Save"}
                           </button>
                         </div>
@@ -582,59 +640,223 @@ export default function InvoicesEditor({
                             { label: "Paid", key: "paidAt" },
                           ].map(({ label, key }) => (
                             <div key={key}>
-                              <label className="text-[10px] font-semibold uppercase tracking-widest text-[#999] block mb-1">{label}</label>
-                              <input type="date" value={infoForm[key as keyof typeof infoForm]}
-                                onChange={(e) => setInfoForm((f) => ({ ...f, [key]: e.target.value }))}
-                                className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#111]" />
+                              <label className="text-[10px] font-semibold uppercase tracking-widest text-[#999] block mb-1">
+                                {label}
+                              </label>
+                              <input
+                                type="date"
+                                value={infoForm[key as keyof typeof infoForm]}
+                                onChange={(e) =>
+                                  setInfoForm((f) => ({
+                                    ...f,
+                                    [key]: e.target.value,
+                                  }))
+                                }
+                                className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#111]"
+                              />
                             </div>
                           ))}
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <label className="text-[10px] font-semibold uppercase tracking-widest text-[#999] block mb-1">Billing Terms</label>
-                            <select value={infoForm.billingTerms} onChange={(e) => setInfoForm((f) => ({ ...f, billingTerms: e.target.value }))}
-                              className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:border-[#111]">
+                            <label className="text-[10px] font-semibold uppercase tracking-widest text-[#999] block mb-1">
+                              Billing Terms
+                            </label>
+                            <select
+                              value={infoForm.billingTerms}
+                              onChange={(e) =>
+                                setInfoForm((f) => ({
+                                  ...f,
+                                  billingTerms: e.target.value,
+                                }))
+                              }
+                              className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:border-[#111]"
+                            >
                               <option value="">— None —</option>
                               <option value="NET15">Net 15</option>
                               <option value="NET30">Net 30</option>
-                              <option value="DUE_UPON_RECEIPT">Due Upon Receipt</option>
+                              <option value="DUE_UPON_RECEIPT">
+                                Due Upon Receipt
+                              </option>
                               <option value="NET45">Net 45</option>
                               <option value="PROGRESS">Progress Billing</option>
                               <option value="PREPAID">Prepaid</option>
                             </select>
                           </div>
                           <div>
-                            <label className="text-[10px] font-semibold uppercase tracking-widest text-[#999] block mb-1">Customer Name</label>
-                            <input type="text" value={infoForm.customerName} onChange={(e) => setInfoForm((f) => ({ ...f, customerName: e.target.value }))}
-                              className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#111]" />
+                            <label className="text-[10px] font-semibold uppercase tracking-widest text-[#999] block mb-1">
+                              Customer Name
+                            </label>
+                            <input
+                              type="text"
+                              value={infoForm.customerName}
+                              onChange={(e) =>
+                                setInfoForm((f) => ({
+                                  ...f,
+                                  customerName: e.target.value,
+                                }))
+                              }
+                              className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#111]"
+                            />
                           </div>
                           <div>
-                            <label className="text-[10px] font-semibold uppercase tracking-widest text-[#999] block mb-1">Email</label>
-                            <input type="email" value={infoForm.customerEmail} onChange={(e) => setInfoForm((f) => ({ ...f, customerEmail: e.target.value }))}
-                              className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#111]" />
+                            <label className="text-[10px] font-semibold uppercase tracking-widest text-[#999] block mb-1">
+                              Email
+                            </label>
+                            <input
+                              type="email"
+                              value={infoForm.customerEmail}
+                              onChange={(e) =>
+                                setInfoForm((f) => ({
+                                  ...f,
+                                  customerEmail: e.target.value,
+                                }))
+                              }
+                              className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#111]"
+                            />
                           </div>
                           <div>
-                            <label className="text-[10px] font-semibold uppercase tracking-widest text-[#999] block mb-1">Phone</label>
-                            <input type="tel" value={infoForm.customerPhone} onChange={(e) => setInfoForm((f) => ({ ...f, customerPhone: e.target.value }))}
-                              className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#111]" />
+                            <label className="text-[10px] font-semibold uppercase tracking-widest text-[#999] block mb-1">
+                              Phone
+                            </label>
+                            <input
+                              type="tel"
+                              value={infoForm.customerPhone}
+                              onChange={(e) =>
+                                setInfoForm((f) => ({
+                                  ...f,
+                                  customerPhone: e.target.value,
+                                }))
+                              }
+                              className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#111]"
+                            />
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="text-[10px] font-semibold uppercase tracking-widest text-[#999] block mb-1">Bill To Address</label>
-                            <textarea rows={3} value={infoForm.billToAddress} onChange={(e) => setInfoForm((f) => ({ ...f, billToAddress: e.target.value }))}
-                              className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-[#111]" />
+                        {[
+                          { label: "Bill To Address", prefix: "billTo" },
+                          { label: "Ship To Address", prefix: "shipTo" },
+                        ].map(({ label, prefix }) => (
+                          <div key={prefix}>
+                            <label className="text-[10px] font-semibold uppercase tracking-widest text-[#999] block mb-1">
+                              {label}
+                            </label>
+                            <div className="space-y-1.5">
+                              <input
+                                type="text"
+                                placeholder="Address line 1"
+                                value={
+                                  infoForm[
+                                    `${prefix}Address` as keyof typeof infoForm
+                                  ]
+                                }
+                                onChange={(e) =>
+                                  setInfoForm((f) => ({
+                                    ...f,
+                                    [`${prefix}Address`]: e.target.value,
+                                  }))
+                                }
+                                className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#111]"
+                              />
+                              <input
+                                type="text"
+                                placeholder="Address line 2"
+                                value={
+                                  infoForm[
+                                    `${prefix}Address2` as keyof typeof infoForm
+                                  ]
+                                }
+                                onChange={(e) =>
+                                  setInfoForm((f) => ({
+                                    ...f,
+                                    [`${prefix}Address2`]: e.target.value,
+                                  }))
+                                }
+                                className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#111]"
+                              />
+                              <div className="flex gap-1.5">
+                                <input
+                                  type="text"
+                                  placeholder="City"
+                                  value={
+                                    infoForm[
+                                      `${prefix}City` as keyof typeof infoForm
+                                    ]
+                                  }
+                                  onChange={(e) =>
+                                    setInfoForm((f) => ({
+                                      ...f,
+                                      [`${prefix}City`]: e.target.value,
+                                    }))
+                                  }
+                                  className="flex-1 text-sm border border-[#E5E3DE] rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#111]"
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="ST"
+                                  value={
+                                    infoForm[
+                                      `${prefix}State` as keyof typeof infoForm
+                                    ]
+                                  }
+                                  onChange={(e) =>
+                                    setInfoForm((f) => ({
+                                      ...f,
+                                      [`${prefix}State`]: e.target.value,
+                                    }))
+                                  }
+                                  className="w-12 text-sm border border-[#E5E3DE] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#111]"
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="Zip"
+                                  value={
+                                    infoForm[
+                                      `${prefix}Zipcode` as keyof typeof infoForm
+                                    ]
+                                  }
+                                  onChange={(e) =>
+                                    setInfoForm((f) => ({
+                                      ...f,
+                                      [`${prefix}Zipcode`]: e.target.value,
+                                    }))
+                                  }
+                                  className="w-20 text-sm border border-[#E5E3DE] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#111]"
+                                />
+                              </div>
+                              <input
+                                type="text"
+                                placeholder="Country"
+                                value={
+                                  infoForm[
+                                    `${prefix}Country` as keyof typeof infoForm
+                                  ]
+                                }
+                                onChange={(e) =>
+                                  setInfoForm((f) => ({
+                                    ...f,
+                                    [`${prefix}Country`]: e.target.value,
+                                  }))
+                                }
+                                className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#111]"
+                              />
+                            </div>
                           </div>
-                          <div>
-                            <label className="text-[10px] font-semibold uppercase tracking-widest text-[#999] block mb-1">Ship To Address</label>
-                            <textarea rows={3} value={infoForm.shipToAddress} onChange={(e) => setInfoForm((f) => ({ ...f, shipToAddress: e.target.value }))}
-                              className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-[#111]" />
-                          </div>
-                        </div>
+                        ))}
                         <div>
-                          <label className="text-[10px] font-semibold uppercase tracking-widest text-[#999] block mb-1">Notes</label>
-                          <textarea rows={2} value={infoForm.notes} onChange={(e) => setInfoForm((f) => ({ ...f, notes: e.target.value }))}
-                            className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-[#111]" />
+                          <label className="text-[10px] font-semibold uppercase tracking-widest text-[#999] block mb-1">
+                            Notes
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={infoForm.notes}
+                            onChange={(e) =>
+                              setInfoForm((f) => ({
+                                ...f,
+                                notes: e.target.value,
+                              }))
+                            }
+                            className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-[#111]"
+                          />
                         </div>
                       </div>
                     ) : (
@@ -642,54 +864,133 @@ export default function InvoicesEditor({
                         <div className="grid grid-cols-3 gap-4 text-sm mb-4">
                           <div>
                             <p className="text-xs text-[#999] mb-0.5">Issued</p>
-                            <p className="font-medium text-[#111]">{formatDate(selected.issuedAt)}</p>
+                            <p className="font-medium text-[#111]">
+                              {formatDate(selected.issuedAt)}
+                            </p>
                           </div>
                           <div>
                             <p className="text-xs text-[#999] mb-0.5">Due</p>
-                            <p className="font-medium text-[#111]">{formatDate(selected.dueDate)}</p>
+                            <p className="font-medium text-[#111]">
+                              {formatDate(selected.dueDate)}
+                            </p>
                           </div>
                           <div>
                             <p className="text-xs text-[#999] mb-0.5">Paid</p>
-                            <p className="font-medium text-[#111]">{formatDate(selected.paidAt)}</p>
+                            <p className="font-medium text-[#111]">
+                              {formatDate(selected.paidAt)}
+                            </p>
                           </div>
                           {selected.billingTerms && (
                             <div>
-                              <p className="text-xs text-[#999] mb-0.5">Terms</p>
-                              <p className="font-medium text-[#111]">{{ NET15: "Net 15", NET30: "Net 30", DUE_UPON_RECEIPT: "Due Upon Receipt", NET45: "Net 45", PROGRESS: "Progress Billing", PREPAID: "Prepaid" }[selected.billingTerms]}</p>
+                              <p className="text-xs text-[#999] mb-0.5">
+                                Terms
+                              </p>
+                              <p className="font-medium text-[#111]">
+                                {
+                                  {
+                                    NET15: "Net 15",
+                                    NET30: "Net 30",
+                                    DUE_UPON_RECEIPT: "Due Upon Receipt",
+                                    NET45: "Net 45",
+                                    PROGRESS: "Progress Billing",
+                                    PREPAID: "Prepaid",
+                                  }[selected.billingTerms]
+                                }
+                              </p>
                             </div>
                           )}
-                          {selected.chargeType === "PERCENTAGE" && selected.chargePercent && (
-                            <div>
-                              <p className="text-xs text-[#999] mb-0.5">Charge</p>
-                              <p className="font-medium text-[#111]">{selected.chargePercent}% progress billing</p>
-                            </div>
-                          )}
+                          {selected.chargeType === "PERCENTAGE" &&
+                            selected.chargePercent && (
+                              <div>
+                                <p className="text-xs text-[#999] mb-0.5">
+                                  Charge
+                                </p>
+                                <p className="font-medium text-[#111]">
+                                  {selected.chargePercent}% progress billing
+                                </p>
+                              </div>
+                            )}
                           {selected.quote && (
                             <div>
-                              <p className="text-xs text-[#999] mb-0.5">Quote</p>
-                              <p className="font-mono text-xs font-medium text-[#111]">#{selected.quote.id.toUpperCase()}</p>
+                              <p className="text-xs text-[#999] mb-0.5">
+                                Quote
+                              </p>
+                              <p className="font-mono text-xs font-medium text-[#111]">
+                                #{selected.quote.id.toUpperCase()}
+                              </p>
                             </div>
                           )}
                         </div>
-                        {(selected.customerName || selected.billToAddress || selected.shipToAddress) && (
-                          <div className="border-t border-[#F0EEE9] pt-4 grid grid-cols-2 gap-6">
-                            {(selected.customerName || selected.billToAddress) && (
-                              <div>
-                                <p className="text-xs font-semibold uppercase tracking-widest text-[#999] mb-2">Bill To</p>
-                                {selected.customerName && <p className="text-sm font-semibold text-[#111]">{selected.customerName}</p>}
-                                {selected.customerEmail && <p className="text-sm text-[#666]">{selected.customerEmail}</p>}
-                                {selected.customerPhone && <p className="text-sm text-[#666]">{selected.customerPhone}</p>}
-                                {selected.billToAddress && <p className="text-sm text-[#666] whitespace-pre-wrap mt-1">{selected.billToAddress}</p>}
-                              </div>
-                            )}
-                            {selected.shipToAddress && (
-                              <div>
-                                <p className="text-xs font-semibold uppercase tracking-widest text-[#999] mb-2">Ship To</p>
-                                <p className="text-sm text-[#666] whitespace-pre-wrap">{selected.shipToAddress}</p>
-                              </div>
-                            )}
-                          </div>
-                        )}
+                        {(() => {
+                          const billToStr = buildAddress({
+                            address1: selected.billToAddress,
+                            address2: selected.billToAddress2,
+                            city: selected.billToCity,
+                            state: selected.billToState,
+                            zipCode: selected.billToZipcode,
+                            country: selected.billToCountry,
+                          });
+                          const shipToStr = buildAddress({
+                            address1: selected.shipToAddress,
+                            address2: selected.shipToAddress2,
+                            city: selected.shipToCity,
+                            state: selected.shipToState,
+                            zipCode: selected.shipToZipcode,
+                            country: selected.shipToCountry,
+                          });
+                          if (
+                            !selected.customerName &&
+                            !billToStr &&
+                            !shipToStr
+                          )
+                            return null;
+                          return (
+                            <div className="border-t border-[#F0EEE9] pt-4 grid grid-cols-2 gap-6">
+                              {(selected.billToContact || billToStr) && (
+                                <div>
+                                  <p className="text-xs font-semibold uppercase tracking-widest text-[#999] mb-2">
+                                    Bill To
+                                  </p>
+                                  {selected.billToContact && (
+                                    <p className="text-sm font-semibold text-[#111]">
+                                      {selected.billToContact}
+                                    </p>
+                                  )}
+                                  {selected.customerEmail && (
+                                    <p className="text-sm text-[#666]">
+                                      {selected.customerEmail}
+                                    </p>
+                                  )}
+                                  {selected.customerPhone && (
+                                    <p className="text-sm text-[#666]">
+                                      {selected.customerPhone}
+                                    </p>
+                                  )}
+                                  {billToStr && (
+                                    <p className="text-sm text-[#666] whitespace-pre-wrap mt-1">
+                                      {billToStr}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                              {shipToStr && (
+                                <div>
+                                  <p className="text-xs font-semibold uppercase tracking-widest text-[#999] mb-2">
+                                    Ship To
+                                  </p>
+                                  {selected.shipToContact && (
+                                    <p className="text-sm font-semibold text-[#111]">
+                                      {selected.shipToContact}
+                                    </p>
+                                  )}
+                                  <p className="text-sm text-[#666] whitespace-pre-wrap">
+                                    {shipToStr}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </>
                     )}
                   </div>
