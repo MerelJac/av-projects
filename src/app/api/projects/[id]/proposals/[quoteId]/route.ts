@@ -174,17 +174,17 @@ export async function PUT(
     });
 
     // 6. Audit log
-    await tx.auditLog.create({
-      data: buildAuditLog(
-        "QUOTE",
-        quoteId,
-        statusChanged ? "STATUS_CHANGE" : "UPDATE",
-        userId,
-        statusChanged
-          ? `Status changed from ${quote.status} to ${status}`
-          : `Quote updated (total: $${total.toFixed(2)})`
-      ),
-    });
+    // await tx.auditLog.create({
+    //   data: buildAuditLog(
+    //     "QUOTE",
+    //     quoteId,
+    //     statusChanged ? "STATUS_CHANGE" : "UPDATE",
+    //     userId,
+    //     statusChanged
+    //       ? `Status changed from ${quote.status} to ${status}`
+    //       : `Proposal updated (total: $${total.toFixed(2)})`
+    //   ),
+    // });
   });
 
   console.log("=== QUOTE SAVE COMPLETE ===");

@@ -223,12 +223,18 @@ export default function ProposalEditor({
   }
 
   function removeBundle(bundleId: string) {
-    // Unassign lines from this bundle
-    setLines((prev) =>
-      prev.map((l) => (l.bundleId === bundleId ? { ...l, bundleId: null } : l)),
-    );
-    setBundles((prev) => prev.filter((b) => b.id !== bundleId));
-    setSaved(false);
+    if (canProposalEdit) {
+      // Unassign lines from this bundle
+      setLines((prev) =>
+        prev.map((l) =>
+          l.bundleId === bundleId ? { ...l, bundleId: null } : l,
+        ),
+      );
+      setBundles((prev) => prev.filter((b) => b.id !== bundleId));
+      setSaved(false);
+    } else {
+      showToast("error", "You don't have permissions to do this.")
+    }
   }
 
   async function handleSave(quiet = false) {
@@ -463,6 +469,7 @@ export default function ProposalEditor({
                         )}
                         {bundle.showToCustomer ? "Visible" : "Hidden"}
                       </button>
+
                       <button
                         onClick={() => removeBundle(bundle.id)}
                         className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-[#ccc] hover:text-red-500 transition-colors"
@@ -484,12 +491,14 @@ export default function ProposalEditor({
                             key={line.id}
                             line={line}
                             bundles={bundles}
-                            editing={editingLineId === line.id}
-                            onEdit={() =>
+                            editing={
+                              canProposalEdit && editingLineId === line.id
+                            }
+                            onEdit={() => {
                               setEditingLineId(
                                 editingLineId === line.id ? null : line.id,
-                              )
-                            }
+                              );
+                            }}
                             onUpdate={(u) => updateLine(line.id, u)}
                             onRemove={() => removeLine(line.id)}
                             onAssignBundle={(bId) =>
@@ -852,6 +861,7 @@ function LineRow({
   onRemove,
   onAssignBundle,
   inBundle = false,
+  canEdit = false,
 }: {
   line: QuoteLine;
   bundles: Bundle[];
@@ -861,6 +871,7 @@ function LineRow({
   onRemove: () => void;
   onAssignBundle: (bundleId: string | null) => void;
   inBundle?: boolean;
+  canEdit?: boolean;
 }) {
   return (
     <>
@@ -879,12 +890,14 @@ function LineRow({
           ) : (
             <div className="flex items-center gap-2">
               <span className="text-sm text-[#111]">{line.description}</span>
-              <button
-                onClick={onEdit}
-                className="opacity-0 group-hover:opacity-100 text-[#ccc] hover:text-[#111] transition-all"
-              >
-                <Edit2 size={11} />
-              </button>
+              {canEdit && (
+                <button
+                  onClick={onEdit}
+                  className="opacity-0 group-hover:opacity-100 text-[#ccc] hover:text-[#111] transition-all"
+                >
+                  <Edit2 size={11} />
+                </button>
+              )}
             </div>
           )}
           {line.item && (
@@ -900,6 +913,7 @@ function LineRow({
                 type="number"
                 value={line.quantity}
                 onChange={(e) =>
+                  canEdit &&
                   onUpdate({ quantity: parseInt(e.target.value) || 0 })
                 }
                 className="w-12 text-right text-sm bg-transparent focus:outline-none tabular-nums"
@@ -924,7 +938,7 @@ function LineRow({
               step={0.01}
               value={line.price.toFixed(2)}
               onChange={(e) =>
-                onUpdate({ price: parseFloat(e.target.value) || 0 })
+                canEdit && onUpdate({ price: parseFloat(e.target.value) || 0 })
               }
               className="w-30 text-right text-sm border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111]"
             />
@@ -936,7 +950,8 @@ function LineRow({
         <td className="pr-3">
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
             {/* Bundle assignment dropdown */}
-            {bundles.length > 0 && (
+
+            {bundles.length > 0 && canEdit && (
               <select
                 value={line.bundleId ?? ""}
                 onChange={(e) => onAssignBundle(e.target.value || null)}
@@ -950,12 +965,14 @@ function LineRow({
                 ))}
               </select>
             )}
-            <button
-              onClick={onRemove}
-              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-[#ccc] hover:text-red-500 transition-colors"
-            >
-              <Trash2 size={13} />
-            </button>
+            {canEdit && (
+              <button
+                onClick={onRemove}
+                className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-[#ccc] hover:text-red-500 transition-colors"
+              >
+                <Trash2 size={13} />
+              </button>
+            )}
           </div>
         </td>
       </tr>

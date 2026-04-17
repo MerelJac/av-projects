@@ -50,6 +50,9 @@ export default function BOMEditor({
   projectBoms,
   projectCosts = [],
   projectPOs = [],
+  canProposalCreate,
+  canPoCreate,
+  canEditBom
 }: {
   bom: BOM;
   items: Item[];
@@ -58,6 +61,9 @@ export default function BOMEditor({
   projectBoms: { id: string; name: string; lineCount: number; total: number }[];
   projectCosts?: ProjectCost[];
   projectPOs?: { id: string; poNumber: string | null }[];
+  canProposalCreate?: boolean;
+  canPoCreate?: boolean;
+    canEditBom?: boolean;
 }) {
   const router = useRouter();
   const [lines, setLines] = useState<BOMLine[]>(() =>
@@ -399,7 +405,7 @@ export default function BOMEditor({
         </div>
       )}
 
-      {showGenerateModal && (
+      {showGenerateModal && canProposalCreate && (
         <GenerateQuoteModal
           boms={projectBoms}
           projectId={projectId}
@@ -407,7 +413,7 @@ export default function BOMEditor({
         />
       )}
 
-      {showCreatePO && (
+      {showCreatePO && canPoCreate && (
         <CreatePOModal
           projectId={projectId}
           lines={lines.map((l) => ({
@@ -501,7 +507,8 @@ export default function BOMEditor({
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowDeleteConfirm(true)}
-                className="w-9 h-9 flex items-center justify-center rounded-xl border border-[#E5E3DE] bg-white hover:bg-red-50 hover:border-red-200 text-[#ccc] hover:text-red-500 transition-colors"
+                disabled={!canEditBom}
+                className="w-9 h-9 flex items-center justify-center rounded-xl border border-[#E5E3DE] bg-white hover:bg-red-50 hover:border-red-200 text-[#ccc] hover:text-red-500 transition-colors disabled:opacity-30 disabled:pointer-events-none"
                 title="Delete BOM"
               >
                 <Trash2 size={15} />
@@ -534,7 +541,7 @@ export default function BOMEditor({
               </p>
               <button
                 onClick={handleSave}
-                disabled={saving || saved}
+                disabled={saving || saved || !canEditBom}
                 className="text-sm font-semibold px-4 py-2 rounded-xl border border-[#E5E3DE] bg-white hover:bg-[#F7F6F3] disabled:opacity-40 transition-colors"
               >
                 {saving ? "Saving…" : saved ? "Saved ✓" : "Save Changes"}
@@ -545,10 +552,13 @@ export default function BOMEditor({
 
         <div className="grid grid-cols-4 gap-6">
           {/* Main table — left 3/4 */}
+          
           <div className="col-span-3 space-y-4">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-red-500">PSSST... You don&apos;t have permissions to edit this BOM.</p>
             {/* Add Item */}
             <div className="bg-white border border-[#E5E3DE] rounded-2xl">
               <div className="px-5 py-4 border-b border-[#F0EEE9] flex items-center justify-between">
+              
                 <p className="text-xs font-semibold uppercase tracking-widest text-[#888]">
                   Add Item
                 </p>
@@ -556,6 +566,7 @@ export default function BOMEditor({
                   <input
                     type="text"
                     value={newSectionName}
+                    disabled={!canEditBom}
                     onChange={(e) => setNewSectionName(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && newSectionName.trim()) {
@@ -568,13 +579,14 @@ export default function BOMEditor({
                       }
                     }}
                     placeholder="New section…"
-                    className="text-xs border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111] w-28"
+                    className="text-xs border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111] w-28 disabled:opacity-40 disabled:pointer-events-none"
                   />
                   <span className="text-xs text-[#999]">Add to:</span>
                   <select
                     value={addingToSection}
+                    disabled={!canEditBom}
                     onChange={(e) => setAddingToSection(e.target.value)}
-                    className="text-xs border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111]"
+                    className="text-xs border border-[#E5E3DE] rounded-lg px-2 py-1 focus:outline-none focus:border-[#111] disabled:opacity-40 disabled:pointer-events-none"
                   >
                     {sections.map((s) => (
                       <option key={s} value={s}>
@@ -595,13 +607,14 @@ export default function BOMEditor({
                     ref={searchRef}
                     type="text"
                     value={itemSearch}
+                    disabled={!canEditBom}
                     onChange={(e) => {
                       setItemSearch(e.target.value);
                       setShowItemPicker(true);
                     }}
                     onFocus={() => setShowItemPicker(true)}
                     placeholder="Search by part #, manufacturer, or category…"
-                    className="w-full pl-9 pr-4 py-2.5 border border-[#E5E3DE] rounded-xl text-sm text-[#111] placeholder:text-[#bbb] focus:outline-none focus:border-[#111] transition-colors"
+                    className="w-full pl-9 pr-4 py-2.5 border border-[#E5E3DE] rounded-xl text-sm text-[#111] placeholder:text-[#bbb] focus:outline-none focus:border-[#111] transition-colors disabled:opacity-40 disabled:pointer-events-none"
                   />
                 </div>
                 {showItemPicker && itemSearch && (
@@ -773,6 +786,7 @@ export default function BOMEditor({
                                   <button
                                     className="flex items-center gap-1.5 group focus:outline-none"
                                     onClick={(e) => {
+                                      if (!canEditBom) return;
                                       e.stopPropagation();
                                       setEditingSectionName(section);
                                       setEditingSectionValue(section);
@@ -781,10 +795,12 @@ export default function BOMEditor({
                                     <span className="text-xs font-bold uppercase tracking-widest text-[#555]">
                                       {section}
                                     </span>
-                                    <Pencil
-                                      size={11}
-                                      className="text-[#bbb] opacity-0 group-hover:opacity-100 transition-opacity"
-                                    />
+                                    {canEditBom && (
+                                      <Pencil
+                                        size={11}
+                                        className="text-[#bbb] opacity-0 group-hover:opacity-100 transition-opacity"
+                                      />
+                                    )}
                                   </button>
                                 )}
 
@@ -883,6 +899,7 @@ export default function BOMEditor({
                                     <input
                                       type="text"
                                       value={line.notes ?? ""}
+                                      disabled={!canEditBom}
                                       onChange={(e) =>
                                         updateField(
                                           line.id,
@@ -891,7 +908,7 @@ export default function BOMEditor({
                                         )
                                       }
                                       placeholder="Add note…"
-                                      className="w-full text-xs text-[#666] placeholder:text-[#ccc] focus:outline-none border-0 bg-transparent border-b border-transparent focus:border-[#E5E3DE] transition-colors py-0.5"
+                                      className="w-full text-xs text-[#666] placeholder:text-[#ccc] focus:outline-none border-0 bg-transparent border-b border-transparent focus:border-[#E5E3DE] transition-colors py-0.5 disabled:pointer-events-none"
                                     />
                                   </td>
                                   {/* Allocation / PO status + project costs */}
@@ -940,6 +957,7 @@ export default function BOMEditor({
                                         <input
                                           type="number"
                                           value={line.quantity}
+                                          disabled={!canEditBom}
                                           onChange={(e) => {
                                             const v = parseInt(
                                               e.target.value,
@@ -951,7 +969,7 @@ export default function BOMEditor({
                                               Number.isNaN(v) ? 0 : v,
                                             );
                                           }}
-                                          className="w-12 text-right text-xs bg-transparent focus:outline-none tabular-nums"
+                                          className="w-12 text-right text-xs bg-transparent focus:outline-none tabular-nums disabled:pointer-events-none"
                                         />
                                         {line.unit && (
                                           <span className="text-xs text-[#999] font-medium shrink-0">
@@ -984,7 +1002,7 @@ export default function BOMEditor({
                                               : parseFloat(e.target.value),
                                           )
                                         }
-                                        disabled={isAllocated}
+                                        disabled={isAllocated || !canEditBom}
                                         placeholder="20"
                                         className="w-16 text-right text-xs border border-[#E5E3DE] rounded-lg pr-5 pl-2 py-1 focus:outline-none focus:border-[#111] text-blue-600 font-medium transition-colors"
                                       />
@@ -1018,7 +1036,7 @@ export default function BOMEditor({
                                               : parseFloat(e.target.value),
                                           )
                                         }
-                                        disabled={isAllocated}
+                                        disabled={isAllocated || !canEditBom}
                                         placeholder="0.00"
                                         className="w-20 text-right text-xs border border-[#E5E3DE] rounded-lg pl-5 pr-2 py-1 focus:outline-none focus:border-[#111] transition-colors"
                                       />
@@ -1047,7 +1065,7 @@ export default function BOMEditor({
                                             ? ""
                                             : sellEach
                                         }
-                                        disabled={isAllocated}
+                                        disabled={isAllocated || !canEditBom}
                                         onChange={(e) =>
                                           updateMarginFromSell(
                                             line.id,
@@ -1069,7 +1087,7 @@ export default function BOMEditor({
                                     })}
                                   </td>
                                   {/* Delete */}
-                                  {!isAllocated && (
+                                  {!isAllocated && canEditBom && (
                                     <td className="pr-2">
                                       <button
                                         onClick={() => removeLine(line.id)}
@@ -1106,10 +1124,11 @@ export default function BOMEditor({
                     min={0}
                     max={99}
                     value={globalMargin}
+                    disabled={!canEditBom}
                     onChange={(e) =>
                       setGlobalMargin(parseFloat(e.target.value) || 0)
                     }
-                    className="w-full text-right text-sm border border-[#E5E3DE] rounded-lg pr-6 pl-3 py-1.5 focus:outline-none focus:border-[#111] transition-colors"
+                    className="w-full text-right text-sm border border-[#E5E3DE] rounded-lg pr-6 pl-3 py-1.5 focus:outline-none focus:border-[#111] transition-colors disabled:opacity-40 disabled:pointer-events-none"
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[#bbb] text-xs">
                     %
@@ -1117,7 +1136,8 @@ export default function BOMEditor({
                 </div>
                 <button
                   onClick={() => applyMarginToAll(globalMargin)}
-                  className="text-xs px-3 py-1.5 rounded-lg bg-[#1a1a1a] text-white hover:bg-[#333] transition-colors whitespace-nowrap"
+                  disabled={!canEditBom}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-[#1a1a1a] text-white hover:bg-[#333] transition-colors whitespace-nowrap disabled:opacity-40 disabled:pointer-events-none"
                 >
                   Apply to all
                 </button>

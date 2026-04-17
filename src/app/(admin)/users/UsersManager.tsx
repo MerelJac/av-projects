@@ -20,6 +20,7 @@ const PERMISSION_LABELS: Record<Permission, string> = {
   PO_APPROVE: "Approve POs",
   PO_CREATE: "Create POs",
   PO_EDIT: "Edit POs",
+  PROPOSAL_CAN_INVOICE: "Can Invoice Customers From Proposals",
   PROPOSAL_APPROVE: "Approve Proposals",
   PROPOSAL_CREATE: "Create Proposals",
   PROPOSAL_EDIT: "Edit Proposals",
@@ -85,7 +86,9 @@ export default function UsersManager({
   } | null>(null);
 
   // Modal state
-  const [modal, setModal] = useState<"add" | "edit" | "invite" | "permissions" | null>(null);
+  const [modal, setModal] = useState<
+    "add" | "edit" | "invite" | "permissions" | null
+  >(null);
   const [editTarget, setEditTarget] = useState<UserRow | null>(null);
 
   // Permissions modal state
@@ -349,7 +352,10 @@ export default function UsersManager({
           <div className="bg-white rounded-2xl border border-[#E5E3DE] p-6 w-full max-w-sm shadow-xl space-y-5">
             <div className="flex items-center justify-between">
               <p className="text-sm font-bold text-[#111]">Permissions</p>
-              <button onClick={closeModal} className="text-[#999] hover:text-[#111] transition-colors">
+              <button
+                onClick={closeModal}
+                className="text-[#999] hover:text-[#111] transition-colors"
+              >
                 <X size={16} />
               </button>
             </div>
@@ -718,7 +724,9 @@ export default function UsersManager({
                         <p className="text-xs text-[#bbb]">
                           Expires in {daysLeft} day{daysLeft !== 1 ? "s" : ""}
                         </p>
-                          <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-md ${roleBadge(inv.role)}`}>
+                        <span
+                          className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-md ${roleBadge(inv.role)}`}
+                        >
                           {roleLabel(inv.role)}
                         </span>
                       </div>

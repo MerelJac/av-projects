@@ -4,9 +4,10 @@ import BOMEditor from "../BomEditor";
 import { BOMItem, BOMLine, BOMType } from "@/types/bom";
 import NotesPanel from "@/app/components/NotesPanel";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { authOptions, hasPermission } from "@/lib/auth";
 import { calcBOMTotals } from "../actions";
 import DuplicateBomToProjectButton from "./DuplicateBomToProjectButton";
+import { Permission } from "@prisma/client";
 
 export default async function BOMPage({
   params,
@@ -86,6 +87,11 @@ export default async function BOMPage({
     }),
   ]);
 
+
+    const canProposalCreate = await hasPermission(Permission.PROPOSAL_CREATE);
+
+  const canPoCreate = await hasPermission(Permission.PO_CREATE);
+    const canEditBom = await hasPermission(Permission.BOM_EDIT);
   return (
     <div className="bg-[#F7F6F3]">
       <BOMEditor
@@ -113,6 +119,9 @@ export default async function BOMPage({
         })}
         projectCosts={projectCosts}
         projectPOs={projectPOs}
+        canProposalCreate={canProposalCreate}
+        canPoCreate={canPoCreate}
+        canEditBom={canEditBom}
       />
       <div className="max-w-5xl mx-auto px-6 pb-10">
         <NotesPanel

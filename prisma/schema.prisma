@@ -20,6 +20,7 @@ enum Permission {
   PROPOSAL_CREATE
   PROPOSAL_CAN_INVOICE
   PROPOSAL_EDIT
+   BOM_EDIT
 }
 
 model User {
