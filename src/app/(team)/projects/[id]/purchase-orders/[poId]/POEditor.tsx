@@ -196,12 +196,16 @@ export default function POEditor({
   users,
   currentUserId,
   linkedSubscriptions = [],
+  canEditPo,
+  canApprovePo
 }: {
   po: PO;
   projectId: string;
   users: User[];
   currentUserId: string | undefined;
   linkedSubscriptions?: LinkedSubscription[];
+  canEditPo?: boolean;
+  canApprovePo?: boolean;
 }) {
   const router = useRouter();
   const [status, setStatus] = useState(po.status);
@@ -783,6 +787,7 @@ export default function POEditor({
             <div className="flex items-center gap-2 flex-wrap justify-end">
               {STATUS_OPTIONS.map((s) => (
                 <button
+                disabled={!canApprovePo || !canEditPo}
                   key={s}
                   onClick={() => handleStatusChange(s)}
                   className={`text-xs font-semibold px-3 py-1.5 rounded-xl border transition-colors ${
@@ -842,7 +847,7 @@ export default function POEditor({
             <h3 className="font-semibold text-sm text-[#111]">Order Details</h3>
             {!editingInfo ? (
               <button
-                disabled={status === "CANCELLED"}
+                disabled={status === "CANCELLED" || !canEditPo}
                 onClick={() => setEditingInfo(true)}
                 className="flex items-center gap-1.5 text-xs text-[#888] hover:text-[#111] transition-colors"
               >
@@ -1077,6 +1082,7 @@ export default function POEditor({
               </div>
               {canEdit && (
                 <button
+                disabled={!canEditPo}
                   onClick={() => setShowAddLine((v) => !v)}
                   className="flex items-center gap-1.5 text-xs font-semibold bg-[#111] text-white px-3 py-1.5 rounded-lg hover:bg-[#333] transition-colors"
                 >
@@ -1389,7 +1395,7 @@ export default function POEditor({
                 )}
               </div>
               {lines.some((l) => l.receivedQuantity > 0) &&
-                status !== "CANCELLED" && (
+               ( status !== "CANCELLED"  || !canEditPo) && (
                   <button
                     onClick={() => setShowReturnModal(true)}
                     className="flex items-center gap-1.5 text-xs font-semibold border border-[#E5E3DE] text-[#444] px-3 py-1.5 rounded-lg hover:bg-[#F0EEE9] transition-colors"
@@ -1540,7 +1546,7 @@ export default function POEditor({
                 <span className="text-xs text-[#bbb]">{shipments.length}</span>
               </div>
               <button
-                disabled={status === "CANCELLED"}
+                disabled={status === "CANCELLED"  || !canEditPo}
                 onClick={() => setShowShipmentForm(true)}
                 className="flex items-center gap-1.5 text-xs font-semibold bg-[#111] text-white px-3 py-1.5 rounded-lg hover:bg-[#333] transition-colors"
               >
@@ -1980,7 +1986,7 @@ export default function POEditor({
                             )
                           }
                           disabled={
-                            !form.startDate || !form.endDate || form.saving
+                            !form.startDate || !form.endDate || form.saving || !canEditPo
                           }
                           className="flex items-center gap-1.5 text-xs font-semibold bg-[#111] text-white px-3 py-1.5 rounded-lg hover:bg-[#333] disabled:opacity-40 transition-colors"
                         >

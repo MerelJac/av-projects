@@ -1,8 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import POEditor from "./POEditor";
-import { authOptions } from "@/lib/auth";
+import { authOptions, hasPermission } from "@/lib/auth";
 import { getServerSession } from "next-auth";
+import { Permission } from "@prisma/client";
 
 export default async function POPage({
   params,
@@ -11,9 +12,8 @@ export default async function POPage({
 }) {
   const { id, poId } = await params;
 
-
-    const session = await getServerSession(authOptions);
-    const currentUserId = session?.user?.id;
+  const session = await getServerSession(authOptions);
+  const currentUserId = session?.user?.id;
   const [po, users] = await Promise.all([
     prisma.purchaseOrder.findUnique({
       where: { id: poId },
@@ -22,7 +22,12 @@ export default async function POPage({
         project: { include: { customer: true } },
         lines: { include: { item: true } },
         quote: { select: { id: true } },
-        buyer: { select: { id: true, profile: { select: { firstName: true, lastName: true } } } },
+        buyer: {
+          select: {
+            id: true,
+            profile: { select: { firstName: true, lastName: true } },
+          },
+        },
         shipments: {
           include: {
             lines: { include: { item: true } },
@@ -39,7 +44,10 @@ export default async function POPage({
     }),
     prisma.user.findMany({
       where: { role: { in: ["TEAM", "ADMIN"] } },
-      select: { id: true, profile: { select: { firstName: true, lastName: true } } },
+      select: {
+        id: true,
+        profile: { select: { firstName: true, lastName: true } },
+      },
       orderBy: { profile: { firstName: "asc" } },
     }),
   ]);
@@ -51,7 +59,14 @@ export default async function POPage({
     include: {
       subscription: {
         include: {
-          item: { select: { id: true, itemNumber: true, manufacturer: true, description: true } },
+          item: {
+            select: {
+              id: true,
+              itemNumber: true,
+              manufacturer: true,
+              description: true,
+            },
+          },
         },
       },
     },
@@ -67,5 +82,17 @@ export default async function POPage({
     returns: po.returns,
   };
 
-  return <POEditor po={poSerialized} projectId={id} users={users} currentUserId={currentUserId} linkedSubscriptions={linkedSubscriptions} />;
+  const canEditPo = await hasPermission(Permission.PO_EDIT);
+  const canApprovePo = await hasPermission(Permission.PO_APPROVE);
+  return (
+    <POEditor
+      po={poSerialized}
+      projectId={id}
+      users={users}
+      currentUserId={currentUserId}
+      linkedSubscriptions={linkedSubscriptions}
+      canEditPo={canEditPo}
+      canApprovePo={canApprovePo}
+    />
+  );
 }
