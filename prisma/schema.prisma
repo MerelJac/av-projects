@@ -12,6 +12,15 @@ enum Role {
   ADMIN
 }
 
+enum Permission {
+  PO_APPROVE
+  PO_CREATE
+  PO_EDIT
+  PROPOSAL_APPROVE
+  PROPOSAL_CREATE
+  PROPOSAL_EDIT
+}
+
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -27,6 +36,7 @@ model User {
   auditLogs           AuditLog[]
   defaultBuyerVendors Vendor[]             @relation("VendorDefaultBuyer")
   purchaseOrdersBuyer PurchaseOrder[]      @relation("POBuyer")
+  permissions         Permission[]         @default([])
 }
 
 model Profile {

@@ -24,6 +24,8 @@ import CreateInvoiceModal from "@/app/components/team/invoices/CreateInvoiceModa
 import { BillingTerms } from "@/app/(team)/customers/[id]/EditCustomerButton";
 import AuditFeed from "@/app/components/AuditFeed";
 import RichTextEditor from "@/app/components/RichTextEditor";
+import { hasPermission } from "@/lib/auth";
+import { Permission } from "@/types/user";
 
 // Derive types directly from the Prisma payload
 type QuoteLine = QuoteWithDetails["lines"][number];
@@ -265,23 +267,20 @@ export default function ProposalEditor({
   }
 
   async function handleStatusChange(newStatus: QuoteStatus) {
+    if (!(await hasPermission(Permission.PROPOSAL_APPROVE))) {
+      setToast("error", "You do not have permission to approve proposals");
+      return;
+    }
+
     setStatus(newStatus);
     setSaved(false);
   }
-
   // Financials
   const subtotal = lines.reduce((s, l) => s + l.price * l.quantity, 0);
   const totalCost = lines.reduce((s, l) => s + (l.cost ?? 0) * l.quantity, 0);
   const margin = subtotal > 0 ? ((subtotal - totalCost) / subtotal) * 100 : 0;
 
   const statusCfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.DRAFT;
-
-  const computedDeposit =
-    depositAmount != null
-      ? depositAmount
-      : depositPct != null && subtotal > 0
-        ? (depositPct / 100) * subtotal
-        : null;
 
   return (
     <div className="bg-[#F7F6F3]">
@@ -733,7 +732,8 @@ export default function ProposalEditor({
                 bundles={bundles}
                 customer={{
                   ...initialQuote.customer,
-                  billingTerm: initialQuote.customer.billingTerm as BillingTerms | null,
+                  billingTerm: initialQuote.customer
+                    .billingTerm as BillingTerms | null,
                 }}
                 quoteSubtotal={subtotal}
                 onClose={() => setShowInvoiceModal(false)}
