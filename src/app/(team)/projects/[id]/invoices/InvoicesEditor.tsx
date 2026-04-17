@@ -14,8 +14,6 @@ import {
   Percent,
   List,
   ChevronRight,
-  Eye,
-  Mail,
   Trash2,
   Download,
   Pencil,
@@ -56,7 +54,7 @@ type Invoice = {
   shipToState: string | null;
   shipToZipcode: string | null;
   shipToCountry: string | null;
-  billingTerms: "NET15" | "NET45" | "NET30" | "PROGRESS" | "PREPAID" | null;
+  billingTerms: "NET15" | "NET45" | "NET30" | "PROGRESS" | "PREPAID" |  "DUE_UPON_RECEIPT" | null;
   notes: string | null;
   issuedAt: Date | null;
   dueDate: Date | null;
@@ -741,6 +739,23 @@ export default function InvoicesEditor({
                               {label}
                             </label>
                             <div className="space-y-1.5">
+                                 <input
+                                type="text"
+                                placeholder="BillToContact"
+                                value={
+                                  infoForm[
+                                    `${prefix}Contact` as keyof typeof infoForm
+                                  ]
+                                }
+                                onChange={(e) =>
+                                  setInfoForm((f) => ({
+                                    ...f,
+                                    [`${prefix}Contact`]: e.target.value,
+                                  }))
+                                }
+                                className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#111]"
+                              />
+
                               <input
                                 type="text"
                                 placeholder="Address line 1"

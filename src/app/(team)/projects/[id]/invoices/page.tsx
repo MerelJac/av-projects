@@ -29,6 +29,7 @@ export default async function InvoicesPage({
   });
 
   return (
+    
     <InvoicesEditor
       project={project}
       invoices={invoices}
