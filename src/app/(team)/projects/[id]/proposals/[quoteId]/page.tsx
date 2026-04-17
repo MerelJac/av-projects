@@ -8,7 +8,6 @@ import { getServerSession } from "next-auth";
 import { Permission } from "@/types/user";
 import DeleteQuoteButton from "@/app/components/projects/DeleteQuoteButton";
 
-
 export default async function QuotePage({
   params,
 }: {
@@ -31,11 +30,22 @@ export default async function QuotePage({
         },
       },
       lines: {
-        include: { item: { include: { preferredVendor: { select: { name: true } } } }, bundle: true },
+        include: {
+          item: { include: { preferredVendor: { select: { name: true } } } },
+          bundle: true,
+        },
         orderBy: { id: "asc" },
       },
       quoteBundles: {
-        include: { lines: { include: { item: { include: { preferredVendor: { select: { name: true } } } } } } },
+        include: {
+          lines: {
+            include: {
+              item: {
+                include: { preferredVendor: { select: { name: true } } },
+              },
+            },
+          },
+        },
         orderBy: { createdAt: "asc" },
       },
       salesOrder: { select: { id: true } },
@@ -45,10 +55,19 @@ export default async function QuotePage({
   if (!quote || quote.projectId !== id) return notFound();
 
   const canApprove = await hasPermission(Permission.PROPOSAL_APPROVE);
-
+  const canInvoice = await hasPermission(Permission.PROPOSAL_CAN_INVOICE);
+  const canPoCreate = await hasPermission(Permission.PO_CREATE);
+  const canProposalEdit = await hasPermission(Permission.PROPOSAL_EDIT);
   return (
     <div className="bg-[#F7F6F3]">
-      <ProposalEditor quote={quote} projectId={id} canApprove={canApprove} />
+      <ProposalEditor
+        quote={quote}
+        projectId={id}
+        canApprove={canApprove}
+        canInvoice={canInvoice}
+        canPoCreate={canPoCreate}
+        canProposalEdit={canProposalEdit}
+      />
       <div className="max-w-5xl mx-auto px-6 pb-10">
         <NotesPanel
           documentType="QUOTE"

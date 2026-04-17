@@ -59,10 +59,16 @@ export default function ProposalEditor({
   quote: initialQuote,
   projectId,
   canApprove,
+  canInvoice,
+  canPoCreate,
+  canProposalEdit,
 }: {
   quote: QuoteWithDetails;
   projectId: string;
   canApprove: boolean;
+  canInvoice: boolean;
+  canPoCreate: boolean;
+  canProposalEdit: boolean;
 }) {
   const router = useRouter();
   const [lines, setLines] = useState<QuoteLine[]>(initialQuote.lines);
@@ -82,21 +88,6 @@ export default function ProposalEditor({
   const [showPDFPreview, setShowPDFPreview] = useState(false);
   const pdfUrl = `/api/projects/${projectId}/proposals/${initialQuote.id}/pdf`;
 
-  const [depositPct, setDepositPct] = useState<number | null>(
-    initialQuote.depositPct ?? null,
-  );
-  const [depositAmount, setDepositAmount] = useState<number | null>(
-    initialQuote.depositAmount ?? null,
-  );
-  const [depositPaid, setDepositPaid] = useState(
-    initialQuote.depositPaid ?? false,
-  );
-  const [depositPaidAt, setDepositPaidAt] = useState<string>(
-    initialQuote.depositPaidAt
-      ? new Date(initialQuote.depositPaidAt).toISOString().split("T")[0]
-      : "",
-  );
-  const [savingDeposit, setSavingDeposit] = useState(false);
   const [isDirect, setIsDirect] = useState(initialQuote.isDirect ?? false);
   const [isChangeOrder, setIsChangeOrder] = useState(
     initialQuote.isChangeOrder ?? false,
@@ -142,6 +133,37 @@ export default function ProposalEditor({
     setTimeout(() => setToast(null), 3500);
   };
 
+  const handleShowPdfPreview = (b: boolean) => {
+    if (canApprove) {
+      setShowPDFPreview(b);
+    } else {
+      showToast("error", "You dont have permissions to do this");
+    }
+  };
+
+  const handleProposalEdit = (b: boolean) => {
+    if (canProposalEdit) {
+      setShowPDFPreview(b);
+    } else {
+      showToast("error", "You dont have permissions to do this");
+    }
+  };
+
+  const handleShowInvoiceModal = (b: boolean) => {
+    if (canInvoice) {
+      setShowInvoiceModal(b);
+    } else {
+      showToast("error", "You dont have permissions to do this");
+    }
+  };
+
+  const handleShowPoModal = (b: boolean) => {
+    if (canPoCreate) {
+      setShowPOModal(b);
+    } else {
+      showToast("error", "You dont have permissions to do this");
+    }
+  };
   // Unbundled lines
   const unbundledLines = lines.filter((l) => !l.bundleId);
 
@@ -635,9 +657,16 @@ export default function ProposalEditor({
                     label: "Proposal",
                     active: !isDirect && !isChangeOrder,
                     onClick: () => {
-                      setIsDirect(false);
-                      setIsChangeOrder(false);
-                      setSaved(false);
+                      if (canProposalEdit) {
+                        setIsDirect(false);
+                        setIsChangeOrder(false);
+                        setSaved(false);
+                      } else {
+                        showToast(
+                          "error",
+                          "You don't have permissions to do this.",
+                        );
+                      }
                     },
                   },
                   // {
@@ -653,9 +682,16 @@ export default function ProposalEditor({
                     label: "Change Order",
                     active: isChangeOrder,
                     onClick: () => {
-                      setIsChangeOrder(true);
-                      setIsDirect(false);
-                      setSaved(false);
+                      if (canProposalEdit) {
+                        setIsChangeOrder(true);
+                        setIsDirect(false);
+                        setSaved(false);
+                      } else {
+                        showToast(
+                          "error",
+                          "You don't have permissions to do this.",
+                        );
+                      }
                     },
                   },
                 ].map(({ label, active, onClick }) => (
@@ -723,25 +759,21 @@ export default function ProposalEditor({
                 Save changes before completing actions.
               </p>
               <button
-                onClick={() => setShowPDFPreview(true)}
+                onClick={() => handleShowPdfPreview(true)}
                 className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-[#111] border border-[#E5E3DE] hover:bg-[#F7F6F3] transition-colors"
               >
                 <Eye size={14} />
                 Preview PDF
               </button>
-              <a
-                href={`${pdfUrl}?download=true`}
+              <button
+                disabled={canApprove}
                 className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-[#111] border border-[#E5E3DE] hover:bg-[#F7F6F3] transition-colors"
               >
-                <FileText size={14} />
-                Export PDF
-              </a>
-              <button className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-[#111] border border-[#E5E3DE] hover:bg-[#F7F6F3] transition-colors">
                 <Send size={14} />
                 Send to Customer
               </button>
               <button
-                onClick={() => setShowInvoiceModal(true)}
+                onClick={() => handleShowInvoiceModal(true)}
                 className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-[#111] border border-[#E5E3DE] hover:bg-[#F7F6F3] transition-colors"
               >
                 <Package size={14} className="shrink-0" />
@@ -753,7 +785,7 @@ export default function ProposalEditor({
                 </span>
               </button>
               <button
-                onClick={() => setShowPOModal(true)}
+                onClick={() => handleShowPoModal(true)}
                 className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-[#111] border border-[#E5E3DE] hover:bg-[#F7F6F3] transition-colors"
               >
                 <Package size={14} />
