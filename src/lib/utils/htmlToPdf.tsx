@@ -1,7 +1,8 @@
 import { Text, View } from "@react-pdf/renderer";
+import type { Style } from "@react-pdf/types";
 import React from "react";
 
-const BASE: React.CSSProperties & Record<string, unknown> = {
+const BASE: Style = {
   fontSize: 9,
   lineHeight: 1.6,
   color: "#333",
@@ -49,7 +50,7 @@ function fontFor(bold: boolean, italic: boolean) {
   return "Helvetica";
 }
 
-function InlineText({ html, style }: { html: string; style?: Record<string, unknown> }) {
+function InlineText({ html, style }: { html: string; style?: Style }) {
   const segs = inlineSegments(html);
   if (segs.length === 0) return null;
   if (segs.length === 1 && !segs[0].bold && !segs[0].italic) {

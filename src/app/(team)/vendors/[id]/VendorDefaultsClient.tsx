@@ -11,7 +11,14 @@ type VendorDefaults = {
   shipToAddress: string | null;
   billToAddress: string | null;
   shippingMethod: string | null;
-  billingTerms: "NET45" | "NET15" | "NET30" | "PROGRESS" | "PREPAID" | null;
+  billingTerms:
+    | "NET45"
+    | "NET15"
+    | "NET30"
+    | "PROGRESS"
+    | "PREPAID"
+    | "DUE_UPON_RECEIPT"
+    | null;
   creditLimit: number | null;
   defaultBuyerId: string | null;
 };
