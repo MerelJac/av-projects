@@ -36,12 +36,12 @@ export default function PublicLayout({
           <span className="text-xs text-muted">
             © {new Date().getFullYear()} Antares
           </span>
-          <Link
+          {/* <Link
             href="/terms"
             className="text-xs text-muted hover:text-secondary-color transition-colors"
           >
             Terms & Privacy Policy
-          </Link>
+          </Link> */}
         </div>
       </footer>
 

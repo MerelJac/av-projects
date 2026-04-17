@@ -34,6 +34,7 @@ type POLine = {
     description: string | null;
     unit: string | null;
     type: string | null;
+    price: number | null;
   } | null;
 };
 
@@ -279,7 +280,7 @@ export default function POEditor({
       [lineId]: { ...prev[lineId], saving: true },
     }));
     try {
-      console.log("Subscription for project id: ", projectId)
+      console.log("Subscription for project id: ", projectId);
       const res = await fetch("/api/subscriptions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1944,7 +1945,7 @@ export default function POEditor({
                                   },
                                 }))
                               }
-                              placeholder="0.00"
+                             placeholder={String(line?.item?.price ?? 0.0)}
                               className="w-28 text-sm border border-[#E5E3DE] rounded-lg pl-6 pr-2 py-1.5 focus:outline-none focus:border-[#111]"
                             />
                           </div>
@@ -2002,44 +2003,78 @@ export default function POEditor({
           <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
             <div className="px-6 py-4 border-b border-[#F0EEE9] flex items-center gap-2.5">
               <CalendarDays size={15} className="text-[#999]" />
-              <h3 className="font-semibold text-sm text-[#111]">Subscriptions on this PO</h3>
-              <span className="text-xs text-[#bbb]">{linkedSubscriptions.length}</span>
+              <h3 className="font-semibold text-sm text-[#111]">
+                Subscriptions on this PO
+              </h3>
+              <span className="text-xs text-[#bbb]">
+                {linkedSubscriptions.length}
+              </span>
             </div>
             <div className="divide-y divide-[#F0EEE9]">
               {linkedSubscriptions.map((lc) => {
                 const sub = lc.subscription;
                 if (!sub) return null;
                 return (
-                  <div key={lc.id} className="px-6 py-4 flex items-start justify-between gap-4">
+                  <div
+                    key={lc.id}
+                    className="px-6 py-4 flex items-start justify-between gap-4"
+                  >
                     <div>
                       <p className="text-sm font-medium text-[#111]">
                         {sub.item?.manufacturer && (
-                          <span className="text-[#999] mr-1">{sub.item.manufacturer}</span>
+                          <span className="text-[#999] mr-1">
+                            {sub.item.manufacturer}
+                          </span>
                         )}
                         {sub.item?.itemNumber}
                         {sub.item?.description && (
-                          <span className="text-xs text-[#999] ml-2">{sub.item.description}</span>
+                          <span className="text-xs text-[#999] ml-2">
+                            {sub.item.description}
+                          </span>
                         )}
                       </p>
                       <p className="text-xs text-[#888] mt-1">
-                        {new Date(sub.startDate).toLocaleDateString()} → {new Date(sub.endDate).toLocaleDateString()}
-                        {sub.billingCycle && <span className="ml-2 text-[#bbb]">· {sub.billingCycle.charAt(0) + sub.billingCycle.slice(1).toLowerCase()}</span>}
+                        {new Date(sub.startDate).toLocaleDateString()} →{" "}
+                        {new Date(sub.endDate).toLocaleDateString()}
+                        {sub.billingCycle && (
+                          <span className="ml-2 text-[#bbb]">
+                            ·{" "}
+                            {sub.billingCycle.charAt(0) +
+                              sub.billingCycle.slice(1).toLowerCase()}
+                          </span>
+                        )}
                       </p>
-                      {sub.notes && <p className="text-xs text-[#999] mt-0.5 italic">{sub.notes}</p>}
+                      {sub.notes && (
+                        <p className="text-xs text-[#999] mt-0.5 italic">
+                          {sub.notes}
+                        </p>
+                      )}
                     </div>
                     <div className="text-right shrink-0">
-                      <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full mb-1 ${
-                        sub.status === "ACTIVE" ? "bg-green-100 text-green-700" :
-                        sub.status === "EXPIRED" ? "bg-gray-100 text-gray-500" :
-                        "bg-amber-100 text-amber-700"
-                      }`}>{sub.status.charAt(0) + sub.status.slice(1).toLowerCase()}</span>
+                      <span
+                        className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full mb-1 ${
+                          sub.status === "ACTIVE"
+                            ? "bg-green-100 text-green-700"
+                            : sub.status === "EXPIRED"
+                              ? "bg-gray-100 text-gray-500"
+                              : "bg-amber-100 text-amber-700"
+                        }`}
+                      >
+                        {sub.status.charAt(0) +
+                          sub.status.slice(1).toLowerCase()}
+                      </span>
                       {sub.price != null && (
                         <p className="text-sm font-semibold text-[#111]">
-                          ${Number(sub.price).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          $
+                          {Number(sub.price).toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                          })}
                         </p>
                       )}
                       {sub.quantity != null && (
-                        <p className="text-xs text-[#999]">qty {sub.quantity}</p>
+                        <p className="text-xs text-[#999]">
+                          qty {sub.quantity}
+                        </p>
                       )}
                     </div>
                   </div>
