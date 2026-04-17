@@ -18,6 +18,7 @@ import {
   Mail,
   Trash2,
   Download,
+  Pencil,
 } from "lucide-react";
 import NotesPanel from "@/app/components/NotesPanel";
 
@@ -151,6 +152,67 @@ export default function InvoicesEditor({
   } | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   const [sendingEmail, setSendingEmail] = useState(false);
+  const [editingInfo, setEditingInfo] = useState(false);
+  const [savingInfo, setSavingInfo] = useState(false);
+  const [infoForm, setInfoForm] = useState({
+    issuedAt: "", dueDate: "", paidAt: "",
+    billingTerms: "", customerName: "", customerEmail: "",
+    customerPhone: "", billToAddress: "", shipToAddress: "", notes: "",
+  });
+
+  function toDateInput(d: Date | null | string) {
+    if (!d) return "";
+    return new Date(d).toISOString().split("T")[0];
+  }
+
+  function startEditInfo() {
+    if (!selected) return;
+    setInfoForm({
+      issuedAt: toDateInput(selected.issuedAt),
+      dueDate: toDateInput(selected.dueDate),
+      paidAt: toDateInput(selected.paidAt),
+      billingTerms: selected.billingTerms ?? "",
+      customerName: selected.customerName ?? "",
+      customerEmail: selected.customerEmail ?? "",
+      customerPhone: selected.customerPhone ?? "",
+      billToAddress: selected.billToAddress ?? "",
+      shipToAddress: selected.shipToAddress ?? "",
+      notes: selected.notes ?? "",
+    });
+    setEditingInfo(true);
+  }
+
+  async function handleSaveInfo() {
+    if (!selected) return;
+    setSavingInfo(true);
+    try {
+      const res = await fetch(`/api/projects/${project.id}/invoices/${selected.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          issuedAt: infoForm.issuedAt || null,
+          dueDate: infoForm.dueDate || null,
+          paidAt: infoForm.paidAt || null,
+          billingTerms: infoForm.billingTerms || null,
+          customerName: infoForm.customerName || null,
+          customerEmail: infoForm.customerEmail || null,
+          customerPhone: infoForm.customerPhone || null,
+          billToAddress: infoForm.billToAddress || null,
+          shipToAddress: infoForm.shipToAddress || null,
+          notes: infoForm.notes || null,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      const updated = await res.json();
+      setInvoices((prev) => prev.map((i) => (i.id === selected.id ? { ...i, ...updated } : i)));
+      setEditingInfo(false);
+      showToast("success", "Invoice updated");
+    } catch {
+      showToast("error", "Failed to save");
+    } finally {
+      setSavingInfo(false);
+    }
+  }
 
   async function handleRecalculateTax(invoiceId: string) {
     setRecalculating(true);
@@ -494,109 +556,143 @@ export default function InvoicesEditor({
                   </div>
 
                   {/* Info grid */}
-                  <div className="grid grid-cols-3 gap-4 mb-5 border-t border-[#F0EEE9] pt-4 text-sm">
-                    <div>
-                      <p className="text-xs text-[#999] mb-0.5">Issued</p>
-                      <p className="font-medium text-[#111]">
-                        {formatDate(selected.issuedAt)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-[#999] mb-0.5">Due</p>
-                      <p className="font-medium text-[#111]">
-                        {formatDate(selected.dueDate)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-[#999] mb-0.5">Paid</p>
-                      <p className="font-medium text-[#111]">
-                        {formatDate(selected.paidAt)}
-                      </p>
-                    </div>
-                    {selected.billingTerms && (
-                      <div>
-                        <p className="text-xs text-[#999] mb-0.5">Terms</p>
-                        <p className="font-medium text-[#111]">
-                          {
-                            {
-                              NET15: "Net 15",
-                              NET30: "Net 30",
-  DUE_UPON_RECEIPT: "Due Upon Receipt",
-                              NET45: "Net 45",
-                              PROGRESS: "Progress Billing",
-                              PREPAID: "Prepaid",
-                            }[selected.billingTerms]
-                          }
-                        </p>
-                      </div>
-                    )}
-                    {selected.chargeType === "PERCENTAGE" &&
-                      selected.chargePercent && (
-                        <div>
-                          <p className="text-xs text-[#999] mb-0.5">Charge</p>
-                          <p className="font-medium text-[#111]">
-                            {selected.chargePercent}% progress billing
-                          </p>
+                  <div className="border-t border-[#F0EEE9] pt-4 mb-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-xs font-semibold uppercase tracking-widest text-[#888]">Details</p>
+                      {!editingInfo ? (
+                        <button onClick={startEditInfo} className="flex items-center gap-1 text-xs text-[#888] hover:text-[#111] transition-colors">
+                          <Pencil size={11} /> Edit
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => setEditingInfo(false)} className="text-xs text-[#888] hover:text-[#111] transition-colors">Cancel</button>
+                          <button onClick={handleSaveInfo} disabled={savingInfo} className="text-xs font-semibold bg-[#111] text-white px-3 py-1 rounded-lg hover:bg-[#333] disabled:opacity-40 transition-colors">
+                            {savingInfo ? "Saving…" : "Save"}
+                          </button>
                         </div>
                       )}
-                    {selected.quote && (
-                      <div>
-                        <p className="text-xs text-[#999] mb-0.5">Quote</p>
-                        <p className="font-mono text-xs font-medium text-[#111]">
-                          #{selected.quote.id.toUpperCase()}
-                        </p>
+                    </div>
+
+                    {editingInfo ? (
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-3 gap-3">
+                          {[
+                            { label: "Issued", key: "issuedAt" },
+                            { label: "Due", key: "dueDate" },
+                            { label: "Paid", key: "paidAt" },
+                          ].map(({ label, key }) => (
+                            <div key={key}>
+                              <label className="text-[10px] font-semibold uppercase tracking-widest text-[#999] block mb-1">{label}</label>
+                              <input type="date" value={infoForm[key as keyof typeof infoForm]}
+                                onChange={(e) => setInfoForm((f) => ({ ...f, [key]: e.target.value }))}
+                                className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#111]" />
+                            </div>
+                          ))}
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-[10px] font-semibold uppercase tracking-widest text-[#999] block mb-1">Billing Terms</label>
+                            <select value={infoForm.billingTerms} onChange={(e) => setInfoForm((f) => ({ ...f, billingTerms: e.target.value }))}
+                              className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:border-[#111]">
+                              <option value="">— None —</option>
+                              <option value="NET15">Net 15</option>
+                              <option value="NET30">Net 30</option>
+                              <option value="DUE_UPON_RECEIPT">Due Upon Receipt</option>
+                              <option value="NET45">Net 45</option>
+                              <option value="PROGRESS">Progress Billing</option>
+                              <option value="PREPAID">Prepaid</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-semibold uppercase tracking-widest text-[#999] block mb-1">Customer Name</label>
+                            <input type="text" value={infoForm.customerName} onChange={(e) => setInfoForm((f) => ({ ...f, customerName: e.target.value }))}
+                              className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#111]" />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-semibold uppercase tracking-widest text-[#999] block mb-1">Email</label>
+                            <input type="email" value={infoForm.customerEmail} onChange={(e) => setInfoForm((f) => ({ ...f, customerEmail: e.target.value }))}
+                              className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#111]" />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-semibold uppercase tracking-widest text-[#999] block mb-1">Phone</label>
+                            <input type="tel" value={infoForm.customerPhone} onChange={(e) => setInfoForm((f) => ({ ...f, customerPhone: e.target.value }))}
+                              className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#111]" />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-[10px] font-semibold uppercase tracking-widest text-[#999] block mb-1">Bill To Address</label>
+                            <textarea rows={3} value={infoForm.billToAddress} onChange={(e) => setInfoForm((f) => ({ ...f, billToAddress: e.target.value }))}
+                              className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-[#111]" />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-semibold uppercase tracking-widest text-[#999] block mb-1">Ship To Address</label>
+                            <textarea rows={3} value={infoForm.shipToAddress} onChange={(e) => setInfoForm((f) => ({ ...f, shipToAddress: e.target.value }))}
+                              className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-[#111]" />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-semibold uppercase tracking-widest text-[#999] block mb-1">Notes</label>
+                          <textarea rows={2} value={infoForm.notes} onChange={(e) => setInfoForm((f) => ({ ...f, notes: e.target.value }))}
+                            className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-[#111]" />
+                        </div>
                       </div>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-3 gap-4 text-sm mb-4">
+                          <div>
+                            <p className="text-xs text-[#999] mb-0.5">Issued</p>
+                            <p className="font-medium text-[#111]">{formatDate(selected.issuedAt)}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-[#999] mb-0.5">Due</p>
+                            <p className="font-medium text-[#111]">{formatDate(selected.dueDate)}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-[#999] mb-0.5">Paid</p>
+                            <p className="font-medium text-[#111]">{formatDate(selected.paidAt)}</p>
+                          </div>
+                          {selected.billingTerms && (
+                            <div>
+                              <p className="text-xs text-[#999] mb-0.5">Terms</p>
+                              <p className="font-medium text-[#111]">{{ NET15: "Net 15", NET30: "Net 30", DUE_UPON_RECEIPT: "Due Upon Receipt", NET45: "Net 45", PROGRESS: "Progress Billing", PREPAID: "Prepaid" }[selected.billingTerms]}</p>
+                            </div>
+                          )}
+                          {selected.chargeType === "PERCENTAGE" && selected.chargePercent && (
+                            <div>
+                              <p className="text-xs text-[#999] mb-0.5">Charge</p>
+                              <p className="font-medium text-[#111]">{selected.chargePercent}% progress billing</p>
+                            </div>
+                          )}
+                          {selected.quote && (
+                            <div>
+                              <p className="text-xs text-[#999] mb-0.5">Quote</p>
+                              <p className="font-mono text-xs font-medium text-[#111]">#{selected.quote.id.toUpperCase()}</p>
+                            </div>
+                          )}
+                        </div>
+                        {(selected.customerName || selected.billToAddress || selected.shipToAddress) && (
+                          <div className="border-t border-[#F0EEE9] pt-4 grid grid-cols-2 gap-6">
+                            {(selected.customerName || selected.billToAddress) && (
+                              <div>
+                                <p className="text-xs font-semibold uppercase tracking-widest text-[#999] mb-2">Bill To</p>
+                                {selected.customerName && <p className="text-sm font-semibold text-[#111]">{selected.customerName}</p>}
+                                {selected.customerEmail && <p className="text-sm text-[#666]">{selected.customerEmail}</p>}
+                                {selected.customerPhone && <p className="text-sm text-[#666]">{selected.customerPhone}</p>}
+                                {selected.billToAddress && <p className="text-sm text-[#666] whitespace-pre-wrap mt-1">{selected.billToAddress}</p>}
+                              </div>
+                            )}
+                            {selected.shipToAddress && (
+                              <div>
+                                <p className="text-xs font-semibold uppercase tracking-widest text-[#999] mb-2">Ship To</p>
+                                <p className="text-sm text-[#666] whitespace-pre-wrap">{selected.shipToAddress}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
-
-                  {(selected.customerName ||
-                    selected.billToAddress ||
-                    selected.shipToAddress) && (
-                    <div className="border-t border-[#F0EEE9] pt-4 mb-5">
-                      <div className="grid grid-cols-2 gap-6">
-                        {/* Bill To */}
-                        {(selected.customerName || selected.billToAddress) && (
-                          <div>
-                            <p className="text-xs font-semibold uppercase tracking-widest text-[#999] mb-2">
-                              Bill To
-                            </p>
-                            {selected.customerName && (
-                              <p className="text-sm font-semibold text-[#111]">
-                                {selected.customerName}
-                              </p>
-                            )}
-                            {selected.customerEmail && (
-                              <p className="text-sm text-[#666]">
-                                {selected.customerEmail}
-                              </p>
-                            )}
-                            {selected.customerPhone && (
-                              <p className="text-sm text-[#666]">
-                                {selected.customerPhone}
-                              </p>
-                            )}
-                            {selected.billToAddress && (
-                              <p className="text-sm text-[#666] whitespace-pre-wrap mt-1">
-                                {selected.billToAddress}
-                              </p>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Ship To */}
-                        {selected.shipToAddress && (
-                          <div>
-                            <p className="text-xs font-semibold uppercase tracking-widest text-[#999] mb-2">
-                              Ship To
-                            </p>
-                            <p className="text-sm text-[#666] whitespace-pre-wrap">
-                              {selected.shipToAddress}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
                   {/* Line items */}
                   {selected.lines.length > 0 && (
                     <div className="border-t border-[#F0EEE9] pt-4">

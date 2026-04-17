@@ -47,7 +47,7 @@ export async function POST(
   }
 
   const destination = invoice.shipToAddress ?? invoice.billToAddress;
-
+  console.log("Vertex desitnation: ", destination)
   if (!destination) {
     return NextResponse.json(
       { error: "No ship-to or bill-to address on invoice" },
@@ -80,6 +80,7 @@ export async function POST(
     );
   }
 
+  console.log("Vertex result: ", vertexResult)
   const subtotal = invoice.lines.reduce((s, l) => s + l.price * l.quantity, 0);
 
   // Update invoice tax + total
