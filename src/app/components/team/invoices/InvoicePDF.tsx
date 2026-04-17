@@ -293,6 +293,9 @@ export function buildInvoicePDF({
             {customerPhone && (
               <Text style={styles.billToDetail}>{customerPhone}</Text>
             )}
+            {billToContact && (
+              <Text style={styles.billToDetail}>{billToContact}</Text>
+            )}
             {billToFormatted && (
               <Text style={styles.billToDetail}>{billToFormatted}</Text>
             )}
@@ -301,6 +304,9 @@ export function buildInvoicePDF({
           {shipToFormatted && (
             <View style={styles.billToBlock}>
               <Text style={styles.billToLabel}>Ship To</Text>
+               {shipToContact && (
+              <Text style={styles.billToDetail}>{shipToContact}</Text>
+            )}
               <Text style={styles.billToDetail}>{shipToFormatted}</Text>
             </View>
           )}

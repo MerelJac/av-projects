@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { buildInvoicePDF } from "@/app/components/team/invoices/InvoicePDF";
+import { Invoice } from "@prisma/client";
 
 export async function GET(
   req: NextRequest,
@@ -23,23 +24,26 @@ export async function GET(
       customerName: invoice.customerName,
       customerEmail: invoice.customerEmail,
       customerPhone: invoice.customerPhone,
+      billToContact: invoice.billToContact,
       billToAddress: invoice.billToAddress,
-      billToAddress2: (invoice as any).billToAddress2,
-      billToCity: (invoice as any).billToCity,
-      billToState: (invoice as any).billToState,
-      billToZipcode: (invoice as any).billToZipcode,
-      billToCountry: (invoice as any).billToCountry,
+      billToAddress2: (invoice as Invoice).billToAddress2,
+      billToCity: (invoice as Invoice).billToCity,
+      billToState: (invoice as Invoice).billToState,
+      billToZipcode: (invoice as Invoice).billToZipcode,
+      billToCountry: (invoice as Invoice).billToCountry,
+      shipToContact: invoice.shipToContact,
       shipToAddress: invoice.shipToAddress,
-      shipToAddress2: (invoice as any).shipToAddress2,
-      shipToCity: (invoice as any).shipToCity,
-      shipToState: (invoice as any).shipToState,
-      shipToZipcode: (invoice as any).shipToZipcode,
-      shipToCountry: (invoice as any).shipToCountry,
+      shipToAddress2: (invoice as Invoice).shipToAddress2,
+      shipToCity: (invoice as Invoice).shipToCity,
+      shipToState: (invoice as Invoice).shipToState,
+      shipToZipcode: (invoice as Invoice).shipToZipcode,
+      shipToCountry: (invoice as Invoice).shipToCountry,
       billingTerms: invoice.billingTerms as
         | "NET45"
         | "NET15"
         | "NET30"
         | "PROGRESS"
+        | "DUE_UPON_RECEIPT"
         | "PREPAID"
         | null,
       chargeType: invoice.chargeType as "LINE_ITEMS" | "PERCENTAGE",
