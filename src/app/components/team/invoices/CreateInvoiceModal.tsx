@@ -97,9 +97,25 @@ export default function CreateInvoiceModal({
       return init;
     },
   );
+
+  const [lineQuantity, setLineQuantity] = useState<Record<string, number>>(
+    () => {
+      const init: Record<string, number> = {};
+      for (const l of lines) init[l.id] = l.quantity;
+      for (const b of bundles) {
+        for (const l of b.lines) init[l.id] = l.quantity;
+      }
+      return init;
+    },
+  );
+
   function toggleTaxable(key: string, e: React.MouseEvent) {
     e.stopPropagation();
     setLineTaxable((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
+  function updateLineQuantity(key: string, quantity: number) {
+    setLineQuantity((prev) => ({ ...prev, [key]: quantity }));
   }
   function addAdditionalLine(description = "") {
     setAdditionalLines((prev) => [
@@ -167,7 +183,7 @@ export default function CreateInvoiceModal({
       if (selected.has(l.id)) {
         result.push({
           description: l.description,
-          quantity: l.quantity,
+          quantity: lineQuantity[l.id] ?? l.quantity,
           price: l.price,
           taxable: lineTaxable[l.id] ?? true,
           quoteLineId: l.id,
@@ -180,7 +196,7 @@ export default function CreateInvoiceModal({
           if (selected.has(l.id)) {
             result.push({
               description: l.description,
-              quantity: l.quantity,
+              quantity: lineQuantity[l.id] ?? l.quantity,
               price: l.price,
               taxable: lineTaxable[l.id] ?? true,
               quoteLineId: l.id,
@@ -404,9 +420,17 @@ export default function CreateInvoiceModal({
                           <span className="flex-1 text-sm text-[#111]">
                             {l.description}
                           </span>
-                          <span className="text-xs text-[#888]">
-                            ×{l.quantity}
-                          </span>
+                          <input
+                            type="number"
+                            min={1}
+                            value={lineQuantity[l.id] ?? l.quantity}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              updateLineQuantity(l.id, parseInt(e.target.value) || 1);
+                            }}
+                            className="w-12 text-right text-sm border border-[#E5E3DE] rounded px-1 py-0.5 focus:outline-none focus:border-[#111] tabular-nums"
+                          />
                           <button
                             type="button"
                             onClick={(e) => toggleTaxable(l.id, e)}
@@ -415,7 +439,7 @@ export default function CreateInvoiceModal({
                             {taxable ? "Taxable" : "Exempt"}
                           </button>
                           <span className="text-sm font-medium text-[#111] w-20 text-right">
-                            ${fmt(l.price * l.quantity)}
+                            ${fmt(l.price * (lineQuantity[l.id] ?? l.quantity))}
                           </span>
                         </div>
                       );
@@ -503,9 +527,17 @@ export default function CreateInvoiceModal({
                             <span className="flex-1 text-sm text-[#111]">
                               {l.description}
                             </span>
-                            <span className="text-xs text-[#888]">
-                              ×{l.quantity}
-                            </span>
+                            <input
+                              type="number"
+                              min={1}
+                              value={lineQuantity[l.id] ?? l.quantity}
+                              onClick={(e) => e.stopPropagation()}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                updateLineQuantity(l.id, parseInt(e.target.value) || 1);
+                              }}
+                              className="w-12 text-right text-sm border border-[#E5E3DE] rounded px-1 py-0.5 focus:outline-none focus:border-[#111] tabular-nums"
+                            />
                             <button
                               type="button"
                               onClick={(e) => toggleTaxable(l.id, e)}
@@ -514,7 +546,7 @@ export default function CreateInvoiceModal({
                               {taxable ? "Tax" : "Exempt"}
                             </button>
                             <span className="text-sm font-medium text-[#111] w-20 text-right">
-                              ${fmt(l.price * l.quantity)}
+                              ${fmt(l.price * (lineQuantity[l.id] ?? l.quantity))}
                             </span>
                           </div>
                         );

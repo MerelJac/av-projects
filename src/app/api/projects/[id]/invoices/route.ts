@@ -208,13 +208,22 @@ export async function POST(
       })),
     });
 
+    const nonTaxableLines = await prisma.invoiceLine.findMany({
+      where: { invoiceId: invoice.id, taxable: false },
+    });
+
+    const nonTaxableSubtotal = nonTaxableLines.reduce(
+      (s, l) => s + l.price * l.quantity,
+      0,
+    );
+
     if (vertexResult) {
       // Update invoice with tax totals
       await prisma.invoice.update({
         where: { id: invoice.id },
         data: {
           taxAmount: vertexResult.totalTax,
-          amount: vertexResult.totalWithTax,
+          amount: vertexResult.totalWithTax + nonTaxableSubtotal,
         },
       });
 
