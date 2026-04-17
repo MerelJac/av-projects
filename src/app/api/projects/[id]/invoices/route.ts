@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { InvoiceChargeType } from "@prisma/client";
 import { calculateVertexTax } from "@/lib/utils/vertex";
+import { applyInvoiceTax } from "@/lib/utils/invoice-tax";
 
 type InvoiceLineInput = {
   description: string;
@@ -191,55 +192,18 @@ export async function POST(
   });
 
   // Calculate tax after invoice is created
-  if (invoice.shipToAddress && isCustomerTaxable) {
-    const taxableLines = await prisma.invoiceLine.findMany({
-      where: { invoiceId: invoice.id, taxable: true },
-      include: { item: { select: { id: true, itemNumber: true } } },
-    });
+  const invoiceLines = await prisma.invoiceLine.findMany({
+    where: { invoiceId: invoice.id },
+    include: { item: { select: { id: true, itemNumber: true } } },
+  });
 
-    const vertexResult = await calculateVertexTax({
-      documentNumber: invoice.invoiceNumber ?? undefined,
-      destination: invoice.shipToAddress,
-      lines: taxableLines.map((line, i) => ({
-        lineItemNumber: (i + 1) * 10000,
-        productCode: line.item?.itemNumber ?? line.description,
-        quantity: line.quantity,
-        unitPrice: line.price,
-      })),
-    });
-
-    const nonTaxableLines = await prisma.invoiceLine.findMany({
-      where: { invoiceId: invoice.id, taxable: false },
-    });
-
-    const nonTaxableSubtotal = nonTaxableLines.reduce(
-      (s, l) => s + l.price * l.quantity,
-      0,
-    );
-
-    if (vertexResult) {
-      // Update invoice with tax totals
-      await prisma.invoice.update({
-        where: { id: invoice.id },
-        data: {
-          taxAmount: vertexResult.totalTax,
-          amount: vertexResult.totalWithTax + nonTaxableSubtotal,
-        },
-      });
-
-      // Update each line with its tax
-      await Promise.all(
-        vertexResult.lineTaxes.map((lt, i) => {
-          const line = taxableLines[i];
-          if (!line) return;
-          return prisma.invoiceLine.update({
-            where: { id: line.id },
-            data: { taxAmount: lt.taxAmount },
-          });
-        }),
-      );
-    }
-  }
+  await applyInvoiceTax({
+    invoiceId: invoice.id,
+    invoiceNumber: invoice.invoiceNumber,
+    destination: invoice.shipToAddress,
+    lines: invoiceLines,
+    isCustomerTaxable,
+  });
 
   return NextResponse.json({
     invoiceId: invoice.id,

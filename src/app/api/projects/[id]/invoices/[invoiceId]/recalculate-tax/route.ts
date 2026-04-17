@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
-import { calculateVertexTax } from "@/lib/utils/vertex";
+
+import { applyInvoiceTax } from "@/lib/utils/invoice-tax";
 
 export async function POST(
   _req: NextRequest,
@@ -12,7 +13,6 @@ export async function POST(
     where: { id: invoiceId },
     include: {
       lines: {
-        where: { taxable: true },
         include: { item: { select: { id: true } } },
       },
       project: {
@@ -24,104 +24,19 @@ export async function POST(
   if (!invoice) {
     return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
   }
-
-  const isCustomerTaxable = invoice.project.customer.taxStatus === "TAXABLE";
-
-  //  RETURN early if not taxable
-  if (!isCustomerTaxable) {
-    const subtotal = invoice.lines.reduce(
-      (s, l) => s + l.price * l.quantity,
-      0,
-    );
-
-    const updated = await prisma.invoice.update({
-      where: { id: invoiceId },
-      data: { taxAmount: 0, amount: subtotal },
+  try {
+    const result = await applyInvoiceTax({
+      invoiceId,
+      invoiceNumber: invoice.invoiceNumber,
+      destination: invoice.shipToAddress ?? invoice.billToAddress,
+      lines: invoice.lines,
+      isCustomerTaxable: invoice.project.customer.taxStatus === "TAXABLE",
     });
-
-    return NextResponse.json({
-      taxAmount: 0,
-      amount: updated.amount,
-      lineTaxes: [],
-    });
+    return NextResponse.json(result);
+  } catch (e) {
+    if (e instanceof Error && e.message === "Tax calculation failed") {
+      return NextResponse.json({ error: e.message }, { status: 502 });
+    }
+    throw e;
   }
-
-  const destination = invoice.shipToAddress ?? invoice.billToAddress;
-  console.log("Vertex desitnation: ", destination)
-  if (!destination) {
-    return NextResponse.json(
-      { error: "No ship-to or bill-to address on invoice" },
-      { status: 400 },
-    );
-  }
-
-  if (!invoice.lines.length) {
-    return NextResponse.json(
-      { error: "No taxable lines on invoice" },
-      { status: 400 },
-    );
-  }
-
-  const vertexResult = await calculateVertexTax({
-    documentNumber: invoice.invoiceNumber ?? invoice.id,
-    destination,
-    lines: invoice.lines.map((line, i) => ({
-      lineItemNumber: (i + 1) * 10000,
-      productCode: line.item?.id ?? line.description,
-      quantity: line.quantity,
-      unitPrice: line.price,
-    })),
-  });
-
-  if (!vertexResult) {
-    return NextResponse.json(
-      { error: "Tax calculation failed" },
-      { status: 502 },
-    );
-  }
-
-  console.log("Vertex result: ", vertexResult)
-  const subtotal = invoice.lines.reduce((s, l) => s + l.price * l.quantity, 0);
-
-  // Update invoice tax + total
-  const updated = await prisma.invoice.update({
-    where: { id: invoiceId },
-    data: {
-      taxAmount: vertexResult.totalTax,
-      amount: subtotal + vertexResult.totalTax,
-    },
-  });
-
-  // Update per-line tax amounts — match by lineItemNumber (10000, 20000, …)
-  await Promise.all(
-    invoice.lines.map((line, i) => {
-      const lineItemNumber = (i + 1) * 10000;
-      const lt = vertexResult.lineTaxes.find(
-        (t) => t.lineItemNumber === lineItemNumber,
-      );
-      if (!lt) return;
-      return prisma.invoiceLine.update({
-        where: { id: line.id },
-        data: { taxAmount: lt.taxAmount },
-      });
-    }),
-  );
-
-  // Attach the invoiceLineId so the frontend can match by ID, not index
-  const lineTaxesWithId = invoice.lines.map((line, i) => {
-    const lineItemNumber = (i + 1) * 10000;
-    const lt = vertexResult.lineTaxes.find(
-      (t) => t.lineItemNumber === lineItemNumber,
-    );
-    return {
-      invoiceLineId: line.id,
-      taxAmount: lt?.taxAmount ?? 0,
-    };
-  });
-
-  return NextResponse.json({
-    taxAmount: updated.taxAmount,
-    amount: updated.amount,
-    lineTaxes: lineTaxesWithId,
-  });
 }

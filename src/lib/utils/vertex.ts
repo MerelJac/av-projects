@@ -23,6 +23,7 @@ function escapeXml(s: string) {
     .replace(/"/g, "&quot;");
 }
 
+
 // Parse a free-form address string like "123 Main St\nAustin, TX 78714-9114"
 function parseAddressString(raw: string): VertexDestination {
   const lines = raw
@@ -209,6 +210,7 @@ export type VertexTaxResult = {
 export async function calculateVertexTax(
   input: VertexTaxInput,
 ): Promise<VertexTaxResult | null> {
+   console.log("Vertex Input: ", input)
   const trustedId = process.env.VERTEX_TRUSTED_ID;
   if (!trustedId) {
     console.error("calculateVertexTax: VERTEX_TRUSTED_ID env var not set");
@@ -223,6 +225,7 @@ export async function calculateVertexTax(
       ? parseAddressString(input.destination)
       : input.destination;
 
+      console.log("Destination: ", destination)
   const lineItemsXml = input.lines
     .map((line, i) =>
       buildLineItemXml({
