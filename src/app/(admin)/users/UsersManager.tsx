@@ -24,6 +24,7 @@ const PERMISSION_LABELS: Record<Permission, string> = {
   PROPOSAL_APPROVE: "Approve Proposals",
   PROPOSAL_CREATE: "Create Proposals",
   PROPOSAL_EDIT: "Edit Proposals",
+  BOM_EDIT: "Edit BOMS",
 };
 
 type Role = "ADMIN" | "TEAM" | "CLIENT";
