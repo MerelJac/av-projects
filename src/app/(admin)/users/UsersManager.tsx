@@ -10,7 +10,20 @@ import {
   Link2,
   X,
   Mail,
+  ShieldCheck,
 } from "lucide-react";
+import { Permission } from "@/types/user";
+
+const ALL_PERMISSIONS = Object.values(Permission);
+
+const PERMISSION_LABELS: Record<Permission, string> = {
+  PO_APPROVE: "Approve POs",
+  PO_CREATE: "Create POs",
+  PO_EDIT: "Edit POs",
+  PROPOSAL_APPROVE: "Approve Proposals",
+  PROPOSAL_CREATE: "Create Proposals",
+  PROPOSAL_EDIT: "Edit Proposals",
+};
 
 type Role = "ADMIN" | "TEAM" | "CLIENT";
 
@@ -19,6 +32,7 @@ type UserRow = {
   email: string;
   role: Role;
   createdAt: string;
+  permissions: Permission[];
   profile: { firstName: string; lastName: string; phone: string | null } | null;
 };
 
@@ -71,8 +85,13 @@ export default function UsersManager({
   } | null>(null);
 
   // Modal state
-  const [modal, setModal] = useState<"add" | "edit" | "invite" | null>(null);
+  const [modal, setModal] = useState<"add" | "edit" | "invite" | "permissions" | null>(null);
   const [editTarget, setEditTarget] = useState<UserRow | null>(null);
+
+  // Permissions modal state
+  const [permTarget, setPermTarget] = useState<UserRow | null>(null);
+  const [permDraft, setPermDraft] = useState<Permission[]>([]);
+  const [savingPerms, setSavingPerms] = useState(false);
 
   // Form state
   const [form, setForm] = useState(blankUser);
@@ -119,6 +138,43 @@ export default function UsersManager({
   function closeModal() {
     setModal(null);
     setEditTarget(null);
+    setPermTarget(null);
+  }
+
+  function openPermissions(user: UserRow) {
+    setPermTarget(user);
+    setPermDraft(user.permissions);
+    setModal("permissions");
+  }
+
+  function togglePerm(p: Permission) {
+    setPermDraft((prev) =>
+      prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p],
+    );
+  }
+
+  async function handleSavePermissions() {
+    if (!permTarget) return;
+    setSavingPerms(true);
+    try {
+      const res = await fetch(`/api/users/${permTarget.id}/permissions`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ permissions: permDraft }),
+      });
+      if (!res.ok) throw new Error();
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === permTarget.id ? { ...u, permissions: permDraft } : u,
+        ),
+      );
+      closeModal();
+      showToast("success", "Permissions updated");
+    } catch {
+      showToast("error", "Failed to update permissions");
+    } finally {
+      setSavingPerms(false);
+    }
   }
 
   async function handleAdd() {
@@ -287,8 +343,59 @@ export default function UsersManager({
         </div>
       )}
 
+      {/* Permissions Modal */}
+      {modal === "permissions" && permTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl border border-[#E5E3DE] p-6 w-full max-w-sm shadow-xl space-y-5">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-bold text-[#111]">Permissions</p>
+              <button onClick={closeModal} className="text-[#999] hover:text-[#111] transition-colors">
+                <X size={16} />
+              </button>
+            </div>
+            <p className="text-xs text-[#999]">
+              {permTarget.profile
+                ? `${permTarget.profile.firstName} ${permTarget.profile.lastName}`
+                : permTarget.email}
+            </p>
+            <div className="space-y-2">
+              {ALL_PERMISSIONS.map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => togglePerm(p)}
+                  className={`w-full flex items-center justify-between text-sm px-3 py-2.5 rounded-xl border transition-all ${
+                    permDraft.includes(p)
+                      ? "border-[#111] bg-[#111] text-white"
+                      : "border-[#E5E3DE] text-[#444] hover:border-[#ccc]"
+                  }`}
+                >
+                  {PERMISSION_LABELS[p]}
+                  {permDraft.includes(p) && <CheckCircle2 size={14} />}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-3 pt-1">
+              <button
+                onClick={handleSavePermissions}
+                disabled={savingPerms}
+                className="flex-1 text-sm font-semibold px-4 py-2.5 rounded-xl bg-[#111] text-white hover:bg-[#333] disabled:opacity-50 transition-colors"
+              >
+                {savingPerms ? "Saving…" : "Save"}
+              </button>
+              <button
+                onClick={closeModal}
+                className="flex-1 text-sm font-semibold px-4 py-2.5 rounded-xl border border-[#E5E3DE] bg-white hover:bg-[#F7F6F3] transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal */}
-      {modal && (
+      {modal && modal !== "permissions" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-2xl border border-[#E5E3DE] p-6 w-full max-w-md shadow-xl space-y-5">
             <div className="flex items-center justify-between">
@@ -551,6 +658,13 @@ export default function UsersManager({
 
                   {/* Actions */}
                   <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={() => openPermissions(user)}
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-[#999] hover:text-[#111] hover:bg-[#F7F6F3] transition-colors"
+                      title="Edit permissions"
+                    >
+                      <ShieldCheck size={13} />
+                    </button>
                     <button
                       onClick={() => openEdit(user)}
                       className="w-7 h-7 rounded-lg flex items-center justify-center text-[#999] hover:text-[#111] hover:bg-[#F7F6F3] transition-colors"

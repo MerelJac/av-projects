@@ -10,7 +10,7 @@ import { Permission } from "@/types/user";
 export async function hasPermission(perm: Permission) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return false;
-  return session.user.permissions.includes(perm);
+  return (session.user.permissions ?? []).includes(perm);
 }
 export const authOptions: AuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -54,6 +54,10 @@ export const authOptions: AuthOptions = {
         token.id = user.id;
         token.role = user.role;
         token.permissions = user.permissions;
+      }
+      if (token.id && token.permissions === undefined) {
+        const dbUser = await prisma.user.findUnique({ where: { id: token.id as string } });
+        token.permissions = dbUser?.permissions ?? [];
       }
       return token;
     },

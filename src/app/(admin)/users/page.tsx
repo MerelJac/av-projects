@@ -16,6 +16,7 @@ export default async function UsersPage() {
         email: true,
         role: true,
         createdAt: true,
+        permissions: true,
         profile: { select: { firstName: true, lastName: true, phone: true } },
       },
       orderBy: { createdAt: "asc" },

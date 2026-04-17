@@ -3,8 +3,9 @@ import { notFound } from "next/navigation";
 import ProposalEditor from "./ProposalEditor";
 
 import NotesPanel from "@/app/components/NotesPanel";
-import { authOptions } from "@/lib/auth";
+import { authOptions, hasPermission } from "@/lib/auth";
 import { getServerSession } from "next-auth";
+import { Permission } from "@/types/user";
 import DeleteQuoteButton from "@/app/components/projects/DeleteQuoteButton";
 
 
@@ -43,9 +44,11 @@ export default async function QuotePage({
 
   if (!quote || quote.projectId !== id) return notFound();
 
+  const canApprove = await hasPermission(Permission.PROPOSAL_APPROVE);
+
   return (
     <div className="bg-[#F7F6F3]">
-      <ProposalEditor quote={quote} projectId={id} />
+      <ProposalEditor quote={quote} projectId={id} canApprove={canApprove} />
       <div className="max-w-5xl mx-auto px-6 pb-10">
         <NotesPanel
           documentType="QUOTE"

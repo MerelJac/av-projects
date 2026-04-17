@@ -24,8 +24,6 @@ import CreateInvoiceModal from "@/app/components/team/invoices/CreateInvoiceModa
 import { BillingTerms } from "@/app/(team)/customers/[id]/EditCustomerButton";
 import AuditFeed from "@/app/components/AuditFeed";
 import RichTextEditor from "@/app/components/RichTextEditor";
-import { hasPermission } from "@/lib/auth";
-import { Permission } from "@/types/user";
 
 // Derive types directly from the Prisma payload
 type QuoteLine = QuoteWithDetails["lines"][number];
@@ -60,9 +58,11 @@ const STATUS_CONFIG: Record<
 export default function ProposalEditor({
   quote: initialQuote,
   projectId,
+  canApprove,
 }: {
   quote: QuoteWithDetails;
   projectId: string;
+  canApprove: boolean;
 }) {
   const router = useRouter();
   const [lines, setLines] = useState<QuoteLine[]>(initialQuote.lines);
@@ -150,32 +150,6 @@ export default function ProposalEditor({
       prev.map((l) => (l.id === lineId ? { ...l, ...updates } : l)),
     );
     setSaved(false);
-  }
-
-  async function handleSaveDeposit() {
-    setSavingDeposit(true);
-    try {
-      const res = await fetch(
-        `/api/projects/${projectId}/proposals/${initialQuote.id}/deposit`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            depositPct,
-            depositAmount,
-            depositPaid,
-            depositPaidAt: depositPaidAt || null,
-          }),
-        },
-      );
-      if (!res.ok) throw new Error();
-      showToast("success", "Deposit saved");
-      router.refresh();
-    } catch {
-      showToast("error", "Failed to save deposit");
-    } finally {
-      setSavingDeposit(false);
-    }
   }
 
   function removeLine(lineId: string) {
@@ -267,8 +241,8 @@ export default function ProposalEditor({
   }
 
   async function handleStatusChange(newStatus: QuoteStatus) {
-    if (!(await hasPermission(Permission.PROPOSAL_APPROVE))) {
-      setToast("error", "You do not have permission to approve proposals");
+    if (!canApprove) {
+      showToast("error", "You don't have permission to change status.");
       return;
     }
 
