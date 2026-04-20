@@ -68,8 +68,20 @@ export default async function VendorDetailPage({
         <VendorDefaultsClient
           vendorId={id}
           defaults={{
+            shipToContact: vendor.shipToContact,
             shipToAddress: vendor.shipToAddress,
+            shipToAddress2: vendor.shipToAddress2,
+            shipToCity: vendor.shipToCity,
+            shipToState: vendor.shipToState,
+            shipToZipcode: vendor.shipToZipcode,
+            shipToCountry: vendor.shipToCountry,
+            billToContact: vendor.billToContact,
             billToAddress: vendor.billToAddress,
+            billToAddress2: vendor.billToAddress2,
+            billToCity: vendor.billToCity,
+            billToState: vendor.billToState,
+            billToZipcode: vendor.billToZipcode,
+            billToCountry: vendor.billToCountry,
             shippingMethod: vendor.shippingMethod,
             billingTerms: vendor.billingTerms,
             creditLimit: vendor.creditLimit ? Number(vendor.creditLimit) : null,

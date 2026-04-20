@@ -108,8 +108,20 @@ type PO = {
   shipments: Shipment[];
   returns: POReturn[];
   quote: { id: string } | null;
+  shipToContact: string | null;
   shipToAddress: string | null;
+  shipToAddress2: string | null;
+  shipToCity: string | null;
+  shipToState: string | null;
+  shipToZipcode: string | null;
+  shipToCountry: string | null;
+  billToContact: string | null;
   billToAddress: string | null;
+  billToAddress2: string | null;
+  billToCity: string | null;
+  billToState: string | null;
+  billToZipcode: string | null;
+  billToCountry: string | null;
   shippingMethod: string | null;
   billingTerms:
     | "NET45"
@@ -327,8 +339,20 @@ export default function POEditor({
   const [editingInfo, setEditingInfo] = useState(false);
   const [savingInfo, setSavingInfo] = useState(false);
   const [infoForm, setInfoForm] = useState({
+    shipToContact: po.shipToContact ?? "",
     shipToAddress: po.shipToAddress ?? "",
+    shipToAddress2: po.shipToAddress2 ?? "",
+    shipToCity: po.shipToCity ?? "",
+    shipToState: po.shipToState ?? "",
+    shipToZipcode: po.shipToZipcode ?? "",
+    shipToCountry: po.shipToCountry ?? "US",
+    billToContact: po.billToContact ?? "",
     billToAddress: po.billToAddress ?? "",
+    billToAddress2: po.billToAddress2 ?? "",
+    billToCity: po.billToCity ?? "",
+    billToState: po.billToState ?? "",
+    billToZipcode: po.billToZipcode ?? "",
+    billToCountry: po.billToCountry ?? "US",
     shippingMethod: po.shippingMethod ?? "",
     billingTerms: po.billingTerms ?? "",
     creditLimit: po.creditLimit != null ? String(po.creditLimit) : "",
@@ -344,13 +368,23 @@ export default function POEditor({
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            shipToContact: infoForm.shipToContact || null,
             shipToAddress: infoForm.shipToAddress || null,
+            shipToAddress2: infoForm.shipToAddress2 || null,
+            shipToCity: infoForm.shipToCity || null,
+            shipToState: infoForm.shipToState || null,
+            shipToZipcode: infoForm.shipToZipcode || null,
+            shipToCountry: infoForm.shipToCountry || null,
+            billToContact: infoForm.billToContact || null,
             billToAddress: infoForm.billToAddress || null,
+            billToAddress2: infoForm.billToAddress2 || null,
+            billToCity: infoForm.billToCity || null,
+            billToState: infoForm.billToState || null,
+            billToZipcode: infoForm.billToZipcode || null,
+            billToCountry: infoForm.billToCountry || null,
             shippingMethod: infoForm.shippingMethod || null,
             billingTerms: infoForm.billingTerms || null,
-            creditLimit: infoForm.creditLimit
-              ? parseFloat(infoForm.creditLimit)
-              : null,
+            creditLimit: infoForm.creditLimit ? parseFloat(infoForm.creditLimit) : null,
             buyerId: infoForm.buyerId || null,
           }),
         },
@@ -981,39 +1015,48 @@ export default function POEditor({
                     />
                   </div>
                 </div>
-                <div className="col-span-3 grid grid-cols-2 gap-x-8 gap-y-4 mt-1 border-t border-[#F0EEE9] pt-4">
-                  <div>
-                    <label className="block text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1.5">
-                      Ship-To Address
-                    </label>
-                    <textarea
-                      rows={3}
-                      className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-[#111]"
-                      value={infoForm.shipToAddress}
-                      onChange={(e) =>
-                        setInfoForm((f) => ({
-                          ...f,
-                          shipToAddress: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1.5">
-                      Bill-To Address
-                    </label>
-                    <textarea
-                      rows={3}
-                      className="w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-[#111]"
-                      value={infoForm.billToAddress}
-                      onChange={(e) =>
-                        setInfoForm((f) => ({
-                          ...f,
-                          billToAddress: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
+                <div className="col-span-3 grid grid-cols-2 gap-x-8 gap-y-1 mt-1 border-t border-[#F0EEE9] pt-4">
+                  {(["shipTo", "billTo"] as const).map((side) => {
+                    const label = side === "shipTo" ? "Ship-To" : "Bill-To";
+                    const f = (field: string) => `${side}${field[0].toUpperCase()}${field.slice(1)}` as keyof typeof infoForm;
+                    const inp = "w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#111]";
+                    const lbl = "block text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1.5";
+                    return (
+                      <div key={side} className="space-y-3">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-[#555]">{label}</p>
+                        <div>
+                          <label className={lbl}>Contact</label>
+                          <input className={inp} value={infoForm[f("contact")] as string} onChange={(e) => setInfoForm((v) => ({ ...v, [f("contact")]: e.target.value }))} placeholder="Contact name" />
+                        </div>
+                        <div>
+                          <label className={lbl}>Address</label>
+                          <input className={inp} value={infoForm[f("address")] as string} onChange={(e) => setInfoForm((v) => ({ ...v, [f("address")]: e.target.value }))} placeholder="123 Main St" />
+                        </div>
+                        <div>
+                          <label className={lbl}>Address 2</label>
+                          <input className={inp} value={infoForm[f("address2")] as string} onChange={(e) => setInfoForm((v) => ({ ...v, [f("address2")]: e.target.value }))} placeholder="Suite 100" />
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div className="col-span-1">
+                            <label className={lbl}>City</label>
+                            <input className={inp} value={infoForm[f("city")] as string} onChange={(e) => setInfoForm((v) => ({ ...v, [f("city")]: e.target.value }))} placeholder="City" />
+                          </div>
+                          <div>
+                            <label className={lbl}>State</label>
+                            <input className={inp} value={infoForm[f("state")] as string} onChange={(e) => setInfoForm((v) => ({ ...v, [f("state")]: e.target.value }))} placeholder="CA" />
+                          </div>
+                          <div>
+                            <label className={lbl}>Zip</label>
+                            <input className={inp} value={infoForm[f("zipcode")] as string} onChange={(e) => setInfoForm((v) => ({ ...v, [f("zipcode")]: e.target.value }))} placeholder="90210" />
+                          </div>
+                        </div>
+                        <div>
+                          <label className={lbl}>Country</label>
+                          <input className={inp} value={infoForm[f("country")] as string} onChange={(e) => setInfoForm((v) => ({ ...v, [f("country")]: e.target.value }))} placeholder="US" />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </>
             ) : (
@@ -1059,26 +1102,25 @@ export default function POEditor({
                       : "—"}
                   </p>
                 </div>
-                {(infoForm.shipToAddress || infoForm.billToAddress) && (
-                  <div className="col-span-3 grid grid-cols-2 gap-x-8 mt-1 border-t border-[#F0EEE9] pt-4">
-                    <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">
-                        Ship-To Address
-                      </p>
-                      <p className="text-sm text-[#111] whitespace-pre-wrap">
-                        {infoForm.shipToAddress || "—"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">
-                        Bill-To Address
-                      </p>
-                      <p className="text-sm text-[#111] whitespace-pre-wrap">
-                        {infoForm.billToAddress || "—"}
-                      </p>
-                    </div>
-                  </div>
-                )}
+                <div className="col-span-3 grid grid-cols-2 gap-x-8 mt-1 border-t border-[#F0EEE9] pt-4">
+                  {(["shipTo", "billTo"] as const).map((side) => {
+                    const label = side === "shipTo" ? "Ship-To" : "Bill-To";
+                    const contact = infoForm[`${side}Contact` as keyof typeof infoForm] as string;
+                    const parts = [
+                      infoForm[`${side}Address` as keyof typeof infoForm] as string,
+                      infoForm[`${side}Address2` as keyof typeof infoForm] as string,
+                      [infoForm[`${side}City` as keyof typeof infoForm], infoForm[`${side}State` as keyof typeof infoForm], infoForm[`${side}Zipcode` as keyof typeof infoForm]].filter(Boolean).join(", "),
+                      infoForm[`${side}Country` as keyof typeof infoForm] as string,
+                    ].filter(Boolean).join("\n");
+                    return (
+                      <div key={side}>
+                        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">{label}</p>
+                        {contact && <p className="text-sm font-medium text-[#111]">{contact}</p>}
+                        <p className="text-sm text-[#111] whitespace-pre-wrap">{parts || "—"}</p>
+                      </div>
+                    );
+                  })}
+                </div>
               </>
             )}
           </div>

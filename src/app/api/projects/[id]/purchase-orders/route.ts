@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { buildAddress } from "@/lib/utils/helpers";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(
@@ -20,8 +19,20 @@ export async function POST(
     where: { id: vendorId },
     select: {
       id: true,
+      shipToContact: true,
       shipToAddress: true,
+      shipToAddress2: true,
+      shipToCity: true,
+      shipToState: true,
+      shipToZipcode: true,
+      shipToCountry: true,
+      billToContact: true,
       billToAddress: true,
+      billToAddress2: true,
+      billToCity: true,
+      billToState: true,
+      billToZipcode: true,
+      billToCountry: true,
       shippingMethod: true,
       billingTerms: true,
       creditLimit: true,
@@ -74,23 +85,7 @@ export async function POST(
         },
       },
     });
-    const projectShipToAddress = buildAddress({
-      address1: project?.customer?.address,
-      address2: project?.customer?.address2,
-      city: project?.customer?.city,
-      state: project?.customer?.state,
-      zipCode: project?.customer?.zipcode,
-      country: project?.customer?.country,
-    });
-
-    const projectBillToAddress = buildAddress({
-      address1: project?.customer?.billToAddress,
-      address2: project?.customer?.billToAddress2,
-      city: project?.customer?.billToCity,
-      state: project?.customer?.billToState,
-      zipCode: project?.customer?.billToZipcode,
-      country: project?.customer?.billToCountry,
-    });
+    const c = project?.customer;
     return tx.purchaseOrder.create({
       data: {
         id: poId,
@@ -99,8 +94,18 @@ export async function POST(
         projectId: id,
         quoteId: quoteId ?? null,
         status: "DRAFT",
-        shipToAddress: projectShipToAddress,
-        billToAddress: projectBillToAddress,
+        shipToAddress: c?.address ?? null,
+        shipToAddress2: c?.address2 ?? null,
+        shipToCity: c?.city ?? null,
+        shipToState: c?.state ?? null,
+        shipToZipcode: c?.zipcode ?? null,
+        shipToCountry: c?.country ?? "US",
+        billToAddress: c?.billToAddress ?? null,
+        billToAddress2: c?.billToAddress2 ?? null,
+        billToCity: c?.billToCity ?? null,
+        billToState: c?.billToState ?? null,
+        billToZipcode: c?.billToZipcode ?? null,
+        billToCountry: c?.billToCountry ?? "US",
         shippingMethod: vendor.shippingMethod,
         billingTerms: vendor.billingTerms,
         creditLimit: vendor.creditLimit,

@@ -631,9 +631,20 @@ model PurchaseOrder {
   status         POStatus              @default(DRAFT)
   createdAt      DateTime              @default(now())
   updatedAt      DateTime              @updatedAt
-  // Snapshot fields — copied from vendor defaults at creation, editable per PO
+  shipToContact  String?
   shipToAddress  String?
+  shipToAddress2 String?
+  shipToCountry  String?               @default("US")
+  shipToCity     String?
+  shipToState    String?
+  shipToZipcode  String?
+  billToContact  String?
   billToAddress  String?
+  billToAddress2 String?
+  billToCountry  String?               @default("US")
+  billToCity     String?
+  billToState    String?
+  billToZipcode  String?
   shippingMethod String?
   billingTerms   BillingTerms?
   creditLimit    Decimal?              @db.Decimal(10, 2)
@@ -712,8 +723,20 @@ model Vendor {
   updatedAt      DateTime      @updatedAt
   bcSyncedAt     DateTime?
   // Default fields — copied to PO at creation, editable per PO
+  shipToContact  String?
   shipToAddress  String?
+  shipToAddress2 String?
+  shipToCountry  String?       @default("US")
+  shipToCity     String?
+  shipToState    String?
+  shipToZipcode  String?
+  billToContact  String?
   billToAddress  String?
+  billToAddress2 String?
+  billToCountry  String?       @default("US")
+  billToCity     String?
+  billToState    String?
+  billToZipcode  String?
   shippingMethod String?
   billingTerms   BillingTerms?
   creditLimit    Decimal?      @db.Decimal(10, 2)

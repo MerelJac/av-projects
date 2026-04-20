@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { buildPOPDF } from "@/app/components/team/purchase-orders/POPDF";
+import { buildAddress } from "@/lib/utils/helpers";
 
 export async function GET(
   req: NextRequest,
@@ -31,8 +32,8 @@ export async function GET(
       createdAt: po.createdAt,
       vendorName: po.vendor?.name ?? "Unknown Vendor",
       vendorAddress: null,
-      shipToAddress: po.shipToAddress,
-      billToAddress: po.billToAddress,
+      shipToAddress: [po.shipToContact, buildAddress({ address1: po.shipToAddress, address2: po.shipToAddress2, city: po.shipToCity, state: po.shipToState, zipCode: po.shipToZipcode, country: po.shipToCountry })].filter(Boolean).join("\n") || null,
+      billToAddress: [po.billToContact, buildAddress({ address1: po.billToAddress, address2: po.billToAddress2, city: po.billToCity, state: po.billToState, zipCode: po.billToZipcode, country: po.billToCountry })].filter(Boolean).join("\n") || null,
       shippingMethod: po.shippingMethod,
       billingTerms: po.billingTerms,
       buyerName,

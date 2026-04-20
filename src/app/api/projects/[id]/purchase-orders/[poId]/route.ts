@@ -27,7 +27,12 @@ export async function PATCH(
 ) {
   const { poId } = await params;
   const body = await req.json();
-  const { status, notes, vendorId, lines, resend, shipToAddress, billToAddress, shippingMethod, billingTerms, creditLimit, buyerId } = body;
+  const {
+    status, notes, vendorId, lines, resend,
+    shipToContact, shipToAddress, shipToAddress2, shipToCity, shipToState, shipToZipcode, shipToCountry,
+    billToContact, billToAddress, billToAddress2, billToCity, billToState, billToZipcode, billToCountry,
+    shippingMethod, billingTerms, creditLimit, buyerId,
+  } = body;
 
   const session = await getServerSession(authOptions);
   const userId = session?.user?.id ?? null;
@@ -128,8 +133,20 @@ export async function PATCH(
         ...(status !== undefined && { status }),
         ...(notes !== undefined && { notes: notes ?? null }),
         ...(vendorId !== undefined && { vendorId }),
+        ...(shipToContact !== undefined && { shipToContact: shipToContact ?? null }),
         ...(shipToAddress !== undefined && { shipToAddress: shipToAddress ?? null }),
+        ...(shipToAddress2 !== undefined && { shipToAddress2: shipToAddress2 ?? null }),
+        ...(shipToCity !== undefined && { shipToCity: shipToCity ?? null }),
+        ...(shipToState !== undefined && { shipToState: shipToState ?? null }),
+        ...(shipToZipcode !== undefined && { shipToZipcode: shipToZipcode ?? null }),
+        ...(shipToCountry !== undefined && { shipToCountry: shipToCountry ?? null }),
+        ...(billToContact !== undefined && { billToContact: billToContact ?? null }),
         ...(billToAddress !== undefined && { billToAddress: billToAddress ?? null }),
+        ...(billToAddress2 !== undefined && { billToAddress2: billToAddress2 ?? null }),
+        ...(billToCity !== undefined && { billToCity: billToCity ?? null }),
+        ...(billToState !== undefined && { billToState: billToState ?? null }),
+        ...(billToZipcode !== undefined && { billToZipcode: billToZipcode ?? null }),
+        ...(billToCountry !== undefined && { billToCountry: billToCountry ?? null }),
         ...(shippingMethod !== undefined && { shippingMethod: shippingMethod ?? null }),
         ...(billingTerms !== undefined && { billingTerms: billingTerms ?? null }),
         ...(creditLimit !== undefined && { creditLimit: creditLimit ?? null }),
