@@ -29,7 +29,7 @@ export async function PATCH(
     name, email, phone, notes, active,
     shipToContact, shipToAddress, shipToAddress2, shipToCity, shipToState, shipToZipcode, shipToCountry,
     billToContact, billToAddress, billToAddress2, billToCity, billToState, billToZipcode, billToCountry,
-    shippingMethod, billingTerms, creditLimit, defaultBuyerId,
+    shippingMethod, billingTerms, creditLimit, defaultBuyerId
   } = await req.json();
   const trim = (v: string | null | undefined) => v?.trim() || null;
   const vendor = await prisma.vendor.update({

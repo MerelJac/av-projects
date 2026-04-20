@@ -9,6 +9,10 @@ type User = {
 };
 
 type VendorDefaults = {
+  email: string | null;
+  phone: string | null;
+  contact: string | null;
+  bcId: string | null;
   shipToContact: string | null;
   shipToAddress: string | null;
   shipToAddress2: string | null;
@@ -53,6 +57,10 @@ export default function VendorDefaultsClient({
   } | null>(null);
 
   const [form, setForm] = useState({
+    email: defaults.email ?? "",
+    contact: defaults.contact ?? "",
+    bcId: defaults.bcId ?? "",
+    phone: defaults.phone ?? "",
     shipToContact: defaults.shipToContact ?? "",
     shipToAddress: defaults.shipToAddress ?? "",
     shipToAddress2: defaults.shipToAddress2 ?? "",
@@ -86,7 +94,12 @@ export default function VendorDefaultsClient({
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          email: form.email || null,
+          phone: form.phone || null,
+          contact: form.contact || null,
+          bcId: form.bcId || null,
           shipToContact: form.shipToContact || null,
+
           shipToAddress: form.shipToAddress || null,
           shipToAddress2: form.shipToAddress2 || null,
           shipToCity: form.shipToCity || null,
@@ -178,6 +191,58 @@ export default function VendorDefaultsClient({
       <div className="px-6 py-5 space-y-5">
         {editing ? (
           <>
+            <div>
+              <label className={labelCls}>Contact</label>
+              <input
+                type="text"
+                className={inputCls}
+                value={form.contact}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, contact: e.target.value }))
+                }
+                placeholder="Vendor Name"
+              />
+            </div>
+
+            <div>
+              <label className={labelCls}>BC ID</label>
+              <input
+                type="text"
+                className={inputCls}
+                value={form.bcId}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, bcId: e.target.value }))
+                }
+                placeholder="BC Unique Identifier"
+              />
+            </div>
+
+            <div>
+              <label className={labelCls}>Contact Email</label>
+              <input
+                type="email"
+                className={inputCls}
+                value={form.email}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, email: e.target.value }))
+                }
+                placeholder="Email"
+              />
+            </div>
+
+            <div>
+              <label className={labelCls}>Contact Phone</label>
+              <input
+                type="phone"
+                className={inputCls}
+                value={form.phone}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, phone: e.target.value }))
+                }
+                placeholder="Phone"
+              />
+            </div>
+
             {/* Shipping / Billing */}
             <div className="grid grid-cols-2 gap-x-8 gap-y-4">
               <div>
@@ -244,25 +309,46 @@ export default function VendorDefaultsClient({
 
             {/* Address blocks */}
             <div className="grid grid-cols-2 gap-x-8 gap-y-4 border-t border-[#F0EEE9] pt-5">
-              <AddressFields prefix="Ship-To" form={form} setForm={setForm} side="shipTo" inputCls={inputCls} labelCls={labelCls} />
-              <AddressFields prefix="Bill-To" form={form} setForm={setForm} side="billTo" inputCls={inputCls} labelCls={labelCls} />
+              <AddressFields
+                prefix="Ship-To"
+                form={form}
+                setForm={setForm}
+                side="shipTo"
+                inputCls={inputCls}
+                labelCls={labelCls}
+              />
+              <AddressFields
+                prefix="Bill-To"
+                form={form}
+                setForm={setForm}
+                side="billTo"
+                inputCls={inputCls}
+                labelCls={labelCls}
+              />
             </div>
           </>
         ) : (
           <>
             <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-              <ReadField label="Shipping Method" value={form.shippingMethod || null} />
+              <ReadField label="Contact" value={form.contact || null} />
+              <ReadField label="BC ID" value={form.bcId || null} />
+              <ReadField
+                label="Shipping Method"
+                value={form.shippingMethod || null}
+              />
               <ReadField
                 label="Billing Terms"
                 value={
-                  ({
-                    NET15: "Net 15",
-                    NET30: "Net 30",
-                    DUE_UPON_RECEIPT: "Due Upon Receipt",
-                    NET45: "Net 45",
-                    PROGRESS: "Progress Billing",
-                    PREPAID: "Prepaid",
-                  } as Record<string, string>)[form.billingTerms] ?? null
+                  (
+                    {
+                      NET15: "Net 15",
+                      NET30: "Net 30",
+                      DUE_UPON_RECEIPT: "Due Upon Receipt",
+                      NET45: "Net 45",
+                      PROGRESS: "Progress Billing",
+                      PREPAID: "Prepaid",
+                    } as Record<string, string>
+                  )[form.billingTerms] ?? null
                 }
               />
               <ReadField
@@ -273,12 +359,37 @@ export default function VendorDefaultsClient({
                     : null
                 }
               />
-              <ReadField label="Default Buyer" value={buyerName(form.defaultBuyerId || null)} />
+              <ReadField
+                label="Default Buyer"
+                value={buyerName(form.defaultBuyerId || null)}
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-x-8 border-t border-[#F0EEE9] pt-5">
-              <ReadAddressBlock label="Ship-To" contact={form.shipToContact} address={buildAddress({ address1: form.shipToAddress, address2: form.shipToAddress2, city: form.shipToCity, state: form.shipToState, zipCode: form.shipToZipcode, country: form.shipToCountry })} />
-              <ReadAddressBlock label="Bill-To" contact={form.billToContact} address={buildAddress({ address1: form.billToAddress, address2: form.billToAddress2, city: form.billToCity, state: form.billToState, zipCode: form.billToZipcode, country: form.billToCountry })} />
+              <ReadAddressBlock
+                label="Ship-To"
+                contact={form.shipToContact}
+                address={buildAddress({
+                  address1: form.shipToAddress,
+                  address2: form.shipToAddress2,
+                  city: form.shipToCity,
+                  state: form.shipToState,
+                  zipCode: form.shipToZipcode,
+                  country: form.shipToCountry,
+                })}
+              />
+              <ReadAddressBlock
+                label="Bill-To"
+                contact={form.billToContact}
+                address={buildAddress({
+                  address1: form.billToAddress,
+                  address2: form.billToAddress2,
+                  city: form.billToCity,
+                  state: form.billToState,
+                  zipCode: form.billToZipcode,
+                  country: form.billToCountry,
+                })}
+              />
             </div>
           </>
         )}
@@ -288,15 +399,37 @@ export default function VendorDefaultsClient({
 }
 
 type FormState = {
-  shipToContact: string; shipToAddress: string; shipToAddress2: string;
-  shipToCity: string; shipToState: string; shipToZipcode: string; shipToCountry: string;
-  billToContact: string; billToAddress: string; billToAddress2: string;
-  billToCity: string; billToState: string; billToZipcode: string; billToCountry: string;
-  shippingMethod: string; billingTerms: string; creditLimit: string; defaultBuyerId: string;
+  email: string;
+  phone: string;
+  bcId: string;
+  contact: string;
+  shipToContact: string;
+  shipToAddress: string;
+  shipToAddress2: string;
+  shipToCity: string;
+  shipToState: string;
+  shipToZipcode: string;
+  shipToCountry: string;
+  billToContact: string;
+  billToAddress: string;
+  billToAddress2: string;
+  billToCity: string;
+  billToState: string;
+  billToZipcode: string;
+  billToCountry: string;
+  shippingMethod: string;
+  billingTerms: string;
+  creditLimit: string;
+  defaultBuyerId: string;
 };
 
 function AddressFields({
-  prefix, form, setForm, side, inputCls, labelCls,
+  prefix,
+  form,
+  setForm,
+  side,
+  inputCls,
+  labelCls,
 }: {
   prefix: string;
   form: FormState;
@@ -305,50 +438,114 @@ function AddressFields({
   inputCls: string;
   labelCls: string;
 }) {
-  const f = (field: string) => `${side}${field[0].toUpperCase()}${field.slice(1)}` as keyof FormState;
+  const f = (field: string) =>
+    `${side}${field[0].toUpperCase()}${field.slice(1)}` as keyof FormState;
   return (
     <div className="space-y-3">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-[#555]">{prefix}</p>
+      <p className="text-[10px] font-bold uppercase tracking-widest text-[#555]">
+        {prefix}
+      </p>
       <div>
         <label className={labelCls}>Contact</label>
-        <input className={inputCls} value={form[f("contact")] as string} onChange={(e) => setForm((v) => ({ ...v, [f("contact")]: e.target.value }))} placeholder="Contact name" />
+        <input
+          className={inputCls}
+          value={form[f("contact")] as string}
+          onChange={(e) =>
+            setForm((v) => ({ ...v, [f("contact")]: e.target.value }))
+          }
+          placeholder="Contact name"
+        />
       </div>
       <div>
         <label className={labelCls}>Address</label>
-        <input className={inputCls} value={form[f("address")] as string} onChange={(e) => setForm((v) => ({ ...v, [f("address")]: e.target.value }))} placeholder="123 Main St" />
+        <input
+          className={inputCls}
+          value={form[f("address")] as string}
+          onChange={(e) =>
+            setForm((v) => ({ ...v, [f("address")]: e.target.value }))
+          }
+          placeholder="123 Main St"
+        />
       </div>
       <div>
         <label className={labelCls}>Address 2</label>
-        <input className={inputCls} value={form[f("address2")] as string} onChange={(e) => setForm((v) => ({ ...v, [f("address2")]: e.target.value }))} placeholder="Suite 100" />
+        <input
+          className={inputCls}
+          value={form[f("address2")] as string}
+          onChange={(e) =>
+            setForm((v) => ({ ...v, [f("address2")]: e.target.value }))
+          }
+          placeholder="Suite 100"
+        />
       </div>
       <div className="grid grid-cols-3 gap-2">
         <div className="col-span-1">
           <label className={labelCls}>City</label>
-          <input className={inputCls} value={form[f("city")] as string} onChange={(e) => setForm((v) => ({ ...v, [f("city")]: e.target.value }))} placeholder="City" />
+          <input
+            className={inputCls}
+            value={form[f("city")] as string}
+            onChange={(e) =>
+              setForm((v) => ({ ...v, [f("city")]: e.target.value }))
+            }
+            placeholder="City"
+          />
         </div>
         <div>
           <label className={labelCls}>State</label>
-          <input className={inputCls} value={form[f("state")] as string} onChange={(e) => setForm((v) => ({ ...v, [f("state")]: e.target.value }))} placeholder="CA" />
+          <input
+            className={inputCls}
+            value={form[f("state")] as string}
+            onChange={(e) =>
+              setForm((v) => ({ ...v, [f("state")]: e.target.value }))
+            }
+            placeholder="CA"
+          />
         </div>
         <div>
           <label className={labelCls}>Zip</label>
-          <input className={inputCls} value={form[f("zipcode")] as string} onChange={(e) => setForm((v) => ({ ...v, [f("zipcode")]: e.target.value }))} placeholder="90210" />
+          <input
+            className={inputCls}
+            value={form[f("zipcode")] as string}
+            onChange={(e) =>
+              setForm((v) => ({ ...v, [f("zipcode")]: e.target.value }))
+            }
+            placeholder="90210"
+          />
         </div>
       </div>
       <div>
         <label className={labelCls}>Country</label>
-        <input className={inputCls} value={form[f("country")] as string} onChange={(e) => setForm((v) => ({ ...v, [f("country")]: e.target.value }))} placeholder="US" />
+        <input
+          className={inputCls}
+          value={form[f("country")] as string}
+          onChange={(e) =>
+            setForm((v) => ({ ...v, [f("country")]: e.target.value }))
+          }
+          placeholder="US"
+        />
       </div>
     </div>
   );
 }
 
-function ReadAddressBlock({ label, contact, address }: { label: string; contact: string; address: string }) {
+function ReadAddressBlock({
+  label,
+  contact,
+  address,
+}: {
+  label: string;
+  contact: string;
+  address: string;
+}) {
   return (
     <div>
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">{label}</p>
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">
+        {label}
+      </p>
       {contact && <p className="text-sm font-medium text-[#111]">{contact}</p>}
-      <p className="text-sm text-[#111] whitespace-pre-wrap">{address || "—"}</p>
+      <p className="text-sm text-[#111] whitespace-pre-wrap">
+        {address || "—"}
+      </p>
     </div>
   );
 }
@@ -370,13 +567,7 @@ function Field({
   );
 }
 
-function ReadField({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | null;
-}) {
+function ReadField({ label, value }: { label: string; value: string | null }) {
   return (
     <div>
       <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">

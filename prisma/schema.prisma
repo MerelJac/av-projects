@@ -716,6 +716,7 @@ model Vendor {
   bcId           String?       @unique // Business Central vendor ID
   name           String
   email          String?
+  contact        String?
   phone          String?
   notes          String?
   active         Boolean       @default(true)

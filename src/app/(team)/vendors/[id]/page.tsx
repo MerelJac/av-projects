@@ -19,7 +19,12 @@ export default async function VendorDetailPage({
         itemPrices: {
           include: {
             item: {
-              select: { id: true, itemNumber: true, manufacturer: true, description: true },
+              select: {
+                id: true,
+                itemNumber: true,
+                manufacturer: true,
+                description: true,
+              },
             },
           },
           orderBy: { updatedAt: "desc" },
@@ -29,7 +34,10 @@ export default async function VendorDetailPage({
     }),
     prisma.user.findMany({
       where: { role: { in: ["TEAM", "ADMIN"] } },
-      select: { id: true, profile: { select: { firstName: true, lastName: true } } },
+      select: {
+        id: true,
+        profile: { select: { firstName: true, lastName: true } },
+      },
       orderBy: { profile: { firstName: "asc" } },
     }),
   ]);
@@ -47,12 +55,15 @@ export default async function VendorDetailPage({
           Vendors
         </Link>
 
- 
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-[#111] tracking-tight">{vendor.name}</h1>
+          <h1 className="text-2xl font-bold text-[#111] tracking-tight">
+            {vendor.name}
+          </h1>
           <div className="flex items-center gap-4 mt-1 text-sm text-[#888]">
+            {vendor.contact && <span>{vendor.contact}</span>}
             {vendor.email && <span>{vendor.email}</span>}
             {vendor.phone && <span>{vendor.phone}</span>}
+              {vendor.bcId && <span>{vendor.bcId}</span>}
             <span>{vendor._count.purchaseOrders} POs</span>
             {!vendor.active && (
               <span className="text-xs font-semibold bg-red-100 text-red-600 px-2 py-0.5 rounded-full">
@@ -68,6 +79,10 @@ export default async function VendorDetailPage({
         <VendorDefaultsClient
           vendorId={id}
           defaults={{
+            email: vendor.email,
+            contact: vendor.contact,
+            bcId: vendor.bcId,
+            phone: vendor.phone,
             shipToContact: vendor.shipToContact,
             shipToAddress: vendor.shipToAddress,
             shipToAddress2: vendor.shipToAddress2,
@@ -89,9 +104,11 @@ export default async function VendorDetailPage({
           }}
           users={users}
         />
-        <VendorItemPricesClient vendorId={id} initialPrices={vendor.itemPrices} />
+        <VendorItemPricesClient
+          vendorId={id}
+          initialPrices={vendor.itemPrices}
+        />
       </div>
-
     </div>
   );
 }
