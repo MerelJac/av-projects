@@ -226,6 +226,12 @@ export default function POEditor({
   const [returns, setReturns] = useState<POReturn[]>(po.returns);
   const [showReturnModal, setShowReturnModal] = useState(false);
   const [updatingReturnId, setUpdatingReturnId] = useState<string | null>(null);
+  const [creditModal, setCreditModal] = useState<{
+    returnId: string;
+    quantity: string;
+    unitCost: string;
+    unitPrice: string;
+  } | null>(null);
   const [toast, setToast] = useState<{
     type: "success" | "error";
     msg: string;
@@ -384,7 +390,9 @@ export default function POEditor({
             billToCountry: infoForm.billToCountry || null,
             shippingMethod: infoForm.shippingMethod || null,
             billingTerms: infoForm.billingTerms || null,
-            creditLimit: infoForm.creditLimit ? parseFloat(infoForm.creditLimit) : null,
+            creditLimit: infoForm.creditLimit
+              ? parseFloat(infoForm.creditLimit)
+              : null,
             buyerId: infoForm.buyerId || null,
           }),
         },
@@ -641,15 +649,25 @@ export default function POEditor({
     showToast("success", "Return created");
   }
 
-  async function handleUpdateReturnStatus(returnId: string, newStatus: string) {
+  async function handleUpdateReturnStatus(
+    returnId: string,
+    newStatus: string,
+    creditData?: { quantity: number; unitCost: number; unitPrice?: number },
+  ) {
     setUpdatingReturnId(returnId);
     try {
+      const body: Record<string, unknown> = { status: newStatus };
+      if (creditData) {
+        body.creditQuantity = creditData.quantity;
+        body.creditUnitCost = creditData.unitCost;
+        if (creditData.unitPrice !== undefined) body.creditUnitPrice = creditData.unitPrice;
+      }
       const res = await fetch(
         `/api/projects/${projectId}/purchase-orders/${po.id}/returns/${returnId}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: newStatus }),
+          body: JSON.stringify(body),
         },
       );
       if (!res.ok) throw new Error();
@@ -668,6 +686,12 @@ export default function POEditor({
   }
 
   async function handleDeleteReturn(returnId: string) {
+    if (
+      !confirm(
+        `Are you sure you want to delete this return record? This cannot be undone.`,
+      )
+    )
+      return;
     try {
       const res = await fetch(
         `/api/projects/${projectId}/purchase-orders/${po.id}/returns/${returnId}`,
@@ -1018,41 +1042,116 @@ export default function POEditor({
                 <div className="col-span-3 grid grid-cols-2 gap-x-8 gap-y-1 mt-1 border-t border-[#F0EEE9] pt-4">
                   {(["shipTo", "billTo"] as const).map((side) => {
                     const label = side === "shipTo" ? "Ship-To" : "Bill-To";
-                    const f = (field: string) => `${side}${field[0].toUpperCase()}${field.slice(1)}` as keyof typeof infoForm;
-                    const inp = "w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#111]";
-                    const lbl = "block text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1.5";
+                    const f = (field: string) =>
+                      `${side}${field[0].toUpperCase()}${field.slice(1)}` as keyof typeof infoForm;
+                    const inp =
+                      "w-full text-sm border border-[#E5E3DE] rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#111]";
+                    const lbl =
+                      "block text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1.5";
                     return (
                       <div key={side} className="space-y-3">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-[#555]">{label}</p>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-[#555]">
+                          {label}
+                        </p>
                         <div>
                           <label className={lbl}>Contact</label>
-                          <input className={inp} value={infoForm[f("contact")] as string} onChange={(e) => setInfoForm((v) => ({ ...v, [f("contact")]: e.target.value }))} placeholder="Contact name" />
+                          <input
+                            className={inp}
+                            value={infoForm[f("contact")] as string}
+                            onChange={(e) =>
+                              setInfoForm((v) => ({
+                                ...v,
+                                [f("contact")]: e.target.value,
+                              }))
+                            }
+                            placeholder="Contact name"
+                          />
                         </div>
                         <div>
                           <label className={lbl}>Address</label>
-                          <input className={inp} value={infoForm[f("address")] as string} onChange={(e) => setInfoForm((v) => ({ ...v, [f("address")]: e.target.value }))} placeholder="123 Main St" />
+                          <input
+                            className={inp}
+                            value={infoForm[f("address")] as string}
+                            onChange={(e) =>
+                              setInfoForm((v) => ({
+                                ...v,
+                                [f("address")]: e.target.value,
+                              }))
+                            }
+                            placeholder="123 Main St"
+                          />
                         </div>
                         <div>
                           <label className={lbl}>Address 2</label>
-                          <input className={inp} value={infoForm[f("address2")] as string} onChange={(e) => setInfoForm((v) => ({ ...v, [f("address2")]: e.target.value }))} placeholder="Suite 100" />
+                          <input
+                            className={inp}
+                            value={infoForm[f("address2")] as string}
+                            onChange={(e) =>
+                              setInfoForm((v) => ({
+                                ...v,
+                                [f("address2")]: e.target.value,
+                              }))
+                            }
+                            placeholder="Suite 100"
+                          />
                         </div>
                         <div className="grid grid-cols-3 gap-2">
                           <div className="col-span-1">
                             <label className={lbl}>City</label>
-                            <input className={inp} value={infoForm[f("city")] as string} onChange={(e) => setInfoForm((v) => ({ ...v, [f("city")]: e.target.value }))} placeholder="City" />
+                            <input
+                              className={inp}
+                              value={infoForm[f("city")] as string}
+                              onChange={(e) =>
+                                setInfoForm((v) => ({
+                                  ...v,
+                                  [f("city")]: e.target.value,
+                                }))
+                              }
+                              placeholder="City"
+                            />
                           </div>
                           <div>
                             <label className={lbl}>State</label>
-                            <input className={inp} value={infoForm[f("state")] as string} onChange={(e) => setInfoForm((v) => ({ ...v, [f("state")]: e.target.value }))} placeholder="CA" />
+                            <input
+                              className={inp}
+                              value={infoForm[f("state")] as string}
+                              onChange={(e) =>
+                                setInfoForm((v) => ({
+                                  ...v,
+                                  [f("state")]: e.target.value,
+                                }))
+                              }
+                              placeholder="CA"
+                            />
                           </div>
                           <div>
                             <label className={lbl}>Zip</label>
-                            <input className={inp} value={infoForm[f("zipcode")] as string} onChange={(e) => setInfoForm((v) => ({ ...v, [f("zipcode")]: e.target.value }))} placeholder="90210" />
+                            <input
+                              className={inp}
+                              value={infoForm[f("zipcode")] as string}
+                              onChange={(e) =>
+                                setInfoForm((v) => ({
+                                  ...v,
+                                  [f("zipcode")]: e.target.value,
+                                }))
+                              }
+                              placeholder="90210"
+                            />
                           </div>
                         </div>
                         <div>
                           <label className={lbl}>Country</label>
-                          <input className={inp} value={infoForm[f("country")] as string} onChange={(e) => setInfoForm((v) => ({ ...v, [f("country")]: e.target.value }))} placeholder="US" />
+                          <input
+                            className={inp}
+                            value={infoForm[f("country")] as string}
+                            onChange={(e) =>
+                              setInfoForm((v) => ({
+                                ...v,
+                                [f("country")]: e.target.value,
+                              }))
+                            }
+                            placeholder="US"
+                          />
                         </div>
                       </div>
                     );
@@ -1105,18 +1204,42 @@ export default function POEditor({
                 <div className="col-span-3 grid grid-cols-2 gap-x-8 mt-1 border-t border-[#F0EEE9] pt-4">
                   {(["shipTo", "billTo"] as const).map((side) => {
                     const label = side === "shipTo" ? "Ship-To" : "Bill-To";
-                    const contact = infoForm[`${side}Contact` as keyof typeof infoForm] as string;
+                    const contact = infoForm[
+                      `${side}Contact` as keyof typeof infoForm
+                    ] as string;
                     const parts = [
-                      infoForm[`${side}Address` as keyof typeof infoForm] as string,
-                      infoForm[`${side}Address2` as keyof typeof infoForm] as string,
-                      [infoForm[`${side}City` as keyof typeof infoForm], infoForm[`${side}State` as keyof typeof infoForm], infoForm[`${side}Zipcode` as keyof typeof infoForm]].filter(Boolean).join(", "),
-                      infoForm[`${side}Country` as keyof typeof infoForm] as string,
-                    ].filter(Boolean).join("\n");
+                      infoForm[
+                        `${side}Address` as keyof typeof infoForm
+                      ] as string,
+                      infoForm[
+                        `${side}Address2` as keyof typeof infoForm
+                      ] as string,
+                      [
+                        infoForm[`${side}City` as keyof typeof infoForm],
+                        infoForm[`${side}State` as keyof typeof infoForm],
+                        infoForm[`${side}Zipcode` as keyof typeof infoForm],
+                      ]
+                        .filter(Boolean)
+                        .join(", "),
+                      infoForm[
+                        `${side}Country` as keyof typeof infoForm
+                      ] as string,
+                    ]
+                      .filter(Boolean)
+                      .join("\n");
                     return (
                       <div key={side}>
-                        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">{label}</p>
-                        {contact && <p className="text-sm font-medium text-[#111]">{contact}</p>}
-                        <p className="text-sm text-[#111] whitespace-pre-wrap">{parts || "—"}</p>
+                        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-1">
+                          {label}
+                        </p>
+                        {contact && (
+                          <p className="text-sm font-medium text-[#111]">
+                            {contact}
+                          </p>
+                        )}
+                        <p className="text-sm text-[#111] whitespace-pre-wrap">
+                          {parts || "—"}
+                        </p>
                       </div>
                     );
                   })}
@@ -1563,7 +1686,10 @@ export default function POEditor({
                                 disabled={updatingReturnId === ret.id}
                                 className="text-[10px] font-semibold px-2 py-1 rounded-lg border border-[#E5E3DE] hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-colors disabled:opacity-40"
                               >
-                                Mark Sent
+                                Mark as Sent to{" "}
+                                {ret.disposition === "RETURN_TO_VENDOR"
+                                  ? "Vendor"
+                                  : "Inventory"}
                               </button>
                               <button
                                 onClick={() => handleDeleteReturn(ret.id)}
@@ -1575,9 +1701,19 @@ export default function POEditor({
                           )}
                           {ret.status === "SENT" && (
                             <button
-                              onClick={() =>
-                                handleUpdateReturnStatus(ret.id, "CREDITED")
-                              }
+                              onClick={() => {
+                                const totalQty = ret.lines.reduce((s, l) => s + l.quantity, 0);
+                                const singleCreditPerUnit =
+                                  ret.lines.length === 1 && ret.lines[0].creditPerUnit != null
+                                    ? String(ret.lines[0].creditPerUnit)
+                                    : "";
+                                setCreditModal({
+                                  returnId: ret.id,
+                                  quantity: String(totalQty),
+                                  unitCost: singleCreditPerUnit,
+                                  unitPrice: "",
+                                });
+                              }}
                               disabled={updatingReturnId === ret.id}
                               className="text-[10px] font-semibold px-2 py-1 rounded-lg border border-[#E5E3DE] hover:bg-green-50 hover:border-green-200 hover:text-green-700 transition-colors disabled:opacity-40"
                             >
@@ -1839,6 +1975,100 @@ export default function POEditor({
           </div>
         </div>
       </div>
+
+      {creditModal && (() => {
+        const qty = parseFloat(creditModal.quantity) || 0;
+        const unitCost = parseFloat(creditModal.unitCost) || 0;
+        const unitPrice = parseFloat(creditModal.unitPrice) || 0;
+        const totalCost = qty * unitCost;
+        const totalPrice = qty * unitPrice;
+        const fmt = (n: number) => n.toLocaleString(undefined, { minimumFractionDigits: 2 });
+        return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="bg-white rounded-2xl shadow-xl border border-[#E5E3DE] w-full max-w-md mx-4 p-6">
+            <h2 className="text-base font-semibold text-[#111] mb-4">
+              How much are we crediting the project?
+            </h2>
+
+            {/* Column headers */}
+            <div className="grid grid-cols-3 gap-3 mb-1">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999]">Qty</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999]">Unit Cost</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999]">Unit Price</p>
+            </div>
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              <input
+                type="number"
+                min="0"
+                autoFocus
+                value={creditModal.quantity}
+                onChange={(e) => setCreditModal((p) => p ? { ...p, quantity: e.target.value } : null)}
+                placeholder="0"
+                className="text-sm border border-[#E5E3DE] rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#111]"
+              />
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#999]">$</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={creditModal.unitCost}
+                  onChange={(e) => setCreditModal((p) => p ? { ...p, unitCost: e.target.value } : null)}
+                  placeholder="0.00"
+                  className="w-full text-sm border border-[#E5E3DE] rounded-xl pl-7 pr-3 py-2.5 focus:outline-none focus:border-[#111]"
+                />
+              </div>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#999]">$</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={creditModal.unitPrice}
+                  onChange={(e) => setCreditModal((p) => p ? { ...p, unitPrice: e.target.value } : null)}
+                  placeholder="0.00"
+                  className="w-full text-sm border border-[#E5E3DE] rounded-xl pl-7 pr-3 py-2.5 focus:outline-none focus:border-[#111]"
+                />
+              </div>
+            </div>
+
+            {/* Totals */}
+            <div className="grid grid-cols-2 gap-3 bg-[#FAFAF8] rounded-xl px-4 py-3 mb-5 border border-[#F0EEE9]">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-0.5">Total Cost</p>
+                <p className="text-sm font-semibold text-[#111]">${fmt(totalCost)}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-[#999] mb-0.5">Total Price</p>
+                <p className="text-sm font-semibold text-green-700">${fmt(totalPrice)}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 justify-end">
+              <button
+                onClick={() => setCreditModal(null)}
+                className="text-sm text-[#888] hover:text-[#111] transition-colors px-3 py-2"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  handleUpdateReturnStatus(creditModal.returnId, "CREDITED", {
+                    quantity: qty,
+                    unitCost: isNaN(unitCost) ? 0 : unitCost,
+                    unitPrice: isNaN(unitPrice) ? undefined : unitPrice,
+                  });
+                  setCreditModal(null);
+                }}
+                className="text-sm font-semibold bg-[#111] text-white px-4 py-2 rounded-xl hover:bg-[#333] transition-colors"
+              >
+                Confirm Credit
+              </button>
+            </div>
+          </div>
+        </div>
+        );
+      })()}
 
       {showReturnModal &&
         (() => {

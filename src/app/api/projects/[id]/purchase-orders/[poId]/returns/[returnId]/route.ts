@@ -10,11 +10,22 @@ export async function PATCH(
 ) {
   const { poId, returnId } = await params;
   const body = await req.json();
-  const { status, rmaNumber, notes, reason } = body as {
+  const {
+    status,
+    rmaNumber,
+    notes,
+    reason,
+    creditQuantity,
+    creditUnitCost,
+    creditUnitPrice,
+  } = body as {
     status?: string;
     rmaNumber?: string;
     notes?: string;
     reason?: string;
+    creditQuantity?: number;
+    creditUnitCost?: number;
+    creditUnitPrice?: number;
   };
 
   const updated = await prisma.purchaseOrderReturn.update({
@@ -123,15 +134,20 @@ export async function PATCH(
           });
 
           // refund the projectCost
+          const qty = creditQuantity ?? line.quantity;
+          const uc = creditUnitCost ?? line.creditPerUnit ?? 0;
+          const up = creditUnitPrice ?? line.creditPerUnit ?? 0;
           await prisma.projectCost.create({
             data: {
               poLink: returnWithLines.poId ?? returnId,
               itemId,
               costType: "RETURN",
               projectId: projectId as string,
-              quantity: line.quantity,
-              unitCost: line.creditPerUnit ?? null,
-              amount: -(line.quantity * (line.creditPerUnit ?? 0)),
+              quantity: qty,
+              unitCost: uc,
+              amount: -(qty * uc),
+              unitPrice: up,
+              amountPrice: -(qty * up),
               poReturnId: returnId,
               notes:
                 disposition === "KEEP_IN_INVENTORY"
@@ -150,7 +166,7 @@ export async function PATCH(
         });
 
         const taxableCosts = returnCosts.filter(
-          (c) => c.item?.taxStatus === "TAXABLE" && (c.unitCost ?? 0) > 0,
+          (c) => c.item?.taxStatus === "TAXABLE" && (c.unitCost ?? 0),
         );
 
         if (taxableCosts.length > 0) {
@@ -178,6 +194,44 @@ export async function PATCH(
                     where: { id: c.id },
                     // Return tax is a credit — store as negative
                     data: { taxAmount: -(result.lineTaxes[i]?.taxAmount ?? 0) },
+                  }),
+                ),
+              );
+            }
+          }
+        }
+
+        const taxablePrice = returnCosts.filter(
+          (c) => c.item?.taxStatus === "TAXABLE" && (c.unitPrice ?? 0),
+        );
+
+        if (taxablePrice.length > 0) {
+          const po = await prisma.purchaseOrder.findUnique({
+            where: { id: poId },
+            select: { shipToAddress: true },
+          });
+
+          if (po?.shipToAddress) {
+            const result = await calculateVertexTax({
+              documentNumber: `RET-${returnId.slice(0, 8).toUpperCase()}`,
+              destination: po.shipToAddress,
+              lines: taxablePrice.map((c, i) => ({
+                lineItemNumber: (i + 1) * 10000,
+                productCode: c.item?.itemNumber ?? c.itemId ?? "UNKNOWN",
+                quantity: c.quantity ?? 1,
+                unitPrice: c.unitCost ?? 0,
+              })),
+            });
+
+            if (result) {
+              await Promise.all(
+                taxablePrice.map((c, i) =>
+                  prisma.projectCost.update({
+                    where: { id: c.id },
+                    // Return tax is a credit — store as negative
+                    data: {
+                      taxAmountPrice: -(result.lineTaxes[i]?.taxAmount ?? 0),
+                    },
                   }),
                 ),
               );

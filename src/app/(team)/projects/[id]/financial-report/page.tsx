@@ -305,7 +305,7 @@ export default async function FinancialReportPage({
         )}
 
         {/* Line items table */}
-        <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-hidden">
+        <div className="bg-white border border-[#E5E3DE] rounded-2xl overflow-y-scroll">
           {rows.length === 0 ? (
             <div className="px-6 py-16 text-center">
               <p className="text-sm text-[#bbb]">No financial activity yet</p>
