@@ -16,7 +16,7 @@ export async function sendForgotPasswordEmail(to: string, resetUrl: string) {
               Reset your password
             </a>
           </p>
-          <p>If you didn’t request this, you can safely ignore it.</p>
+          <p>If you didn’t request this, please contact support.</p>
           <br/>
           <p style="font-size:0.9rem; color:#888;">— Antares</p>
         </div>
