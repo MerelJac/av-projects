@@ -466,18 +466,22 @@ model Subscription {
 }
 
 model ProjectScope {
-  id             String        @id @default(uuid())
+  id             String           @id @default(uuid())
   projectId      String
-  project        Project       @relation(fields: [projectId], references: [id])
+  project        Project          @relation(fields: [projectId], references: [id])
+  bomId          String?
+  bom            BillOfMaterials? @relation(fields: [bomId], references: [id])
+  bomLineId      String?
+  bomLine        BOMLine?         @relation(fields: [bomLineId], references: [id])
   itemId         String?
-  item           Item?         @relation(fields: [itemId], references: [id])
+  item           Item?            @relation(fields: [itemId], references: [id])
   name           String
-  estimatedHours Float         @default(0)
+  estimatedHours Float            @default(0)
   ratePerHour    Float?
   costPerHour    Float?
   timeEntries    TimeEntry[]
   invoiceLines   InvoiceLine[]
-  createdAt      DateTime      @default(now())
+  createdAt      DateTime         @default(now())
 }
 
 model TimeEntry {
@@ -546,11 +550,11 @@ model BillOfMaterials {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  lines  BOMLine[]
-  quotes QuoteBOM[]
-
+  lines        BOMLine[]
+  quotes       QuoteBOM[]
   quoteBundles QuoteBundle[]
   costs        ProjectCost[]
+  scopes       ProjectScope[]
 }
 
 model QuoteBOM {
@@ -580,6 +584,7 @@ model BOMLine {
 
   inventoryMovements InventoryMovement[]
   projectCosts       ProjectCost[]
+  projectScopes      ProjectScope[]
 }
 
 enum NoteDocumentType {

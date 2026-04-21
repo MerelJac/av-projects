@@ -929,7 +929,7 @@ export default function BOMEditor({
                                             className="flex flex-col gap-0.5"
                                           >
                                             <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-green-50 text-green-700 whitespace-nowrap">
-                                              {c.poLink ?? "Received"}
+                                          {c.costType === "LABOR" ? "Labor In Progress" : c.poLink ? "Received" : null}
                                             </span>
                                           </div>
                                         );

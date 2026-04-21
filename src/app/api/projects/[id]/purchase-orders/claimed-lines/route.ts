@@ -23,6 +23,6 @@ export async function GET(
     po: l.poId,
     poNumber: l.purchaseOrder.poNumber,
   }));
-  console.log("claimed lines from server", claimed);
+  // console.log("claimed lines from server", claimed);
   return NextResponse.json(claimed);
 }

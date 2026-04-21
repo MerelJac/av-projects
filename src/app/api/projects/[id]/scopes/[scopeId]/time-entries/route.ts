@@ -31,8 +31,20 @@ export async function POST(
   // Create a LABOR project cost if the scope has a cost rate
   const scope = await prisma.projectScope.findUnique({
     where: { id: scopeId },
-    select: { costPerHour: true, ratePerHour: true, itemId: true },
+    select: {
+      costPerHour: true,
+      ratePerHour: true,
+      itemId: true,
+      projectId: true,
+      bomLineId: true,
+       bomId: true,
+    },
   });
+
+  if (!scope) {
+    console.log("Error finding scope");
+    return;
+  }
 
   let laborCost = null;
   if (scope?.costPerHour) {
@@ -49,6 +61,8 @@ export async function POST(
         amount: unitCost * hours,
         amountPrice: unitPrice ? unitPrice * hours : null,
         timeEntryId: entry.id,
+          bomId: scope.bomId ?? null,
+        bomLineId: scope.bomLineId ?? null,
         notes: "Auto-populated when time was logged.",
       },
       include: {

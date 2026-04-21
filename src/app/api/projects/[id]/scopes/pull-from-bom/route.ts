@@ -34,6 +34,8 @@ export async function POST(
     await prisma.projectScope.create({
       data: {
         projectId,
+        bomId: bom.id,
+        bomLineId: line.id,
         itemId: line.itemId,
         name: line.item.description ?? line.item.itemNumber,
         estimatedHours: line.quantity,
