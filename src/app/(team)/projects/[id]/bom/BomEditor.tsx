@@ -919,7 +919,7 @@ export default function BOMEditor({
                                   <td className="px-3 py-2">
                                     <div className="flex flex-col gap-1 items-start">
                                       {lineCosts.map((c) => {
-                                        console.log("Line costs: ", lineCosts)
+                                        // console.log("Line costs: ", lineCosts)
                                         const poId = c.poLink
                                           ? poIdByKey[c.poLink]
                                           : null;
