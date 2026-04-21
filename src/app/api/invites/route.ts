@@ -6,6 +6,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 import { Role } from "@prisma/client";
+import { sendWelcomeEmail } from "@/lib/email-templates/welcomeEmail";
 
 export async function GET() {
   const invites = await prisma.invite.findMany({
@@ -74,8 +75,12 @@ export async function POST(req: NextRequest) {
     });
 
     
+    
     return [newUser, newInvite];
   });
+
+  // send welcome email
+  await sendWelcomeEmail(email)
 
   return NextResponse.json({
     user,
