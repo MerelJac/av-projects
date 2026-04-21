@@ -27,7 +27,7 @@ const PERMISSION_LABELS: Record<Permission, string> = {
   BOM_EDIT: "Edit BOMS",
 };
 
-type Role = "ADMIN" | "TEAM";
+type Role = "ADMIN" | "TEAM" | "CLIENT";
 
 type UserRow = {
   id: string;
@@ -56,7 +56,7 @@ type Props = {
 
 const ROLES: Role[] = ["ADMIN", "TEAM"];
 const roleLabel = (r: Role) =>
-  ({ ADMIN: "Admin", TEAM: "Team" })[r];
+  ({ ADMIN: "Admin", TEAM: "Team", CLIENT: "Client" })[r];
 const roleBadge = (r: Role) =>
   ({
     ADMIN: "bg-[#111] text-white",
