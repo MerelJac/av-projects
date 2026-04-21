@@ -147,7 +147,7 @@ export default function UsersManager({
 
   function openPermissions(user: UserRow) {
     setPermTarget(user);
-    setPermDraft(user.permissions);
+    setPermDraft(user.permissions ?? []);
     setModal("permissions");
   }
 
