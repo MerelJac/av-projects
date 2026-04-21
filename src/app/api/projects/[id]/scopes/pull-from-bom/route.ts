@@ -29,7 +29,20 @@ export async function POST(
       where: { projectId, itemId: line.itemId },
     });
 
-    if (existing) { skipped++; continue; }
+    if (existing) {
+      await prisma.projectScope.update({
+        where: { id: existing.id },
+        data: {
+          bomId: bom.id,
+          bomLineId: line.id,
+          estimatedHours: line.quantity,
+          ratePerHour: line.sellEach ?? line.item.price ?? null,
+          costPerHour: line.costEach ?? line.item.cost ?? null,
+        },
+      });
+      skipped++;
+      continue;
+    }
 
     await prisma.projectScope.create({
       data: {

@@ -101,7 +101,7 @@ export default function ScopesPanel({
     if (res.ok) {
       const { created, skipped } = await res.json();
       setPullMsg(
-        `Added ${created} scope${created !== 1 ? "s" : ""}${skipped > 0 ? `, ${skipped} already existed` : ""}`,
+        `Added ${created} new scope${created !== 1 ? "s" : ""}${skipped > 0 ? `, ${skipped} already existed` : ""}`,
       );
       await refresh();
     }

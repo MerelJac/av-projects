@@ -108,7 +108,7 @@ export default function TimeCardEditor({
         const data = await res.json().catch(() => ({}));
         if (res.ok) totalAdded += data.added ?? 0;
       }
-      setPullMsg(`Pulled ${totalAdded} scope(s) from all BOMs`);
+      setPullMsg(`Pulled ${totalAdded} new scope(s) from all BOMs`);
       await refresh();
     } catch { setPullMsg("Network error"); } finally { setPulling(false); }
   }
@@ -372,7 +372,7 @@ export default function TimeCardEditor({
                           <div>
                             <p className="text-[10px] text-[#999]">Quoted Price</p>
                             <p className="text-xs font-semibold text-[#111]">${fmt(quotedPrice)}</p>
-                            <p className="text-[10px] text-[#bbb]">${sc.ratePerHour}/hr</p>
+                            <p className="text-[10px] text-[#bbb]">${Number(sc.ratePerHour).toFixed(2)}/hr</p>
                           </div>
                         )}
                         {margin !== null && (
