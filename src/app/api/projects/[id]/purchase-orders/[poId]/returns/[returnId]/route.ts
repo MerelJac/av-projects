@@ -126,6 +126,7 @@ export async function PATCH(
               itemId,
               type, // either RETURN_TO_INVENTORY or RETURN_TO_VENDOR based on disposition
               quantityDelta,
+              returnId: returnId,
               notes:
                 disposition === "KEEP_IN_INVENTORY"
                   ? `Kept in inventory — not returned to vendor (${returnWithLines.returnNumber ?? returnId})`

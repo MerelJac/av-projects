@@ -294,7 +294,9 @@ export default async function ItemPage({
                           ? `#${m.invoice.invoiceNumber}`
                           : m.shipment?.id
                             ? `Shipment`
-                            : "—"}
+                            : m.returnId
+                              ? `Return PO-AV-${m.pruchaseOrderReturn?.poId}`
+                              : "—"}
                       </td>
                       <td className="px-6 py-3 text-right">
                         <span

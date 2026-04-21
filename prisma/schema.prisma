@@ -673,19 +673,20 @@ model PurchaseOrderLine {
 }
 
 model PurchaseOrderReturn {
-  id           String                    @id @default(uuid())
-  returnNumber String?
-  poId         String
-  po           PurchaseOrder             @relation(fields: [poId], references: [id], onDelete: Cascade)
-  status       ReturnStatus              @default(PENDING)
-  disposition  ReturnDisposition         @default(RETURN_TO_VENDOR)
-  reason       String?
-  rmaNumber    String?
-  notes        String?
-  createdAt    DateTime                  @default(now())
-  updatedAt    DateTime                  @updatedAt
-  lines        PurchaseOrderReturnLine[]
-  projectCosts ProjectCost[]
+  id                 String                    @id @default(uuid())
+  returnNumber       String?
+  poId               String
+  po                 PurchaseOrder             @relation(fields: [poId], references: [id], onDelete: Cascade)
+  status             ReturnStatus              @default(PENDING)
+  disposition        ReturnDisposition         @default(RETURN_TO_VENDOR)
+  reason             String?
+  rmaNumber          String?
+  notes              String?
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+  lines              PurchaseOrderReturnLine[]
+  projectCosts       ProjectCost[]
+  inventoryMovements InventoryMovement[]
 }
 
 model PurchaseOrderReturnLine {
@@ -896,13 +897,15 @@ model InventoryMovement {
 
   // Optional source references
   shipmentId    String?
-  shipment      Shipment?    @relation(fields: [shipmentId], references: [id])
+  shipment      Shipment?            @relation(fields: [shipmentId], references: [id])
+  returnId      String?
+  return        PurchaseOrderReturn? @relation(fields: [returnId], references: [id])
   invoiceId     String?
-  invoice       Invoice?     @relation(fields: [invoiceId], references: [id])
+  invoice       Invoice?             @relation(fields: [invoiceId], references: [id])
   invoiceLineId String?
-  invoiceLine   InvoiceLine? @relation(fields: [invoiceLineId], references: [id])
+  invoiceLine   InvoiceLine?         @relation(fields: [invoiceLineId], references: [id])
   bomLineId     String?
-  bomLine       BOMLine?     @relation(fields: [bomLineId], references: [id])
+  bomLine       BOMLine?             @relation(fields: [bomLineId], references: [id])
 
   notes     String?
   createdAt DateTime @default(now())
