@@ -25,7 +25,7 @@ export async function sendWelcomeEmail(to: string) {
         <p style="font-size: 0.9rem; color: #888;">— Antares</p>
       </div>
     `,
-    text: `Welcome to Antares! You're officially part of the movement 🔥
+    text: `Welcome to Antares! You're officially part of the team 🔥
 Get started here: ${appUrl}/signup`,
   });
 }

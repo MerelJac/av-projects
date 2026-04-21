@@ -1,3 +1,5 @@
+# bash pipeline-push.sh
+
 git add -A
 git commit -m "pipeline run"
 git push origin dev
